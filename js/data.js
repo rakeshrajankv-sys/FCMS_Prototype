@@ -18,8 +18,10 @@ function seedDemoData(){
     db.members ||= [];
     db.payments ||= [];
     db.activities ||= [];
+    db.submissions ||= [];
     // Migrate older versions without changing their existing data.
     if(!Array.isArray(db.activities)) db.activities=[];
+    if(!Array.isArray(db.submissions)) db.submissions=[];
     localStorage.setItem(FCMS_KEY,JSON.stringify(db));
   }
   return db;
@@ -90,16 +92,3 @@ function paymentSnapshot(p){
 function resetPrototype(){
   localStorage.removeItem(FCMS_KEY); location.href="index.html";
 }
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

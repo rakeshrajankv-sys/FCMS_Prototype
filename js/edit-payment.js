@@ -6,7 +6,7 @@ else{
 document.getElementById("page-content").innerHTML=`
 ${pageTitle("Edit Payment","Main Committee can correct a submitted receipt.")}
 <div class="panel form-card"><div class="receipt-box mb-4"><div class="d-flex justify-content-between"><span>Member</span><b>${escapeHTML(member.name)}</b></div><div class="d-flex justify-content-between mt-2"><span>Receipt</span><b>${escapeHTML(payment.receiptNumber)}</b></div></div>
-<form id="editPaymentForm" novalidate><div class="row g-3">
+<form id="editPaymentForm"><div class="row g-3">
 <div class="col-md-4"><label class="form-label">Receipt Number *</label><input id="receipt" class="form-control" required value="${escapeHTML(payment.receiptNumber)}"></div>
 <div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(payment.amount)}"></div>
 <div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="mode" class="form-select" required><option ${payment.paymentMode==="Cash"?"selected":""}>Cash</option><option ${payment.paymentMode==="UPI"?"selected":""}>UPI</option><option ${payment.paymentMode==="Bank"?"selected":""}>Bank</option></select></div>
@@ -28,16 +28,3 @@ document.getElementById("editPaymentForm").addEventListener("submit",e=>{
  saveDB(db);location.href="member-details.html?id="+encodeURIComponent(member.id);
 });
 }
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

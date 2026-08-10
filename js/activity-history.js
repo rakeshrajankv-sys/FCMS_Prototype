@@ -6,7 +6,7 @@ ${pageTitle("Activity History","Audit trail of member and payment changes across
 <div class="row g-2 mb-3">
 <div class="col-md-5"><input id="search" class="form-control" placeholder="Search member, receipt or action"></div>
 <div class="col-md-3"><select id="pr" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map(p=>`<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select></div>
-<div class="col-md-2"><select id="action" class="form-select"><option value="">All actions</option>${["Member Added","Member Edited","Member Deleted","Payment Added","Payment Edited","Payment Deleted"].map(a=>`<option>${a}</option>`).join("")}</select></div>
+<div class="col-md-2"><select id="action" class="form-select"><option value="">All actions</option>${["Member Added","Member Edited","Member Deleted","Payment Added","Payment Edited","Payment Deleted","Submission Added"].map(a=>`<option>${a}</option>`).join("")}</select></div>
 <div class="col-md-2"><select id="actor" class="form-select"><option value="">All users</option><option value="admin">Main Committee</option><option value="pradeshikam">Pradeshikam</option></select></div>
 </div>
 <div id="activityList"></div></div>`;
@@ -23,16 +23,3 @@ document.getElementById("exportActivity").addEventListener("click",()=>{
  if(typeof exportCSV==="function")exportCSV(data,"fcms-activity-history.csv");
 });
 render();
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

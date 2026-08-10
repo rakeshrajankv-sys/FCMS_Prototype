@@ -9,7 +9,7 @@ ${pageTitle("New Member","Register a new person and record their first payment."
 <div class="row g-3">
 <div class="col-md-6"><label class="form-label">Name *</label><input id="name" class="form-control" required></div>
 <div class="col-md-3"><label class="form-label">Gender *</label><select id="gender" class="form-select" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
-<div class="col-md-3"><label class="form-label">Age *</label><input id="age" type="number" min="0" max="100" class="form-control" required></div>
+<div class="col-md-3"><label class="form-label">Age *</label><input id="age" type="number" min="1" max="100" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Phone Number *</label><div class="input-group"><span class="input-group-text">+91</span><input id="phone" class="form-control" inputmode="numeric" type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}" required></div></div>
 <div class="col-md-4"><label class="form-label">House Number *</label><input id="house" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Pradeshikam *</label>
@@ -21,7 +21,7 @@ ${s.role==="admin"
 <hr class="my-4"><h6 class="fw-bold mb-3">First Payment</h6>
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">Receipt Number *</label><input id="receipt" class="form-control" required></div>
-<div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="0" step="1" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="1" step="1" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="mode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option></select></div>
 <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
 </div>
@@ -29,6 +29,9 @@ ${s.role==="admin"
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
 <div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Member & Payment</button></div>
 </form></div>`;
+
+["name","gender","age","phone","house","pradeshikam","receipt","amount","mode"].forEach(id=>document.getElementById(id)?.addEventListener("input",()=>document.getElementById(id).classList.remove("is-invalid")));
+["gender","pradeshikam","mode"].forEach(id=>document.getElementById(id)?.addEventListener("change",()=>document.getElementById(id).classList.remove("is-invalid")));
 function selectedPradeshikamId(){return s.role==="admin"?Number(document.getElementById("pradeshikam").value):Number(s.pradeshikamId)}
 function updatePreview(){
   const req=requiredAmount(document.getElementById("gender").value,document.getElementById("age").value);
@@ -39,6 +42,10 @@ function updatePreview(){
 document.getElementById("pradeshikam")?.addEventListener("change",updatePreview);
 document.getElementById("memberForm").addEventListener("submit",e=>{
   e.preventDefault();
+  const form=e.currentTarget;
+  let requiredOk=true;
+  form.querySelectorAll("[required]").forEach(el=>{const empty=!String(el.value||"").trim();el.classList.toggle("is-invalid",empty);if(empty)requiredOk=false});
+  if(!requiredOk){const err=document.getElementById("formError");err.textContent="Please fill in all required fields highlighted in red.";err.classList.remove("d-none");return}
   const name=document.getElementById("name").value.trim(),gender=document.getElementById("gender").value,age=Number(document.getElementById("age").value),
   phone=normalizePhone(document.getElementById("phone").value),house=document.getElementById("house").value.trim(),receipt=document.getElementById("receipt").value.trim(),
   amount=Number(document.getElementById("amount").value),mode=document.getElementById("mode").value,remarks=document.getElementById("remarks").value.trim(),
@@ -50,8 +57,7 @@ document.getElementById("memberForm").addEventListener("submit",e=>{
   if(duplicate){err.textContent="This person already exists in this Pradeshikam. Open the existing member and add a payment instead.";err.classList.remove("d-none");return}
   if(db.payments.some(p=>p.receiptNumber===receipt)){err.textContent="This receipt number already exists.";err.classList.remove("d-none");return}
   const req=requiredAmount(gender,age);
-  if(!Number.isFinite(amount)||amount<0){err.textContent="Enter a valid payment amount.";err.classList.remove("d-none");return}
-  if(amount===0 && req>0){err.textContent="Enter a valid payment amount.";err.classList.remove("d-none");return}
+  if(amount<=0){err.textContent="Enter a valid payment amount.";err.classList.remove("d-none");return}
   if(req>0 && amount>req){err.textContent=`Payment cannot exceed the required amount of ${money(req)}.`;err.classList.remove("d-none");return}
   const member={id:uid("m"),memberCode:makeMemberCode(pradeshikamId,db),name,gender,age,phone,houseNumber:house,pradeshikamId,requiredAmount:req,createdAt:new Date().toISOString()};
   db.members.push(member);
@@ -62,16 +68,3 @@ document.getElementById("memberForm").addEventListener("submit",e=>{
   saveDB(db);
   location.href="member-details.html?id="+encodeURIComponent(member.id);
 });
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

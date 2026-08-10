@@ -15,16 +15,3 @@ function render(){
 }
 function badge(s){return `<span class="status-badge status-${s.toLowerCase()}">● ${s}</span>`}
 document.getElementById("search").addEventListener("input",render);document.getElementById("statusFilter").addEventListener("change",render);document.getElementById("genderFilter").addEventListener("change",render);render();
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

@@ -1,0 +1,9 @@
+FCMS Stage 2 update - Submission Portal
+
+- Added Submissions page using the existing Stage 1 layout and LocalStorage.
+- Pradeshikam users can record amounts handed to Main Committee with date and optional remarks.
+- Main Committee can select any Pradeshikam and view collection, submitted amount, remaining amount, and submission history.
+- Submission Added actions are recorded in Activity History.
+- No browser prompt/pop-up is used; the submission form is an inline form like Add Member.
+- Remarks are optional (no *). Required fields are marked with * and missing required fields are highlighted red on submit.
+- Existing Stage 1 design and functions are preserved.

@@ -21,16 +21,3 @@ document.getElementById("search").addEventListener("input",render);
 document.getElementById("mode").addEventListener("change",render);
 document.getElementById("exportBtn").addEventListener("click",()=>exportCSV(rows.map(p=>{const m=db.members.find(x=>x.id===p.memberId),pr=db.pradeshikams.find(x=>x.id===m?.pradeshikamId);return {Receipt:p.receiptNumber,Member:m?.name||"",MemberID:m?.memberCode||"",Pradeshikam:pr?.name||"",Amount:p.amount,Mode:p.paymentMode,Date:new Date(p.paymentDate).toLocaleString("en-IN"),Remarks:p.remarks||""}}),"fcms-payments.csv"));
 render();
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

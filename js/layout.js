@@ -10,6 +10,7 @@ document.getElementById("app").innerHTML=`
     <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>Dashboard</a>
     <a href="members.html"><i class="bi bi-people"></i>Members</a>
     <a href="payments.html"><i class="bi bi-receipt"></i>Payments</a>
+    <a href="submissions.html"><i class="bi bi-bank"></i>Submissions</a>
     ${session.role==="admin"?`<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>Pradeshikams</a><a href="activity-history.html"><i class="bi bi-clock-history"></i>Activity History</a>`:""}
     <a href="reports.html"><i class="bi bi-bar-chart"></i>Reports</a>
     <div class="nav-section">System</div>
@@ -34,16 +35,3 @@ function logout(){clearSession();location.href="index.html"}
 function pageTitle(title,sub,button=""){
 return `<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div class="page-title"><h1>${title}</h1><p>${sub}</p></div>${button}</div>`;
 }
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};

@@ -5,14 +5,14 @@ if(!member){location.href="members.html"}
 else{
 document.getElementById("page-content").innerHTML=`
 ${pageTitle("Edit Member","Main Committee can correct member information.")}
-<div class="panel form-card"><form id="editMemberForm" novalidate>
+<div class="panel form-card"><form id="editMemberForm">
 <div class="row g-3">
 <div class="col-md-6"><label class="form-label">Name *</label><input id="name" class="form-control" required value="${escapeHTML(member.name)}"></div>
 <div class="col-md-3"><label class="form-label">Gender *</label><select id="gender" class="form-select" required><option ${member.gender==="Male"?"selected":""}>Male</option><option ${member.gender==="Female"?"selected":""}>Female</option></select></div>
-<div class="col-md-3"><label class="form-label">Age *</label><input id="age" type="number" min="0" max="100" class="form-control" required value="${member.age}"></div>
+<div class="col-md-3"><label class="form-label">Age *</label><input id="age" type="number" min="1" max="100" class="form-control" required value="${member.age}"></div>
 <div class="col-md-4"><label class="form-label">Phone Number *</label><div class="input-group"><span class="input-group-text">+91</span><input id="phone" class="form-control" inputmode="numeric" type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}" required value="${escapeHTML(normalizePhone(member.phone||""))}"></div></div>
 <div class="col-md-4"><label class="form-label">House Number *</label><input id="house" class="form-control" required value="${escapeHTML(member.houseNumber||"")}"></div>
-<div class="col-md-4"><label class="form-label">Pradeshikam *</label><select id="pradeshikam" class="form-select" required>${db.pradeshikams.map(p=>`<option value="${p.id}" ${Number(member.pradeshikamId)===Number(p.id)?"selected":""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
+<div class="col-md-4"><label class="form-label">Pradeshikam</label><select id="pradeshikam" class="form-select">${db.pradeshikams.map(p=>`<option value="${p.id}" ${Number(member.pradeshikamId)===Number(p.id)?"selected":""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
 </div>
 <div class="receipt-box mt-4">Current required amount: <b>${money(member.requiredAmount)}</b>. It will be recalculated from gender and age.</div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
@@ -34,16 +34,3 @@ document.getElementById("editMemberForm").addEventListener("submit",e=>{
  saveDB(db);location.href="member-details.html?id="+encodeURIComponent(member.id);
 });
 }
-
-
-// Under-21 payment rule: no collection is required.
-// Payment amount may be submitted as ₹0 so the form can be completed.
-window.getRequiredCollectionAmount = function(age, gender) {
-  const a = Number(age);
-  if (!Number.isFinite(a) || a < 21) return 0;
-  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
-};
-
-window.isUnder21NoCollection = function(age) {
-  return Number(age) < 21;
-};
