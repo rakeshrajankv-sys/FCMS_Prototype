@@ -1,0 +1,18 @@
+const db=getDB(),s=currentSession();markActive();
+if(s.role!=="admin"){location.href="dashboard.html"}
+document.getElementById("page-content").innerHTML=`
+${pageTitle("Pradeshikams","Overview of all 18 Pradeshikams.")}
+<div class="row g-3">${db.pradeshikams.map(p=>{const ms=db.members.filter(m=>m.pradeshikamId===p.id);const ex=ms.reduce((a,m)=>a+Number(m.requiredAmount),0),pd=ms.reduce((a,m)=>a+memberStats(m,db).paid,0),pct=ex?Math.min(100,pd/ex*100):0;const g=ms.filter(m=>memberStats(m,db).status==="Green").length,y=ms.filter(m=>memberStats(m,db).status==="Yellow").length,r=ms.filter(m=>memberStats(m,db).status==="Red").length;return `<div class="col-md-6 col-xl-4"><div class="panel h-100"><div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-1">${escapeHTML(p.name)}</h6><div class="small text-muted">${ms.length} members</div></div><span class="fw-bold">${Math.round(pct)}%</span></div><div class="progress my-3"><div class="progress-bar" style="width:${pct}%"></div></div><div class="d-flex justify-content-between small mb-3"><span>Collected <b>${money(pd)}</b></span><span>Expected <b>${money(ex)}</b></span></div><div class="d-flex gap-2 mb-3"><span class="status-badge status-green">● ${g}</span><span class="status-badge status-yellow">● ${y}</span><span class="status-badge status-red">● ${r}</span></div><a class="btn btn-sm btn-outline-primary w-100" href="members.html?pradeshikam=${p.id}"><i class="bi bi-people me-1"></i>View All Members</a></div></div>`}).join("")}</div>`;
+
+
+// Under-21 payment rule: no collection is required.
+// Payment amount may be submitted as ₹0 so the form can be completed.
+window.getRequiredCollectionAmount = function(age, gender) {
+  const a = Number(age);
+  if (!Number.isFinite(a) || a < 21) return 0;
+  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
+};
+
+window.isUnder21NoCollection = function(age) {
+  return Number(age) < 21;
+};

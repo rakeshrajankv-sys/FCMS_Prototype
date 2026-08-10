@@ -1,0 +1,21 @@
+const db=getDB(),s=currentSession();markActive();document.getElementById("page-content").innerHTML=`
+${pageTitle("Reports","Filter the collection and download a spreadsheet.")}
+<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Pradeshikam</label><select id="pr" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.filter(p=>s.role==="admin"||p.id===s.pradeshikamId).map(p=>`<option value="${p.id}">${p.name}</option>`).join("")}</select></div><div class="col-md-3"><label class="form-label">Status</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div><div class="col-md-3"><label class="form-label">Report</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Payments</option></select></div><div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div>
+<div class="panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div>`;
+function filteredMembers(){return db.members.filter(m=>(s.role==="admin"||m.pradeshikamId===s.pradeshikamId)&&(!document.getElementById("pr").value||m.pradeshikamId==document.getElementById("pr").value)&&(!document.getElementById("st").value||memberStats(m,db).status===document.getElementById("st").value))}
+function renderSummary(){const ms=filteredMembers(),ex=ms.reduce((a,m)=>a+Number(m.requiredAmount),0),pd=ms.reduce((a,m)=>a+memberStats(m,db).paid,0);document.getElementById("summary").innerHTML=`<div class="row g-3"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Members</div><div class="stat-value">${ms.length}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Expected</div><div class="stat-value">${money(ex)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value">${money(pd)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value">${money(Math.max(0,ex-pd))}</div></div></div></div>`}
+["pr","st","type"].forEach(id=>document.getElementById(id).addEventListener("change",renderSummary));document.getElementById("download").addEventListener("click",()=>{if(document.getElementById("type").value==="members"){const data=filteredMembers().map(m=>{const x=memberStats(m,db),p=db.pradeshikams.find(p=>p.id===m.pradeshikamId);return {MemberID:m.memberCode,Name:m.name,Gender:m.gender,Age:m.age,Phone:m.phone||"",HouseNumber:m.houseNumber||"",Pradeshikam:p?.name||"",Required:m.requiredAmount,Paid:x.paid,Balance:x.balance,Status:x.status}});exportCSV(data,"fcms-members.csv")}else{const ids=new Set(filteredMembers().map(m=>m.id));const data=db.payments.filter(p=>ids.has(p.memberId)).map(p=>{const m=db.members.find(x=>x.id===p.memberId),pr=db.pradeshikams.find(x=>x.id===m?.pradeshikamId);return {Receipt:p.receiptNumber,MemberID:m?.memberCode||"",Name:m?.name||"",Pradeshikam:pr?.name||"",Amount:p.amount,PaymentMode:p.paymentMode,Date:new Date(p.paymentDate).toLocaleString("en-IN"),Remarks:p.remarks||""}});exportCSV(data,"fcms-payments.csv")}});renderSummary();
+function exportCSV(data,filename){if(!data.length){alert("No data to export.");return}const keys=Object.keys(data[0]),csv=[keys.join(","),...data.map(row=>keys.map(k=>`"${String(row[k]??"").replace(/"/g,'""')}"`).join(","))].join("\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href)}
+
+
+// Under-21 payment rule: no collection is required.
+// Payment amount may be submitted as ₹0 so the form can be completed.
+window.getRequiredCollectionAmount = function(age, gender) {
+  const a = Number(age);
+  if (!Number.isFinite(a) || a < 21) return 0;
+  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
+};
+
+window.isUnder21NoCollection = function(age) {
+  return Number(age) < 21;
+};

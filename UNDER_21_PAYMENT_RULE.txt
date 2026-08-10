@@ -1,0 +1,5 @@
+Under-21 payment rule:
+- If a member is below 21 years old, required collection is ₹0.
+- The payment form accepts ₹0 so the collector can submit the payment form.
+- Existing 21+ rules remain unchanged: male ₹8,000; female ₹2,000.
+- No layout or design changes were made.

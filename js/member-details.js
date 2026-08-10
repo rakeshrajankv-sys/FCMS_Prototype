@@ -1,0 +1,56 @@
+const db=getDB(),s=currentSession();markActive();
+const id=new URLSearchParams(location.search).get("id");
+const member=db.members.find(m=>m.id===id);
+if(!member){location.href="members.html"}
+else{
+  if(s.role==="pradeshikam"&&member.pradeshikamId!==s.pradeshikamId){location.href="members.html"}
+  const pr=db.pradeshikams.find(p=>p.id===member.pradeshikamId),x=memberStats(member,db),
+  payments=db.payments.filter(p=>p.memberId===member.id).sort((a,b)=>new Date(b.paymentDate)-new Date(a.paymentDate));
+  const adminActions=s.role==="admin"?`<a href="edit-member.html?id=${encodeURIComponent(member.id)}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit Member</a>`:"";
+  document.getElementById("page-content").innerHTML=`
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <a href="members.html" class="text-decoration-none small"><i class="bi bi-arrow-left me-1"></i>Back to Members</a>
+    <div class="action-buttons">
+      ${adminActions}
+      <button id="deleteMemberBtn" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete Member</button>
+      <a href="add-payment.html?id=${encodeURIComponent(member.id)}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Payment</a>
+    </div>
+  </div>
+  <div class="member-hero mb-4"><div class="d-flex justify-content-between flex-wrap gap-3"><div><div class="small muted">${escapeHTML(member.memberCode)}</div><h2 class="fw-bold mb-1">${escapeHTML(member.name)}</h2><div class="muted">${escapeHTML(pr?.name||"")} · ${member.gender} · Age ${member.age}</div></div><div class="text-end"><div class="small muted">Current Status</div><div class="mt-1">${badge(x.status)}</div></div></div></div>
+  <div class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Required</div><div class="stat-value">${money(member.requiredAmount)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Total Paid</div><div class="stat-value">${money(x.paid)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value">${money(x.balance)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Progress</div><div class="stat-value">${Math.round(x.percent)}%</div></div></div></div>
+  <div class="row g-3"><div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Member Information</div>${info("Phone",member.phone||"-")}${info("House Number",member.houseNumber||"-")}${info("Pradeshikam",pr?.name||"-")}${info("Required Amount",money(member.requiredAmount))}</div></div>
+  <div class="col-lg-8"><div class="panel"><div class="d-flex justify-content-between mb-3"><div class="panel-title">Payment History</div><span class="small text-muted">${payments.length} receipt(s)</span></div>
+  ${payments.length?`<div class="table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Amount</th><th>Mode</th><th>Date</th><th>Remarks</th>${s.role==="admin"?`<th>Actions</th>`:""}</tr></thead><tbody>${payments.map(p=>`<tr><td data-label="Receipt"><b>${escapeHTML(p.receiptNumber)}</b></td><td data-label="Amount" class="fw-semibold">${money(p.amount)}</td><td data-label="Mode">${escapeHTML(p.paymentMode)}</td><td data-label="Date">${new Date(p.paymentDate).toLocaleDateString("en-IN")}</td><td data-label="Remarks">${escapeHTML(p.remarks||"-")}</td>${s.role==="admin"?`<td data-label="Actions"><div class="d-flex gap-1"><a class="btn btn-sm btn-light" href="edit-payment.html?id=${encodeURIComponent(p.id)}" title="Edit"><i class="bi bi-pencil"></i></a><button class="btn btn-sm btn-outline-danger delete-payment" data-id="${escapeHTML(p.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<div class="empty-state"><i class="bi bi-receipt"></i>No payments yet.</div>`}
+  </div></div></div>`;
+  document.getElementById("deleteMemberBtn").addEventListener("click",()=>{
+    if(!confirm(`Delete ${member.name}? This removes the member and active receipts, but keeps a record in Activity History.`))return;
+    const memberPayments=db.payments.filter(p=>p.memberId===member.id);
+    memberPayments.forEach(p=>addActivity(db,{action:"Payment Deleted",entityType:"payment",entityId:p.id,memberId:member.id,pradeshikamId:member.pradeshikamId,summary:`Receipt ${p.receiptNumber} removed with member`,details:`Receipt ${p.receiptNumber} for ${money(p.amount)} was removed because member ${member.name} was deleted.`,oldValue:paymentSnapshot(p)}));
+    addActivity(db,{action:"Member Deleted",entityType:"member",entityId:member.id,memberId:member.id,pradeshikamId:member.pradeshikamId,summary:`${member.name} deleted`,details:`Member ${member.memberCode} and ${memberPayments.length} active receipt(s) deleted.`,oldValue:memberSnapshot(member)});
+    db.payments=db.payments.filter(p=>p.memberId!==member.id);
+    db.members=db.members.filter(m=>m.id!==member.id);
+    saveDB(db); location.href="members.html";
+  });
+  document.querySelectorAll(".delete-payment").forEach(btn=>btn.addEventListener("click",()=>{
+    const pid=btn.dataset.id,p=db.payments.find(x=>x.id===pid);
+    if(!p||s.role!=="admin")return;
+    if(!confirm(`Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`))return;
+    addActivity(db,{action:"Payment Deleted",entityType:"payment",entityId:p.id,memberId:member.id,pradeshikamId:member.pradeshikamId,summary:`Receipt ${p.receiptNumber} deleted`,details:`Payment deleted by Main Committee.`,oldValue:paymentSnapshot(p)});
+    db.payments=db.payments.filter(x=>x.id!==pid);saveDB(db);location.reload();
+  }));
+}
+function badge(s){return `<span class="status-badge status-${s.toLowerCase()}">● ${s}</span>`}
+function info(l,v){return `<div class="mb-3"><div class="info-label">${l}</div><div class="info-value">${escapeHTML(v)}</div></div>`}
+
+
+// Under-21 payment rule: no collection is required.
+// Payment amount may be submitted as ₹0 so the form can be completed.
+window.getRequiredCollectionAmount = function(age, gender) {
+  const a = Number(age);
+  if (!Number.isFinite(a) || a < 21) return 0;
+  return String(gender || '').toLowerCase() === 'female' ? 2000 : 8000;
+};
+
+window.isUnder21NoCollection = function(age) {
+  return Number(age) < 21;
+};
