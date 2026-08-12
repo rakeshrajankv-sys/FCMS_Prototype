@@ -1,7 +1,27 @@
 const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
 
-const DEFAULT_PRADESHIKAMS = Array.from({length:18},(_,i)=>({id:i+1,name:`Pradeshikam ${i+1}`,username:`p${i+1}`,password:"p123"}));
+const PRADESHIKAM_NAMES = [
+  "Ambangad",
+  "Bara/Mukkunnoth",
+  "Bedakam",
+  "Chalingal",
+  "Chemmanad",
+  "Kalanad",
+  "kuttikkol",
+  "Kolathur/Maruthadukkam",
+  "Kaniyamabdi",
+  "Melbara",
+  "Poinachi",
+  "pakkam",
+  "Periya",
+  "Poochakkad",
+  "Thokkanam/karuvakod",
+  "Thiravakoli",
+  "Udma",
+  "chendalam"
+];
+const DEFAULT_PRADESHIKAMS = PRADESHIKAM_NAMES.map((name,i)=>({id:i+1,name,username:`p${i+1}`,password:"p123"}));
 const DEFAULT_USERS = [
   {id:1,role:"admin",name:"Main Committee",username:"admin",password:"admin123",pradeshikamId:null},
   ...DEFAULT_PRADESHIKAMS.map((p,i)=>({id:i+2,role:"pradeshikam",name:p.name,username:p.username,password:p.password,pradeshikamId:p.id}))
@@ -14,7 +34,10 @@ function seedDemoData(){
     localStorage.setItem(FCMS_KEY,JSON.stringify(db));
   } else {
     db.pradeshikams ||= DEFAULT_PRADESHIKAMS;
+    // Keep existing LocalStorage data, but update the displayed Pradeshikam names.
+    db.pradeshikams.forEach((p,i)=>{ if(PRADESHIKAM_NAMES[i]) p.name=PRADESHIKAM_NAMES[i]; });
     db.users ||= DEFAULT_USERS;
+    db.users.forEach(u=>{ if(u.role==="pradeshikam" && u.pradeshikamId && PRADESHIKAM_NAMES[u.pradeshikamId-1]) u.name=PRADESHIKAM_NAMES[u.pradeshikamId-1]; });
     db.members ||= [];
     db.payments ||= [];
     db.activities ||= [];

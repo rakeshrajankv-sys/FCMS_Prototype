@@ -8,11 +8,21 @@ document.getElementById("app").innerHTML=`
   <nav class="sidebar-nav">
     <div class="nav-section">Main</div>
     <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>Dashboard</a>
-    <a href="members.html"><i class="bi bi-people"></i>Members</a>
-    <a href="payments.html"><i class="bi bi-receipt"></i>Payments</a>
-    <a href="submissions.html"><i class="bi bi-bank"></i>Submissions</a>
-    ${session.role==="admin"?`<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>Pradeshikams</a><a href="activity-history.html"><i class="bi bi-clock-history"></i>Activity History</a>`:""}
+    ${session.role==="admin"?`<a href="activity-history.html"><i class="bi bi-clock-history"></i>Activity History</a>`:""}
     <a href="reports.html"><i class="bi bi-bar-chart"></i>Reports</a>
+
+    <div class="nav-dropdown ${["members.html","payments.html","submissions.html","pradeshikams.html"].includes(location.pathname.split("/").pop())?"open":""}">
+      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')">
+        <span><i class="bi bi-diagram-3"></i>Pradeshikam</span><i class="bi bi-chevron-down nav-chevron"></i>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="members.html"><i class="bi bi-people"></i>Members</a>
+        <a href="payments.html"><i class="bi bi-receipt"></i>Collections</a>
+        <a href="submissions.html"><i class="bi bi-bank"></i>Submissions</a>
+        ${session.role==="admin"?`<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>Pradeshikams</a>`:""}
+      </div>
+    </div>
+
     <div class="nav-section">System</div>
     <a href="#" onclick="logout();return false"><i class="bi bi-box-arrow-right"></i>Logout</a>
   </nav>
@@ -30,6 +40,8 @@ document.getElementById("app").innerHTML=`
 function markActive(){
   const page=location.pathname.split("/").pop()||"dashboard.html";
   document.querySelectorAll(".sidebar a").forEach(a=>{if(a.getAttribute("href")===page)a.classList.add("active")});
+  const current=document.querySelector(`.nav-dropdown-menu a[href="${page}"]`);
+  if(current){current.classList.add("active");current.closest(".nav-dropdown")?.classList.add("open");}
 }
 function logout(){clearSession();location.href="index.html"}
 function pageTitle(title,sub,button=""){
