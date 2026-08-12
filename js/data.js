@@ -2,7 +2,7 @@ const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
 
 const PRADESHIKAM_NAMES = [
-  "Ambangad","Bara/Mukkunnoth","Bedakam","Chalingal","Chemmanad","Kalanad","kuttikkol","Kolathur/Maruthadukkam","Kaniyamabdi","Melbara","Poinachi","pakkam","Periya","Poochakkad","Thokkanam/karuvakod","Thiravakoli","Udma","chendalam"
+  "Ambangad","Bara/Mukkunnoth","Bedakam","Chalingal","Chemmanad","Kalanad","Kuttikkol","Kolathur/Maruthadukkam","Kaniyambadi","Melbara","Poinachi","Pakkam","Periya","Poochakkad","Thokkanam/Karuvakod","Thiravakoli","Udma","Chendalam"
 ];
 const DEFAULT_PRADESHIKAMS = PRADESHIKAM_NAMES.map((name,i)=>({id:i+1,name,username:`p${i+1}`,password:"p123"}));
 const DEFAULT_USERS = [
