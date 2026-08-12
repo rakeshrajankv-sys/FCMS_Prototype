@@ -4,7 +4,7 @@ const ids=new Set(allowedMembers.map(m=>m.id));
 let rows=db.payments.filter(p=>ids.has(p.memberId)).sort((a,b)=>new Date(b.paymentDate)-new Date(a.paymentDate));
 document.getElementById("page-content").innerHTML=`
 ${pageTitle("Collections","Every installment is stored as a separate receipt.")}
-<div class="panel"><div class="row g-2 mb-3"><div class="col-md-7"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div><div class="col-md-3"><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option></select></div><div class="col-md-2"><button id="exportBtn" class="btn btn-outline-primary w-100"><i class="bi bi-download me-1"></i>CSV</button></div></div><div id="paymentTable"></div></div>`;
+<div class="panel"><div class="row g-2 mb-3"><div class="col-md-7"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div><div class="col-md-3"><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Check</option></select></div><div class="col-md-2"><button id="exportBtn" class="btn btn-outline-primary w-100"><i class="bi bi-download me-1"></i>CSV</button></div></div><div id="paymentTable"></div></div>`;
 function render(){
  const q=document.getElementById("search").value.toLowerCase(),mode=document.getElementById("mode").value;
  const arr=rows.filter(p=>{const m=db.members.find(x=>x.id===p.memberId);return(!q||[p.receiptNumber,m?.name,m?.phone].join(" ").toLowerCase().includes(q))&&(!mode||p.paymentMode===mode)});

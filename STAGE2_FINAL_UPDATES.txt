@@ -1,0 +1,8 @@
+Final Stage 2 updates:
+- Removed manual Allocation field from Add Member.
+- Changed household view labels to House Number and View.
+- Members page split into Member List and House views.
+- Added searchable member picker in Donations (name, phone, house number).
+- Improved phone country-code and mobile layout (+91/+971).
+- Main Committee Pradeshikams page shows total collected, member collections, donations, and member status counts.
+- Preserved LocalStorage architecture and existing Stage 1 functionality.
