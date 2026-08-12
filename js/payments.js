@@ -1,6 +1,8 @@
 const db = getDB(),
   s = currentSession();
 markActive();
+const paymentsParams = new URLSearchParams(location.search);
+const requestedPradeshikam = paymentsParams.get("pradeshikam");
 const allowedMembers =
   s.role === "admin"
     ? db.members
@@ -65,6 +67,10 @@ function render() {
 document.getElementById("search").addEventListener("input", render);
 document.getElementById("mode").addEventListener("change", render);
 document.getElementById("prFilter")?.addEventListener("change", render);
+if (s.role === "admin" && requestedPradeshikam) {
+  const prSelect = document.getElementById("prFilter");
+  if (prSelect) prSelect.value = requestedPradeshikam;
+}
 document.getElementById("exportBtn").addEventListener("click", () =>
   exportCSV(
     rows.map((p) => {

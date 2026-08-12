@@ -1,7 +1,9 @@
 const db = getDB(),
   s = currentSession();
 markActive();
-const listOnly = new URLSearchParams(location.search).get("view") === "list";
+const donationsParams = new URLSearchParams(location.search);
+const listOnly = donationsParams.get("view") === "list";
+const requestedPradeshikam = donationsParams.get("pradeshikam");
 const visibleMembers =
   s.role === "admin"
     ? db.members
@@ -192,6 +194,10 @@ function deleteDonation(id) {
 }
 if (listOnly)
   document.getElementById("donationAddPanel").classList.add("d-none");
+if (s.role === "admin" && requestedPradeshikam) {
+  const prSelect = document.getElementById("filterPr");
+  if (prSelect) prSelect.value = requestedPradeshikam;
+}
 document.getElementById("donorPhone").addEventListener("input", (e) => {
   e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
 });
