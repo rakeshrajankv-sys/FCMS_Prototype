@@ -1,4 +1,26 @@
-const db=getDB(),s=currentSession();markActive();
-if(s.role!=="admin"){location.href="dashboard.html"}else{
-document.getElementById("page-content").innerHTML=`${pageTitle("Pradeshikams","")}<div class="row g-3">${db.pradeshikams.map(p=>{const ms=db.members.filter(m=>Number(m.pradeshikamId)===Number(p.id));const memberTotal=memberCollectionTotal(p.id,db),donTotal=donationTotal(p.id,db),total=memberTotal+donTotal;const green=ms.filter(m=>memberStats(m,db).status==="Green").length,yellow=ms.filter(m=>memberStats(m,db).status==="Yellow").length,red=ms.filter(m=>memberStats(m,db).status==="Red").length;return `<div class="col-md-6 col-xl-4"><div class="panel h-100 pradeshikam-summary-card"><div class="d-flex justify-content-between align-items-start gap-2"><div><h6 class="fw-bold mb-1">${escapeHTML(p.name)}</h6><div class="small text-muted">${ms.length} members</div></div><a class="btn btn-sm btn-light" href="members.html?pradeshikam=${p.id}" title="View members"><i class="bi bi-eye"></i></a></div><div class="row g-2 mt-3"><div class="col-12"><div class="summary-metric"><span>Total Collected</span><b>${money(total)}</b></div></div><div class="col-6"><div class="summary-metric"><span>Members</span><b>${money(memberTotal)}</b></div></div><div class="col-6"><div class="summary-metric"><span>Donations</span><b>${money(donTotal)}</b></div></div></div><div class="small fw-semibold mt-3 mb-2">Member Status</div><div class="d-flex flex-wrap gap-2"><span class="status-badge status-green">● ${green} Green</span><span class="status-badge status-yellow">● ${yellow} Yellow</span><span class="status-badge status-red">● ${red} Red</span></div></div></div>`}).join("")}</div>`;
+const db = getDB(),
+  s = currentSession();
+markActive();
+if (s.role !== "admin") {
+  location.href = "dashboard.html";
+} else {
+  document.getElementById("page-content").innerHTML =
+    `${pageTitle("Pradeshikams", "")}<div class="row g-3">${db.pradeshikams
+      .map((p) => {
+        const ms = db.members.filter(
+          (m) => Number(m.pradeshikamId) === Number(p.id),
+        );
+        const memberTotal = memberCollectionTotal(p.id, db),
+          donTotal = donationTotal(p.id, db),
+          total = memberTotal + donTotal;
+        const green = ms.filter(
+            (m) => memberStats(m, db).status === "Green",
+          ).length,
+          yellow = ms.filter(
+            (m) => memberStats(m, db).status === "Yellow",
+          ).length,
+          red = ms.filter((m) => memberStats(m, db).status === "Red").length;
+        return `<div class="col-md-6 col-xl-4"><div class="panel h-100 pradeshikam-summary-card"><div class="d-flex justify-content-between align-items-start gap-2"><div><h6 class="fw-bold mb-1">${escapeHTML(p.name)}</h6><div class="small text-muted">${ms.length} members</div></div><a class="btn btn-sm btn-light" href="members.html?pradeshikam=${p.id}" title="View members"><i class="bi bi-eye"></i></a></div><div class="row g-2 mt-3"><div class="col-12"><div class="summary-metric"><span>Total Collected</span><b>${money(total)}</b></div></div><div class="col-6"><div class="summary-metric"><span>Members</span><b>${money(memberTotal)}</b></div></div><div class="col-6"><div class="summary-metric"><span>Donations</span><b>${money(donTotal)}</b></div></div></div><div class="small fw-semibold mt-3 mb-2">Member Status</div><div class="d-flex flex-wrap gap-2"><span class="status-badge status-green">● ${green} Green</span><span class="status-badge status-yellow">● ${yellow} Yellow</span><span class="status-badge status-red">● ${red} Red</span></div></div></div>`;
+      })
+      .join("")}</div>`;
 }
