@@ -24,7 +24,7 @@ ${pageTitle("Add Member","","")}
 <div class="col-md-4"><label class="form-label">Date *</label><input id="transactionDate" type="date" class="form-control" required></div>
 <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
 </div>
-<div id="allocationPreview" class="receipt-box mt-4"></div>
+<div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
 <div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
