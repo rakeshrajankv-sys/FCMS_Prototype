@@ -83,6 +83,10 @@ function seedDemoData() {
   db.donations.forEach((d) => {
     d.sourceType ||= "Member";
     d.paymentMode ||= "Cash";
+    d.status ||= "completed";
+  });
+  db.payments.forEach((p) => {
+    p.status ||= "completed";
   });
   db.submissions.forEach((x) => {
     if (x.memberAmount == null && x.donationAmount == null) {
@@ -161,11 +165,15 @@ function percent(required, paid) {
 }
 function memberStats(member, db = getDB()) {
   const paid = db.payments
-    .filter((p) => p.memberId === member.id)
+    .filter((p) => p.memberId === member.id && p.status !== "hold")
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+  const held = db.payments
+    .filter((p) => p.memberId === member.id && p.status === "hold")
     .reduce((s, p) => s + Number(p.amount || 0), 0);
   const req = Number(member.requiredAmount) || 0;
   return {
     paid,
+    held,
     balance: Math.max(0, req - paid),
     status: statusFor(req, paid),
     percent: percent(req, paid),
@@ -199,8 +207,9 @@ function donationTotal(pradeshikamId = null, db = getDB()) {
   return (db.donations || [])
     .filter(
       (d) =>
-        pradeshikamId == null ||
-        Number(d.pradeshikamId) === Number(pradeshikamId),
+        d.status !== "hold" &&
+        (pradeshikamId == null ||
+          Number(d.pradeshikamId) === Number(pradeshikamId)),
     )
     .reduce((a, d) => a + Number(d.amount || 0), 0);
 }
@@ -210,6 +219,7 @@ function memberCollectionTotal(pradeshikamId = null, db = getDB()) {
       const m = db.members.find((x) => x.id === p.memberId);
       return (
         !!m &&
+        p.status !== "hold" &&
         (pradeshikamId == null ||
           Number(m.pradeshikamId) === Number(pradeshikamId))
       );
@@ -288,6 +298,7 @@ function paymentSnapshot(p) {
     masterReceiptNumber: p.masterReceiptNumber || null,
     amount: Number(p.amount),
     paymentMode: p.paymentMode,
+    status: p.status || "completed",
     remarks: p.remarks || "",
     paymentDate: p.paymentDate,
   };
@@ -301,6 +312,7 @@ function donationSnapshot(d) {
     donorName: d.donorName || "",
     pradeshikamId: d.pradeshikamId,
     paymentMode: d.paymentMode || "",
+    status: d.status || "completed",
     date: d.date || d.createdAt,
     remarks: d.remarks || "",
   };

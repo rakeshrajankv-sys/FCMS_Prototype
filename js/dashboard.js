@@ -9,6 +9,22 @@ const members =
 const memberCollected = memberCollectionTotal(pid, db),
   donations = donationTotal(pid, db),
   total = memberCollected + donations;
+const heldTotal =
+  db.payments
+    .filter(
+      (p) =>
+        p.status === "hold" &&
+        (pid == null ||
+          Number(db.members.find((m) => m.id === p.memberId)?.pradeshikamId) ===
+            pid),
+    )
+    .reduce((a, p) => a + Number(p.amount || 0), 0) +
+  (db.donations || [])
+    .filter(
+      (d) =>
+        d.status === "hold" && (pid == null || Number(d.pradeshikamId) === pid),
+    )
+    .reduce((a, d) => a + Number(d.amount || 0), 0);
 const stats = members.reduce(
   (a, m) => {
     const x = memberStats(m, db);
@@ -41,6 +57,7 @@ ${statCard("bi-person-check", "Total Members", members.length)}
 ${statCard("bi-wallet2", "Submitted to Office", money(submitted))}
 ${statCard("bi-hourglass-split", "Remaining Balance", money(remainingBalance))}
 </div>
+${heldTotal > 0 ? `<div class="alert alert-primary d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4"><span><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} on hold — receipts issued, payment pending confirmation.</span><a href="payments.html" class="btn btn-sm btn-primary">Review Hold Payments</a></div>` : ""}
 <div class="row g-3 mb-4">
 <div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3"><div><div class="panel-title">Member Collection Progress</div><div class="small text-muted mt-1">Required: <b>${money(stats.expected)}</b> · Remaining: <b>${money(remaining)}</b></div></div><span class="small text-muted">${stats.expected ? Math.round((stats.paid / stats.expected) * 100) : 0}%</span></div><div class="progress mb-3" style="height:12px"><div class="progress-bar bg-primary" style="width:${stats.expected ? Math.min(100, (stats.paid / stats.expected) * 100) : 0}%"></div></div><div class="row text-center"><div class="col-4"><div class="h5 fw-bold mb-1">${stats.green}</div><span class="status-badge status-green">● Fully Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.yellow}</div><span class="status-badge status-yellow">● Mostly Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.red}</div><span class="status-badge status-red">● Less Paid</span></div></div></div></div>
 <div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Quick Actions</div><div class="d-grid gap-2"><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">Add Member</b></span></a><a class="quick-action" href="donations.html"><span class="quick-icon"><i class="bi bi-gift"></i></span><span><b class="d-block small">Donation</b></span></a><a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-search"></i></span><span><b class="d-block small">Find Member</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">Reports</b></span></a></div></div></div></div>
@@ -52,6 +69,7 @@ function statCard(icon, label, value) {
 function renderRecentTransactions(db, pid) {
   const rows = [];
   db.payments.forEach((p) => {
+    if (p.status === "hold") return;
     const m = db.members.find((x) => x.id === p.memberId);
     if (!m || (pid != null && Number(m.pradeshikamId) !== pid)) return;
     rows.push({
@@ -67,6 +85,7 @@ function renderRecentTransactions(db, pid) {
     });
   });
   (db.donations || []).forEach((d) => {
+    if (d.status === "hold") return;
     if (pid != null && Number(d.pradeshikamId) !== pid) return;
     rows.push({
       date: d.date || d.createdAt,

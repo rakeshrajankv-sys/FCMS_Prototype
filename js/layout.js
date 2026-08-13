@@ -25,7 +25,16 @@ if (session) {
   </nav>
   ${session.role === "admin" ? `<div class="sidebar-footer"><button class="btn btn-sm btn-outline-light w-100" onclick="resetPrototype()">Reset Prototype Data</button></div>` : ""}
 </aside>
-<main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">Fund Collection Management System</div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${session.role === "admin" ? "Main Committee" : "Pradeshikam"}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">Fund Collection Management System</div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${session.role === "admin" ? "Main Committee" : "Pradeshikam"}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;
+}
+function toggleSidebar() {
+  document.getElementById("sidebar")?.classList.toggle("open");
+  document.getElementById("sidebarOverlay")?.classList.toggle("open");
+}
+function closeSidebar() {
+  document.getElementById("sidebar")?.classList.remove("open");
+  document.getElementById("sidebarOverlay")?.classList.remove("open");
 }
 function markActive() {
   const page = location.pathname.split("/").pop() || "dashboard.html";

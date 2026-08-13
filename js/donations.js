@@ -20,7 +20,7 @@ ${pageTitle("Donations", "", `<button id="exportDonations" class="btn btn-outlin
 <div class="col-md-4" id="phoneField"><label class="form-label">Phone Number *</label><div class="phone-field"><select id="donorPhoneCode" class="form-select" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="donorPhone" class="form-control" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number"></div></div>
 <div class="col-md-4"><label class="form-label">Pradeshikam *</label>${s.role === "admin" ? `<select id="donationPradeshikam" class="form-select" required><option value="">Select Pradeshikam</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : `<input id="donationPradeshikam" class="form-control" value="${escapeHTML(db.pradeshikams.find((p) => p.id === s.pradeshikamId)?.name || "")}" disabled>`}</div>
 <div class="col-md-4"><label class="form-label">Amount *</label><input id="donationAmount" type="number" min="1" step="1" class="form-control" required></div><div class="col-md-4"><label class="form-label">Receipt Number *</label><input id="donationReceipt" class="form-control" required></div>
-<div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="donationMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Check</option></select></div><div class="col-md-4"><label class="form-label">Date *</label><input id="donationDate" type="date" class="form-control" required></div><div class="col-md-4"><label class="form-label">Remarks</label><input id="donationRemarks" class="form-control"></div>
+<div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="donationMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="col-md-4"><label class="form-label">Date *</label><input id="donationDate" type="date" class="form-control" required></div><div class="col-md-4"><label class="form-label">Remarks</label><input id="donationRemarks" class="form-control"></div>
 </div><div id="donationError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary"><i class="bi bi-gift me-1"></i>Save Donation</button></div></form></div>
 <div class="panel"><div class="row g-2 mb-3"><div class="col-md-6"><input id="searchDonation" class="form-control" placeholder="Search donor, house, receipt or Pradeshikam"></div>${s.role === "admin" ? `<div class="col-md-4"><select id="filterPr" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select></div>` : ""}<div class="col-md-2"><select id="filterSource" class="form-select"><option value="">All sources</option><option>Member</option><option>Shop</option><option>Organization</option><option>Other</option></select></div></div><div id="donationTable"></div></div>`;
 function todayValue() {
@@ -148,9 +148,14 @@ function render() {
         new Date(b.d.date || b.d.createdAt) -
         new Date(a.d.date || a.d.createdAt),
     );
-  const total = rows.reduce((a, x) => a + Number(x.d.amount || 0), 0),
+  const total = rows
+      .filter((x) => x.d.status !== "hold")
+      .reduce((a, x) => a + Number(x.d.amount || 0), 0),
     memberTotal = rows
-      .filter((x) => x.d.sourceType === "Member")
+      .filter((x) => x.d.sourceType === "Member" && x.d.status !== "hold")
+      .reduce((a, x) => a + Number(x.d.amount || 0), 0),
+    heldTotal = rows
+      .filter((x) => x.d.status === "hold")
       .reduce((a, x) => a + Number(x.d.amount || 0), 0);
   document.getElementById("donationTotal").textContent = money(total);
   document.getElementById("memberDonationTotal").textContent =
@@ -160,7 +165,7 @@ function render() {
   );
   document.getElementById("donationTable").innerHTML = !rows.length
     ? `<div class="empty-state"><i class="bi bi-gift"></i>No donations found.</div>`
-    : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
+    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
   document
     .querySelectorAll(".delete-donation")
     .forEach((btn) =>
@@ -300,6 +305,7 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     donorPhoneCode:
       type === "Member" ? donor?.countryCode || "+91" : donorPhoneCode,
     paymentMode: mode,
+    status: "completed",
     date: new Date(date + "T12:00:00").toISOString(),
     remarks,
     createdAt: new Date().toISOString(),

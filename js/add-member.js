@@ -22,16 +22,16 @@ ${pageTitle("Add Member", "", "")}
 <hr class="my-4">
 <h6 class="fw-bold mb-3">Payment / Donation</h6>
 <div class="row g-3">
-<div class="col-md-4"><label class="form-label">Amount Received *</label><input id="totalAmount" type="number" min="1" step="1" class="form-control" required placeholder="Enter amount received"></div>
+<div class="col-md-4"><label class="form-label">Amount Received *</label><input id="totalAmount" type="number" min="0" step="1" class="form-control" required placeholder="Enter amount received"></div>
 <div class="col-md-4" id="houseReceiptField"><label class="form-label">Receipt Number *</label><input id="receipt" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Received From *</label><select id="payerIndex" class="form-select" required></select></div>
-<div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="mode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Check</option></select></div>
+<div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="mode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div>
 <div class="col-md-4"><label class="form-label">Date *</label><input id="transactionDate" type="date" class="form-control" required></div>
 <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
@@ -139,7 +139,13 @@ updatePreview();
 
 document.getElementById("householdForm").addEventListener("submit", (e) => {
   e.preventDefault();
-  const form = e.currentTarget,
+  saveHousehold(false);
+});
+document.getElementById("saveHoldBtn").addEventListener("click", () => {
+  saveHousehold(true);
+});
+function saveHousehold(hold) {
+  const form = document.getElementById("householdForm"),
     err = document.getElementById("formError");
   err.classList.add("d-none");
   let valid = true;
@@ -168,7 +174,7 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
     err.classList.remove("d-none");
     return;
   }
-  if (total <= 0) {
+  if (total < 0 || isNaN(total)) {
     err.textContent = "Enter a valid amount received.";
     err.classList.remove("d-none");
     return;
@@ -236,6 +242,10 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
     err.classList.remove("d-none");
     return;
   }
+  const status = hold ? "hold" : "completed";
+  const holdNote = hold
+    ? " Marked Hold — receipt issued, payment to be collected and confirmed later."
+    : "";
   const created = [];
   draft.forEach((d) => {
     const member = {
@@ -272,6 +282,7 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
         masterReceiptNumber: receiptMode === "one" ? masterReceipt : null,
         amount: pay,
         paymentMode: mode,
+        status,
         remarks: remarks || "",
         paymentDate: new Date(date + "T12:00:00").toISOString(),
         source: "household-collection",
@@ -280,18 +291,73 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
       remaining -= pay;
       allocated += pay;
       addActivity(db, {
-        action: "Payment Added",
+        action: hold ? "Payment Added (Hold)" : "Payment Added",
         entityType: "payment",
         entityId: payment.id,
         memberId: m.id,
         pradeshikamId,
-        summary: `${money(pay)} allocated to ${m.name}`,
-        details: `Household ${house}. Receipt ${rec}.`,
+        summary: `${money(pay)} ${hold ? "held" : "allocated"} for ${m.name}`,
+        details: `Household ${house}. Receipt ${rec}.${holdNote}`,
         newValue: paymentSnapshot(payment),
       });
     }
   });
   const donationAmount = Math.max(0, total - allocated);
+  if (hold && total === 0) {
+    if (receiptMode === "one") {
+      const payer = created[payerIndex] || created[0];
+      const payment = {
+        id: uid("pay"),
+        memberId: payer.id,
+        receiptNumber: masterReceipt,
+        masterReceiptNumber: masterReceipt,
+        amount: 0,
+        paymentMode: mode,
+        status,
+        remarks: remarks || "",
+        paymentDate: new Date(date + "T12:00:00").toISOString(),
+        source: "household-collection",
+      };
+      db.payments.push(payment);
+      addActivity(db, {
+        action: "Payment Added (Hold)",
+        entityType: "payment",
+        entityId: payment.id,
+        memberId: payer.id,
+        pradeshikamId,
+        summary: `Receipt ${masterReceipt} held for ${payer.name}`,
+        details: `Household ${house}. Receipt reserved with ₹0 recorded.${holdNote}`,
+        newValue: paymentSnapshot(payment),
+      });
+    } else {
+      created.forEach((m, i) => {
+        const rec = draft[i].receiptNumber;
+        const payment = {
+          id: uid("pay"),
+          memberId: m.id,
+          receiptNumber: rec,
+          masterReceiptNumber: null,
+          amount: 0,
+          paymentMode: mode,
+          status,
+          remarks: remarks || "",
+          paymentDate: new Date(date + "T12:00:00").toISOString(),
+          source: "household-collection",
+        };
+        db.payments.push(payment);
+        addActivity(db, {
+          action: "Payment Added (Hold)",
+          entityType: "payment",
+          entityId: payment.id,
+          memberId: m.id,
+          pradeshikamId,
+          summary: `Receipt ${rec} held for ${m.name}`,
+          details: `Household ${house}. Receipt reserved with ₹0 recorded.${holdNote}`,
+          newValue: paymentSnapshot(payment),
+        });
+      });
+    }
+  }
   if (donationAmount > 0) {
     const donor = created[payerIndex] || created[0];
     const donorReceipt =
@@ -310,19 +376,20 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
       sourceType: "Member",
       sourceLabel: "Member",
       paymentMode: mode,
+      status,
       date: new Date(date + "T12:00:00").toISOString(),
       remarks,
       createdAt: new Date().toISOString(),
     };
     db.donations.push(donation);
     addActivity(db, {
-      action: "Donation Added",
+      action: hold ? "Donation Added (Hold)" : "Donation Added",
       entityType: "donation",
       entityId: donation.id,
       memberId: donor.id,
       pradeshikamId,
-      summary: `${money(donationAmount)} donation recorded`,
-      details: `Household ${house}; donor ${donor.name}; receipt ${donorReceipt}.`,
+      summary: `${money(donationAmount)} donation ${hold ? "held" : "recorded"}`,
+      details: `Household ${house}; donor ${donor.name}; receipt ${donorReceipt}.${holdNote}`,
       newValue: donationSnapshot(donation),
     });
   }
@@ -334,10 +401,10 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
       memberId: m.id,
       pradeshikamId,
       summary: `${m.name} added to house ${house}`,
-      details: `Household ${house} created with ${created.length} members.`,
+      details: `Household ${house} created with ${created.length} members.${holdNote}`,
       newValue: memberSnapshot(m),
     }),
   );
   saveDB(db);
   location.href = "members.html";
-});
+}

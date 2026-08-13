@@ -26,6 +26,15 @@ function filteredMembers() {
 function visibleDonations() {
   return (db.donations || []).filter(
     (d) =>
+      d.status !== "hold" &&
+      (s.role === "admin" ||
+        Number(d.pradeshikamId) === Number(s.pradeshikamId)) &&
+      (!selectedPid() || Number(d.pradeshikamId) === Number(selectedPid())),
+  );
+}
+function visibleDonationsAll() {
+  return (db.donations || []).filter(
+    (d) =>
       (s.role === "admin" ||
         Number(d.pradeshikamId) === Number(s.pradeshikamId)) &&
       (!selectedPid() || Number(d.pradeshikamId) === Number(selectedPid())),
@@ -78,13 +87,14 @@ document.getElementById("download").addEventListener("click", () => {
           Pradeshikam: pr?.name || "",
           Amount: p.amount,
           PaymentMode: p.paymentMode,
+          Status: p.status === "hold" ? "Hold" : "Completed",
           Date: new Date(p.paymentDate).toLocaleString("en-IN"),
           Remarks: p.remarks || "",
         };
       });
     exportCSV(data, "fcms-collections.csv");
   } else {
-    const data = visibleDonations().map((d) => {
+    const data = visibleDonationsAll().map((d) => {
       const donor = d.donorMemberId
           ? db.members.find((m) => m.id === d.donorMemberId)
           : null,
@@ -100,6 +110,7 @@ document.getElementById("download").addEventListener("click", () => {
         Pradeshikam: pr?.name || "",
         Amount: d.amount,
         PaymentMode: d.paymentMode || "",
+        Status: d.status === "hold" ? "Hold" : "Completed",
         Remarks: d.remarks || "",
       };
     });
