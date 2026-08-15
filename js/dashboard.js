@@ -51,7 +51,7 @@ document.getElementById("page-content").innerHTML = `
 ${pageTitle("Dashboard", "", `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Add Member</a>`)}
 <div class="row g-3 mb-4">
 ${statCard("bi-cash-stack", "Total Collected", money(total))}
-${statCard("bi-people", "Collected by Members", money(memberCollected))}
+${statCard("bi-people", "Collected by Pradeshikam", money(memberCollected))}
 ${statCard("bi-gift", "Received from Donations", money(donations))}
 ${statCard("bi-person-check", "Total Members", members.length)}
 ${statCard("bi-wallet2", "Submitted to Office", money(submitted))}
@@ -59,7 +59,7 @@ ${statCard("bi-hourglass-split", "Remaining Balance", money(remainingBalance))}
 </div>
 ${heldTotal > 0 ? `<div class="alert alert-primary d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4"><span><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} on hold — receipts issued, payment pending confirmation.</span><a href="payments.html" class="btn btn-sm btn-primary">Review Hold Payments</a></div>` : ""}
 <div class="row g-3 mb-4">
-<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3"><div><div class="panel-title">Member Collection Progress</div><div class="small text-muted mt-1">Required: <b>${money(stats.expected)}</b> · Remaining: <b>${money(remaining)}</b></div></div><span class="small text-muted">${stats.expected ? Math.round((stats.paid / stats.expected) * 100) : 0}%</span></div><div class="progress mb-3" style="height:12px"><div class="progress-bar bg-primary" style="width:${stats.expected ? Math.min(100, (stats.paid / stats.expected) * 100) : 0}%"></div></div><div class="row text-center"><div class="col-4"><div class="h5 fw-bold mb-1">${stats.green}</div><span class="status-badge status-green">● Fully Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.yellow}</div><span class="status-badge status-yellow">● Mostly Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.red}</div><span class="status-badge status-red">● Less Paid</span></div></div></div></div>
+<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3"><div><div class="panel-title">Pradeshikam Collection Progress</div><div class="small text-muted mt-1">Required: <b>${money(stats.expected)}</b> · Remaining: <b>${money(remaining)}</b></div></div><span class="small text-muted">${stats.expected ? Math.round((stats.paid / stats.expected) * 100) : 0}%</span></div><div class="progress mb-3" style="height:12px"><div class="progress-bar bg-primary" style="width:${stats.expected ? Math.min(100, (stats.paid / stats.expected) * 100) : 0}%"></div></div><div class="row text-center"><div class="col-4"><div class="h5 fw-bold mb-1">${stats.green}</div><span class="status-badge status-green">● Fully Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.yellow}</div><span class="status-badge status-yellow">● Mostly Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.red}</div><span class="status-badge status-red">● Less Paid</span></div></div></div></div>
 <div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Quick Actions</div><div class="d-grid gap-2"><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">Add Member</b></span></a><a class="quick-action" href="donations.html"><span class="quick-icon"><i class="bi bi-gift"></i></span><span><b class="d-block small">Donation</b></span></a><a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-search"></i></span><span><b class="d-block small">Find Member</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">Reports</b></span></a></div></div></div></div>
 ${s.role === "admin" ? renderPradeshikamOverview(db) : ""}
 <div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Recent Collections & Donations</div><div class="d-flex gap-3"><a href="payments.html" class="small text-decoration-none">Collections</a><a href="donations.html?view=list" class="small text-decoration-none">Donations</a></div></div>${renderRecentTransactions(db, pid)}</div>`;
@@ -74,7 +74,7 @@ function renderRecentTransactions(db, pid) {
     if (!m || (pid != null && Number(m.pradeshikamId) !== pid)) return;
     rows.push({
       date: p.paymentDate,
-      type: "Member Collection",
+      type: "Pradeshikam Collection",
       receipt: p.receiptNumber,
       name: m.name,
       pr:
@@ -126,7 +126,7 @@ function renderPradeshikamOverview(db) {
           (m) => memberStats(m, db).status === "Yellow",
         ).length,
         red = ms.filter((m) => memberStats(m, db).status === "Red").length;
-      return `<div class="col-md-6 col-xl-4"><div class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between align-items-center mb-2"><b>${escapeHTML(p.name)}</b><span class="small text-muted">${ms.length} members</span></div><div class="row g-2 small"><div class="col-6"><span class="text-muted d-block">Member Collections</span><b>${money(memberTotal)}</b></div><div class="col-6"><span class="text-muted d-block">Donations</span><b>${money(donTotal)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Total Collected</span><b>${money(all)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Submitted to Office</span><b>${money(submitted)}</b></div><div class="col-12 mt-2"><span class="text-muted d-block">Remaining Balance</span><b>${money(balance)}</b></div></div><div class="d-flex gap-2 flex-wrap mt-3"><span class="status-badge status-green">● ${green}</span><span class="status-badge status-yellow">● ${yellow}</span><span class="status-badge status-red">● ${red}</span></div></div></div>`;
+      return `<div class="col-md-6 col-xl-4"><div class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between align-items-center mb-2"><b>${escapeHTML(p.name)}</b><span class="small text-muted">${ms.length} members</span></div><div class="row g-2 small"><div class="col-6"><span class="text-muted d-block">Collected by Pradeshikam</span><b>${money(memberTotal)}</b></div><div class="col-6"><span class="text-muted d-block">Donations</span><b>${money(donTotal)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Total Collected</span><b>${money(all)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Submitted to Office</span><b>${money(submitted)}</b></div><div class="col-12 mt-2"><span class="text-muted d-block">Remaining Balance</span><b>${money(balance)}</b></div></div><div class="d-flex gap-2 flex-wrap mt-3"><span class="status-badge status-green">● ${green}</span><span class="status-badge status-yellow">● ${yellow}</span><span class="status-badge status-red">● ${red}</span></div></div></div>`;
     })
     .join("")}</div></div>`;
 }

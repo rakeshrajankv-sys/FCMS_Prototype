@@ -31,7 +31,7 @@ ${pageTitle("Add Member", "", "")}
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
@@ -119,7 +119,7 @@ function updatePreview() {
   });
   const donation = Math.max(0, total - allocated);
   document.getElementById("allocationPreview").innerHTML =
-    `<div class="fw-semibold mb-2">Payment Summary</div>${rows.map((m) => `<div class="d-flex justify-content-between small py-1"><span>Member ${m.index + 1}${m.name ? ` — ${escapeHTML(m.name)}` : ""}</span><span>Required ${money(m.requiredAmount)} · Payment ${money(m.pay)}</span></div>`).join("")}<hr class="my-2"><div class="d-flex justify-content-between"><span>Member collections</span><b>${money(allocated)}</b></div><div class="d-flex justify-content-between"><span>Donation</span><b>${money(donation)}</b></div><div class="d-flex justify-content-between"><span>Total received</span><b>${money(total)}</b></div>`;
+    `<div class="fw-semibold mb-2">Payment Summary</div>${rows.map((m) => `<div class="d-flex justify-content-between small py-1"><span>Member ${m.index + 1}${m.name ? ` — ${escapeHTML(m.name)}` : ""}</span><span>Required ${money(m.requiredAmount)} · Payment ${money(m.pay)}</span></div>`).join("")}<hr class="my-2"><div class="d-flex justify-content-between"><span>Collected by Pradeshikam</span><b>${money(allocated)}</b></div><div class="d-flex justify-content-between"><span>Donation</span><b>${money(donation)}</b></div><div class="d-flex justify-content-between"><span>Total received</span><b>${money(total)}</b></div>`;
   members.forEach((m) => {
     const el = document.getElementById(`req-${m.index}`);
     if (el) el.textContent = `Required: ${money(m.requiredAmount)}`;

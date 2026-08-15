@@ -1,0 +1,10 @@
+Stage 3 updates added:
+- Three sub committees: Souvenir Committee, Publicity Committee, Audio Video Committee.
+- Separate sub committee login accounts.
+- Sub committee dashboard, collections, submissions, expenses and reports.
+- Main Committee Sub Committees sidebar with nested menus.
+- Main Committee allocation page for money given to sub committees.
+- Sub committee collection includes source, donor/member, phone, place, amount, receipt, mode, date and remarks.
+- Edit/delete collection and expense records.
+- Bill upload stored locally in the browser prototype.
+- Main dashboard includes combined sub committee collections and individual sub committee overview.

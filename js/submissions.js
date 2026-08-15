@@ -74,11 +74,11 @@ function render() {
       ? `<div class="panel mb-4"><label class="form-label">Pradeshikam</label><select id="pradeshikamSelect" class="form-select">${db.pradeshikams.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(p.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
       : "";
   const form =
-    s.role === "pradeshikam"
-      ? `<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount Type *</label><select id="amountType" class="form-select"><option value="member">Member Collected Amount</option><option value="donation">Donation</option><option value="both">Both</option></select></div><div class="col-md-4" id="memberAmountWrap"><label class="form-label">Member Amount *</label><input id="memberAmount" type="number" min="0" max="${mr}" class="form-control" value="0"></div><div class="col-md-4" id="donationAmountWrap"><label class="form-label">Donation Amount *</label><input id="donationAmount" type="number" min="0" max="${dr}" class="form-control" value="0"></div><div class="col-md-6"><label class="form-label">Submission Date *</label><input id="submissionDate" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div><div class="col-12"><label class="form-label">Remarks</label><textarea id="submissionRemarks" class="form-control" rows="2"></textarea></div></div><div id="submissionPreview" class="receipt-box mt-3"></div><div id="submissionError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${mr + dr <= 0 ? "disabled" : ""}>Save Submission</button></div></form></div>`
+    s.role === "pradeshikam" || s.role === "admin"
+      ? `<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount Type *</label><select id="amountType" class="form-select"><option value="member">Collected by Pradeshikam</option><option value="donation">Donation</option><option value="both">Both</option></select></div><div class="col-md-4" id="memberAmountWrap"><label class="form-label">Amount *</label><input id="memberAmount" type="number" min="0" max="${mr}" class="form-control" value="0"></div><div class="col-md-4" id="donationAmountWrap"><label class="form-label">Donation Amount *</label><input id="donationAmount" type="number" min="0" max="${dr}" class="form-control" value="0"></div><div class="col-md-6"><label class="form-label">Submission Date *</label><input id="submissionDate" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div><div class="col-12"><label class="form-label">Remarks</label><textarea id="submissionRemarks" class="form-control" rows="2"></textarea></div></div><div id="submissionPreview" class="receipt-box mt-3"></div><div id="submissionError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${mr + dr <= 0 ? "disabled" : ""}>Save Submission</button></div></form></div>`
       : "";
   document.getElementById("page-content").innerHTML =
-    `${pageTitle("Submissions")} ${selector}<div class="row g-3 mb-4"><div class="col-md-3"><div class="stat-card"><div class="stat-label">Member Collections</div><div class="stat-value">${money(mc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Donations</div><div class="stat-value">${money(dc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(ms + ds)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(mr + dr)}</div></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Amount Available</div><div class="row g-3"><div class="col-md-6"><div class="d-flex justify-content-between"><span>Member collections remaining</span><b>${money(mr)}</b></div></div><div class="col-md-6"><div class="d-flex justify-content-between"><span>Donation remaining</span><b>${money(dr)}</b></div></div></div></div>${form}<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Submission History</div><span class="small text-muted">${rows.length} submission(s)</span></div>${!rows.length ? `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>` : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Member</th><th>Donation</th><th>Total</th><th>Remaining</th><th>Recorded By</th><th>Actions</th></tr></thead><tbody>${renderRows(rows, p.id)}</tbody></table></div>`}</div>`;
+    `${pageTitle("Submissions")} ${selector}<div class="row g-3 mb-4"><div class="col-md-3"><div class="stat-card"><div class="stat-label">Collected by Pradeshikam</div><div class="stat-value">${money(mc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Donations</div><div class="stat-value">${money(dc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(ms + ds)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(mr + dr)}</div></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Amount Available</div><div class="row g-3"><div class="col-md-6"><div class="d-flex justify-content-between"><span>Collected by Pradeshikam remaining</span><b>${money(mr)}</b></div></div><div class="col-md-6"><div class="d-flex justify-content-between"><span>Donation remaining</span><b>${money(dr)}</b></div></div></div></div>${form}<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Submission History</div><span class="small text-muted">${rows.length} submission(s)</span></div>${!rows.length ? `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>` : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Collected by Pradeshikam</th><th>Donation</th><th>Total</th><th>Remaining</th><th>Recorded By</th><th>Actions</th></tr></thead><tbody>${renderRows(rows, p.id)}</tbody></table></div>`}</div>`;
   if (s.role === "admin")
     document
       .getElementById("pradeshikamSelect")
@@ -91,45 +91,62 @@ function render() {
         );
         render();
       });
-  if (s.role === "pradeshikam") {
+  if (s.role === "pradeshikam" || s.role === "admin") {
     const type = document.getElementById("amountType");
     const ma = document.getElementById("memberAmount"),
-      da = document.getElementById("donationAmount");
+      da = document.getElementById("donationAmount"),
+      prSelect = document.getElementById("submitPradeshikam");
+    function targetId() {
+      return prSelect ? Number(prSelect.value) : Number(selectedId);
+    }
+    function targetRemaining() {
+      const id = targetId();
+      return {
+        mr: Math.max(0, memberCollected(id) - submitted(id, "member")),
+        dr: Math.max(0, donations(id) - submitted(id, "donation")),
+      };
+    }
     function update() {
-      const t = type.value;
+      const t = type.value,
+        { mr: tmr, dr: tdr } = targetRemaining();
       document.getElementById("memberAmountWrap").style.display =
         t === "donation" ? "none" : "block";
       document.getElementById("donationAmountWrap").style.display =
         t === "member" ? "none" : "block";
+      ma.max = tmr;
+      da.max = tdr;
       if (t === "member") da.value = 0;
       if (t === "donation") ma.value = 0;
       document.getElementById("submissionPreview").innerHTML =
-        `<div class="d-flex justify-content-between"><span>Member amount</span><b>${money(Number(ma.value) || 0)}</b></div><div class="d-flex justify-content-between"><span>Donation amount</span><b>${money(Number(da.value) || 0)}</b></div><div class="d-flex justify-content-between"><span>Total submission</span><b>${money((Number(ma.value) || 0) + (Number(da.value) || 0))}</b></div>`;
+        `<div class="d-flex justify-content-between"><span>Pradeshikam amount</span><b>${money(Number(ma.value) || 0)}</b></div><div class="d-flex justify-content-between"><span>Donation amount</span><b>${money(Number(da.value) || 0)}</b></div><div class="d-flex justify-content-between"><span>Total submission</span><b>${money((Number(ma.value) || 0) + (Number(da.value) || 0))}</b></div><div class="small text-muted mt-2">Remaining for ${escapeHTML(prName(targetId()))}: ${money(tmr)} pradeshikam · ${money(tdr)} donation</div>`;
     }
     type.addEventListener("change", update);
+    prSelect?.addEventListener("change", update);
     [ma, da].forEach((el) => el.addEventListener("input", update));
     update();
     document
       .getElementById("submissionForm")
       .addEventListener("submit", (e) => {
         e.preventDefault();
-        const memberAmount = Number(ma.value) || 0,
+        const submitId = targetId(),
+          { mr: tmr, dr: tdr } = targetRemaining(),
+          memberAmount = Number(ma.value) || 0,
           donationAmount = Number(da.value) || 0,
           err = document.getElementById("submissionError"),
           total = memberAmount + donationAmount;
-        if (type.value === "member" && memberAmount > mr) {
-          err.textContent = `Member amount cannot exceed ${money(mr)}.`;
+        if (type.value === "member" && memberAmount > tmr) {
+          err.textContent = `Pradeshikam amount cannot exceed ${money(tmr)}.`;
           err.classList.remove("d-none");
           return;
         }
-        if (type.value === "donation" && donationAmount > dr) {
-          err.textContent = `Donation amount cannot exceed ${money(dr)}.`;
+        if (type.value === "donation" && donationAmount > tdr) {
+          err.textContent = `Donation amount cannot exceed ${money(tdr)}.`;
           err.classList.remove("d-none");
           return;
         }
         if (
           type.value === "both" &&
-          (memberAmount > mr || donationAmount > dr)
+          (memberAmount > tmr || donationAmount > tdr)
         ) {
           err.textContent = "One or both amounts exceed the remaining amount.";
           err.classList.remove("d-none");
@@ -148,7 +165,7 @@ function render() {
         }
         const submission = {
           id: uid("sub"),
-          pradeshikamId: Number(selectedId),
+          pradeshikamId: submitId,
           memberAmount,
           donationAmount,
           amount: total,
@@ -163,12 +180,20 @@ function render() {
           action: "Submission Added",
           entityType: "submission",
           entityId: submission.id,
-          pradeshikamId: Number(selectedId),
-          summary: `${prName(selectedId)} submitted ${money(total)}`,
-          details: `Member ${money(memberAmount)} · Donation ${money(donationAmount)}.`,
+          pradeshikamId: submitId,
+          summary: `${prName(submitId)} submitted ${money(total)}`,
+          details: `Pradeshikam ${money(memberAmount)} · Donation ${money(donationAmount)}.`,
           newValue: submission,
         });
         saveDB(db);
+        selectedId = submitId;
+        history.replaceState(
+          null,
+          "",
+          s.role === "admin"
+            ? `submissions.html?pradeshikam=${selectedId}`
+            : "submissions.html",
+        );
         render();
       });
   }
@@ -193,7 +218,7 @@ function renderRows(rows, pid) {
       const mem = Number(x.memberAmount || 0),
         don = Number(x.donationAmount || 0),
         t = totals.get(x.id) || { memberRemaining: 0, donRemaining: 0 };
-      return `<tr><td>${escapeHTML(new Date((x.date || x.createdAt) + (x.date && !String(x.date).includes("T") ? "T00:00:00" : "")).toLocaleDateString("en-IN"))}</td><td>${escapeHTML(x.type || (mem && don ? "Both" : mem ? "Member" : "Donation"))}</td><td>${money(mem)}</td><td>${money(don)}</td><td class="fw-semibold">${money(mem + don)}</td><td>${money(t.memberRemaining + t.donRemaining)}</td><td>${escapeHTML(x.recordedBy || "-")}</td><td><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-submission.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-submission" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`;
+      return `<tr><td>${escapeHTML(new Date((x.date || x.createdAt) + (x.date && !String(x.date).includes("T") ? "T00:00:00" : "")).toLocaleDateString("en-IN"))}</td><td>${escapeHTML(x.type || (mem && don ? "Both" : mem ? "Pradeshikam" : "Donation"))}</td><td>${money(mem)}</td><td>${money(don)}</td><td class="fw-semibold">${money(mem + don)}</td><td>${money(t.memberRemaining + t.donRemaining)}</td><td>${escapeHTML(x.recordedBy || "-")}</td><td><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-submission.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-submission" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`;
     })
     .join("");
   setTimeout(
@@ -229,3 +254,4 @@ function deleteSubmission(id) {
   saveDB(db);
   render();
 }
+render();
