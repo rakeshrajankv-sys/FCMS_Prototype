@@ -4,12 +4,19 @@ markActive();
 const params = new URLSearchParams(location.search);
 const requestedPradeshikam = params.get("pradeshikam");
 const requestedHouse = params.get("house");
-let members =
-  s.role === "admin"
-    ? db.members
-    : db.members.filter(
-        (m) => Number(m.pradeshikamId) === Number(s.pradeshikamId),
-      );
+const myCommittee =
+  s.role === "subcommittee"
+    ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId))
+    : null;
+if (s.role === "subcommittee" && !myCommittee?.financeAccess) {
+  location.href = "dashboard.html";
+}
+const canViewAllMembers = s.role === "admin" || !!myCommittee?.financeAccess;
+let members = canViewAllMembers
+  ? db.members
+  : db.members.filter(
+      (m) => Number(m.pradeshikamId) === Number(s.pradeshikamId),
+    );
 if (s.role === "admin" && requestedPradeshikam)
   members = members.filter(
     (m) => Number(m.pradeshikamId) === Number(requestedPradeshikam),
@@ -19,7 +26,7 @@ const prName = db.pradeshikams.find(
 )?.name;
 
 document.getElementById("page-content").innerHTML = `
-${pageTitle("Members", "", `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Add Member</a>`)}
+${pageTitle("Members", "", s.role === "admin" || myCommittee?.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Add Member</a>` : "")}
 <div class="panel mb-4 member-tabs-panel">
   <div class="member-view-tabs" role="tablist">
     <button type="button" class="member-view-tab active" data-view="members"><i class="bi bi-people"></i><span>Member List</span></button>

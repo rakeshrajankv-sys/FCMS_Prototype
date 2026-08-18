@@ -1,2 +1,133 @@
-const ctx=getCommitteeContext();
-if(ctx){const {s,committee}=ctx;let db=getDB();markActive();function render(){const rows=(db.subcommitteeSubmissions||[]).filter(x=>x.committeeId===committee.id).sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));const available=subCommitteeTotal(committee.id,db)-subCommitteeSubmissionTotal(committee.id,db);document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(committee.name)} Submissions`,"",`<button id="add" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>New Submission</button>`)}<div class="row g-3 mb-4">${statCard("bi-cash-stack","Collected",money(subCommitteeTotal(committee.id,db)))}${statCard("bi-bank","Submitted",money(subCommitteeSubmissionTotal(committee.id,db)))}${statCard("bi-hourglass-split","Available to Submit",money(Math.max(0,available)))}</div><div class="panel mb-4" id="formWrap" style="display:none"><div class="panel-title mb-3">Submit to Main Committee</div><form id="form"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="1" max="${Math.max(0,available)}" class="form-control" required></div><div class="col-md-4"><label class="form-label">Date *</label><input id="date" type="date" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div><div class="col-md-4"><label class="form-label">Remarks</label><input id="remarks" class="form-control"></div></div><div id="err" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-3"><button type="button" id="cancel" class="btn btn-light">Cancel</button><button class="btn btn-primary">Submit</button></div></form></div><div class="panel"><div class="panel-title mb-3">Submission History</div>${rows.length?`<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Amount</th><th>Remarks</th><th>Recorded By</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${new Date(x.date||x.createdAt).toLocaleDateString("en-IN")}</td><td class="fw-semibold">${money(x.amount)}</td><td>${escapeHTML(x.remarks||"-")}</td><td>${escapeHTML(x.recordedBy||"-")}</td><td><button class="btn btn-sm btn-outline-danger del" data-id="${x.id}"><i class="bi bi-trash"></i></button></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty-state">No submissions recorded.</div>`}</div>`;function statCard(i,l,v){return `<div class="col-6 col-xl-3"><div class="stat-card"><div class="stat-icon"><i class="bi ${i}"></i></div><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div></div>`}document.getElementById("add").onclick=()=>document.getElementById("formWrap").style.display="block";document.getElementById("cancel").onclick=()=>document.getElementById("formWrap").style.display="none";document.getElementById("form").onsubmit=e=>{e.preventDefault();const amount=Number(document.getElementById("amount").value),err=document.getElementById("err");if(amount<=0||amount>available){err.textContent=`Amount must be between 1 and ${money(Math.max(0,available))}.`;err.classList.remove("d-none");return}const x={id:uid("scsub"),committeeId:committee.id,amount,date:document.getElementById("date").value,remarks:document.getElementById("remarks").value.trim(),recordedBy:actorLabel(),createdAt:new Date().toISOString()};db.subcommitteeSubmissions.push(x);addActivity(db,{action:"Sub Committee Submission Added",entityType:"subcommitteeSubmission",entityId:x.id,summary:`${committee.name} submitted ${money(amount)}`,newValue:x});saveDB(db);render()};document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{const x=db.subcommitteeSubmissions.find(x=>x.id===b.dataset.id);if(!x||!confirm("Delete this submission?"))return;db.subcommitteeSubmissions=db.subcommitteeSubmissions.filter(y=>y.id!==x.id);addActivity(db,{action:"Sub Committee Submission Deleted",entityType:"subcommitteeSubmission",entityId:x.id,summary:`${committee.name} submission deleted`,oldValue:x});saveDB(db);render()})}render()}
+const db = getDB(),
+  s = currentSession();
+markActive();
+if (s.role !== "admin" && s.role !== "subcommittee") {
+  location.href = "dashboard.html";
+}
+const allowedCommittees =
+  s.role === "admin"
+    ? db.subCommittees
+    : db.subCommittees.filter((c) => Number(c.id) === Number(s.subCommitteeId));
+let selectedId =
+  s.role === "admin"
+    ? Number(new URLSearchParams(location.search).get("committee")) ||
+      Number(allowedCommittees[0]?.id)
+    : Number(s.subCommitteeId);
+if (!allowedCommittees.some((c) => Number(c.id) === Number(selectedId)))
+  selectedId = Number(allowedCommittees[0]?.id);
+function committeeName(id) {
+  return (
+    db.subCommittees.find((c) => Number(c.id) === Number(id))?.name ||
+    "Sub Committee"
+  );
+}
+function selectedCommittee() {
+  return db.subCommittees.find((c) => Number(c.id) === Number(selectedId));
+}
+function render() {
+  const c = selectedCommittee();
+  if (!c) {
+    document.getElementById("page-content").innerHTML =
+      pageTitle("Submissions");
+    return;
+  }
+  const collected = subCommitteeCollectionTotal(c.id, db),
+    subm = subCommitteeSubmittedTotal(c.id, db),
+    remaining = Math.max(0, collected - subm),
+    rows = [...(db.subCommitteeSubmissions || [])]
+      .filter((x) => Number(x.subCommitteeId) === Number(c.id))
+      .sort(
+        (a, b) =>
+          new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt),
+      );
+  const selector =
+    s.role === "admin"
+      ? `<div class="panel mb-4"><label class="form-label">Sub Committee</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
+      : "";
+  document.getElementById("page-content").innerHTML =
+    `${pageTitle(`${escapeHTML(c.name)} — Submissions`)} ${selector}<div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(collected)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(subm)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(remaining)}</div></div></div></div>
+<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount *</label><input id="subAmount" type="number" min="0" max="${remaining}" class="form-control" value="0"></div><div class="col-md-4"><label class="form-label">Submission Date *</label><input id="subDate" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div><div class="col-md-4"><label class="form-label">Remarks</label><input id="subRemarks" class="form-control"></div></div><div id="subError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${remaining <= 0 ? "disabled" : ""}>Save Submission</button></div></form></div>
+<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Submission History</div><span class="small text-muted">${rows.length} submission(s)</span></div>${!rows.length ? `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>` : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Amount</th><th>Recorded By</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Recorded By">${escapeHTML(x.recordedBy || "-")}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-submission.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-sub" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`}</div>`;
+  if (s.role === "admin")
+    document
+      .getElementById("committeeSelect")
+      .addEventListener("change", (e) => {
+        selectedId = Number(e.target.value);
+        history.replaceState(
+          null,
+          "",
+          `subcommittee-submissions.html?committee=${selectedId}`,
+        );
+        render();
+      });
+  document.getElementById("submissionForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const amount = Number(document.getElementById("subAmount").value) || 0,
+      err = document.getElementById("subError");
+    if (amount <= 0) {
+      err.textContent = "Enter an amount to submit.";
+      err.classList.remove("d-none");
+      return;
+    }
+    if (amount > remaining) {
+      err.textContent = `Amount cannot exceed remaining balance of ${money(remaining)}.`;
+      err.classList.remove("d-none");
+      return;
+    }
+    const date = document.getElementById("subDate").value;
+    if (!date) {
+      err.textContent = "Select a submission date.";
+      err.classList.remove("d-none");
+      return;
+    }
+    const submission = {
+      id: uid("scsub"),
+      subCommitteeId: c.id,
+      amount,
+      date,
+      remarks: document.getElementById("subRemarks").value.trim(),
+      createdAt: new Date().toISOString(),
+      recordedBy: actorLabel(),
+    };
+    db.subCommitteeSubmissions.push(submission);
+    addActivity(db, {
+      action: "Sub Committee Submission Added",
+      entityType: "subCommitteeSubmission",
+      entityId: submission.id,
+      summary: `${committeeName(c.id)} submitted ${money(amount)}`,
+      details: `Submitted to Main Committee.`,
+      newValue: submission,
+    });
+    saveDB(db);
+    render();
+  });
+  document
+    .querySelectorAll(".delete-sub")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => deleteSubmission(btn.dataset.id)),
+    );
+}
+function deleteSubmission(id) {
+  const sub = (db.subCommitteeSubmissions || []).find((x) => x.id === id);
+  if (!sub) return;
+  if (
+    s.role !== "admin" &&
+    Number(sub.subCommitteeId) !== Number(s.subCommitteeId)
+  )
+    return;
+  if (!confirm(`Delete this submission of ${money(sub.amount || 0)}?`)) return;
+  addActivity(db, {
+    action: "Sub Committee Submission Deleted",
+    entityType: "subCommitteeSubmission",
+    entityId: sub.id,
+    summary: `${committeeName(sub.subCommitteeId)}: submission of ${money(sub.amount || 0)} deleted`,
+    details: "",
+    oldValue: sub,
+  });
+  db.subCommitteeSubmissions = db.subCommitteeSubmissions.filter(
+    (x) => x.id !== id,
+  );
+  saveDB(db);
+  render();
+}
+render();

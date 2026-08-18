@@ -1,10 +1,17 @@
 const db = getDB(),
   s = currentSession();
 markActive();
-const allowedPradeshikams =
-  s.role === "admin"
-    ? db.pradeshikams
-    : [db.pradeshikams.find((p) => p.id === s.pradeshikamId)];
+const myCommittee =
+  s.role === "subcommittee"
+    ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId))
+    : null;
+const isAdminLike = s.role === "admin" || !!myCommittee?.financeAccess;
+if (s.role === "subcommittee" && !myCommittee?.financeAccess) {
+  location.href = "dashboard.html";
+}
+const allowedPradeshikams = isAdminLike
+  ? db.pradeshikams
+  : [db.pradeshikams.find((p) => p.id === s.pradeshikamId)];
 const lockedPr = allowedPradeshikams[0];
 
 document.getElementById("page-content").innerHTML = `
@@ -15,7 +22,7 @@ ${pageTitle("Add Member", "", "")}
 <div class="row g-3">
 <div class="col-md-4"><label class="form-label">House Number *</label><input id="house" class="form-control" type="text" inputmode="text" autocomplete="off" required placeholder="e.g. PP001"></div>
 <div class="col-md-4"><label class="form-label">Number of Members *</label><select id="memberCount" class="form-select" required>${Array.from({ length: 20 }, (_, i) => `<option value="${i + 1}">${i + 1} member${i ? "s" : ""}</option>`).join("")}</select></div>
-<div class="col-md-4"><label class="form-label">Pradeshikam *</label>${s.role === "admin" ? `<select id="pradeshikam" class="form-select" required><option value="">Select Pradeshikam</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : `<input id="pradeshikam" class="form-control" value="${escapeHTML(lockedPr?.name || "")}" disabled>`}</div>
+<div class="col-md-4"><label class="form-label">Pradeshikam *</label>${isAdminLike ? `<select id="pradeshikam" class="form-select" required><option value="">Select Pradeshikam</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : `<input id="pradeshikam" class="form-control" value="${escapeHTML(lockedPr?.name || "")}" disabled>`}</div>
 <div class="col-md-4"><label class="form-label">Receipt Setup *</label><select id="receiptMode" class="form-select"><option value="one">One receipt</option><option value="each">Receipt to each member</option></select></div>
 </div>
 <div id="memberRows" class="mt-4"></div>
@@ -31,11 +38,11 @@ ${pageTitle("Add Member", "", "")}
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
-  return s.role === "admin"
+  return isAdminLike
     ? Number(document.getElementById("pradeshikam").value)
     : Number(s.pradeshikamId);
 }

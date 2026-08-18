@@ -13,6 +13,9 @@ function isAdmin() {
 function isPradeshikam() {
   return currentSession()?.role === "pradeshikam";
 }
+function isSubCommittee() {
+  return currentSession()?.role === "subcommittee";
+}
 document.getElementById("loginForm")?.addEventListener("submit", (e) => {
   e.preventDefault();
   const username = document.getElementById("username").value.trim();
@@ -32,6 +35,7 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
     name: user.name,
     username: user.username,
     pradeshikamId: user.pradeshikamId,
+    subCommitteeId: user.subCommitteeId,
   });
   location.href = "dashboard.html";
 });

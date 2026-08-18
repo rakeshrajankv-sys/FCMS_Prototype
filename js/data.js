@@ -27,6 +27,21 @@ const DEFAULT_PRADESHIKAMS = PRADESHIKAM_NAMES.map((name, i) => ({
   username: `p${i + 1}`,
   password: "p123",
 }));
+const SUBCOMMITTEE_DEFS = [
+  { name: "Souvenir Committee", icon: "bi-book" },
+  { name: "Publicity Committee", icon: "bi-megaphone" },
+  { name: "Audio Video Committee", icon: "bi-camera-video" },
+  { name: "Finance Committee", icon: "bi-cash-coin", financeAccess: true },
+];
+const SUBCOMMITTEE_NAMES = SUBCOMMITTEE_DEFS.map((c) => c.name);
+const DEFAULT_SUBCOMMITTEES = SUBCOMMITTEE_DEFS.map((c, i) => ({
+  id: i + 1,
+  name: c.name,
+  username: `sc${i + 1}`,
+  password: "sc123",
+  icon: c.icon,
+  financeAccess: !!c.financeAccess,
+}));
 const DEFAULT_USERS = [
   {
     id: 1,
@@ -44,6 +59,14 @@ const DEFAULT_USERS = [
     password: p.password,
     pradeshikamId: p.id,
   })),
+  ...DEFAULT_SUBCOMMITTEES.map((c, i) => ({
+    id: i + 2 + DEFAULT_PRADESHIKAMS.length,
+    role: "subcommittee",
+    name: c.name,
+    username: c.username,
+    password: c.password,
+    subCommitteeId: c.id,
+  })),
 ];
 
 function seedDemoData() {
@@ -57,10 +80,33 @@ function seedDemoData() {
       donations: [],
       activities: [],
       submissions: [],
+      subCommittees: DEFAULT_SUBCOMMITTEES,
+      subCommitteeCollections: [],
+      subCommitteeSubmissions: [],
+      subCommitteeAllocations: [],
+      subCommitteeExpenses: [],
     };
   db.pradeshikams ||= DEFAULT_PRADESHIKAMS;
   db.pradeshikams.forEach((p, i) => {
     if (PRADESHIKAM_NAMES[i]) p.name = PRADESHIKAM_NAMES[i];
+  });
+  db.subCommittees ||= DEFAULT_SUBCOMMITTEES;
+  // Add any sub committees introduced after this browser's data was first created
+  // (e.g. Finance Committee) without disturbing existing committees' data.
+  DEFAULT_SUBCOMMITTEES.forEach((def) => {
+    if (!db.subCommittees.some((c) => Number(c.id) === Number(def.id))) {
+      db.subCommittees.push({ ...def });
+    }
+  });
+  db.subCommittees.forEach((c) => {
+    const def = DEFAULT_SUBCOMMITTEES.find(
+      (d) => Number(d.id) === Number(c.id),
+    );
+    if (def) {
+      c.name = def.name;
+      c.icon ||= def.icon;
+      c.financeAccess = def.financeAccess || !!c.financeAccess;
+    }
   });
   db.users ||= DEFAULT_USERS;
   db.users.forEach((u) => {
@@ -70,12 +116,41 @@ function seedDemoData() {
       PRADESHIKAM_NAMES[u.pradeshikamId - 1]
     )
       u.name = PRADESHIKAM_NAMES[u.pradeshikamId - 1];
+    if (
+      u.role === "subcommittee" &&
+      u.subCommitteeId &&
+      SUBCOMMITTEE_NAMES[u.subCommitteeId - 1]
+    )
+      u.name = SUBCOMMITTEE_NAMES[u.subCommitteeId - 1];
+  });
+  // Ensure every sub committee (including newly added ones) has a login account.
+  const scUserCommitteeIds = new Set(
+    db.users
+      .filter((u) => u.role === "subcommittee")
+      .map((u) => Number(u.subCommitteeId)),
+  );
+  let nextUserId = Math.max(0, ...db.users.map((u) => Number(u.id) || 0)) + 1;
+  db.subCommittees.forEach((c) => {
+    if (!scUserCommitteeIds.has(Number(c.id))) {
+      db.users.push({
+        id: nextUserId++,
+        role: "subcommittee",
+        name: c.name,
+        username: c.username,
+        password: c.password,
+        subCommitteeId: c.id,
+      });
+    }
   });
   db.members ||= [];
   db.payments ||= [];
   db.donations ||= [];
   db.activities ||= [];
   db.submissions ||= [];
+  db.subCommitteeCollections ||= [];
+  db.subCommitteeSubmissions ||= [];
+  db.subCommitteeAllocations ||= [];
+  db.subCommitteeExpenses ||= [];
   db.members.forEach((m) => {
     m.countryCode ||= "+91";
     m.maritalStatus ||= "Single";
@@ -96,6 +171,14 @@ function seedDemoData() {
     x.memberAmount = Number(x.memberAmount || 0);
     x.donationAmount = Number(x.donationAmount || 0);
     x.amount = x.memberAmount + x.donationAmount;
+  });
+  db.subCommitteeCollections.forEach((c) => {
+    c.sourceType ||= "Person";
+    c.paymentMode ||= "Cash";
+  });
+  db.subCommitteeExpenses.forEach((x) => {
+    x.billName ||= "";
+    x.billDataUrl ||= "";
   });
   localStorage.setItem(FCMS_KEY, JSON.stringify(db));
   return db;
@@ -230,6 +313,68 @@ function totalReceived(pradeshikamId = null, db = getDB()) {
   return (
     memberCollectionTotal(pradeshikamId, db) + donationTotal(pradeshikamId, db)
   );
+}
+function subCommitteeCollectionTotal(subCommitteeId = null, db = getDB()) {
+  return (db.subCommitteeCollections || [])
+    .filter(
+      (c) =>
+        subCommitteeId == null ||
+        Number(c.subCommitteeId) === Number(subCommitteeId),
+    )
+    .reduce((a, c) => a + Number(c.amount || 0), 0);
+}
+function subCommitteeSubmittedTotal(subCommitteeId = null, db = getDB()) {
+  return (db.subCommitteeSubmissions || [])
+    .filter(
+      (x) =>
+        subCommitteeId == null ||
+        Number(x.subCommitteeId) === Number(subCommitteeId),
+    )
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+}
+function subCommitteeAllocationTotal(subCommitteeId = null, db = getDB()) {
+  return (db.subCommitteeAllocations || [])
+    .filter(
+      (x) =>
+        subCommitteeId == null ||
+        Number(x.subCommitteeId) === Number(subCommitteeId),
+    )
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+}
+function subCommitteeExpenseTotal(subCommitteeId = null, db = getDB()) {
+  return (db.subCommitteeExpenses || [])
+    .filter(
+      (x) =>
+        subCommitteeId == null ||
+        Number(x.subCommitteeId) === Number(subCommitteeId),
+    )
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+}
+function subCommitteeCollectionSnapshot(c) {
+  if (!c) return null;
+  return {
+    receiptNumber: c.receiptNumber,
+    amount: Number(c.amount),
+    sourceType: c.sourceType || "Person",
+    donorName: c.donorName || "",
+    memberId: c.memberId || null,
+    place: c.place || "",
+    subCommitteeId: c.subCommitteeId,
+    paymentMode: c.paymentMode || "",
+    date: c.date || c.createdAt,
+    remarks: c.remarks || "",
+  };
+}
+function subCommitteeExpenseSnapshot(x) {
+  if (!x) return null;
+  return {
+    amount: Number(x.amount),
+    description: x.description || "",
+    subCommitteeId: x.subCommitteeId,
+    date: x.date || x.createdAt,
+    remarks: x.remarks || "",
+    billName: x.billName || "",
+  };
 }
 function currentSession() {
   return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
