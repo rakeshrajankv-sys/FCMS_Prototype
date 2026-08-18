@@ -22,23 +22,23 @@ if (session) {
   document.getElementById("app").innerHTML = `
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><img src="logo.png" alt="Logo"><span>Fund Collection</span></div>
-  <div class="px-3 small sidebar-role">${escapeHTML(isAdminRole ? "Main Committee" : session.name)}</div>
+  <div class="sidebar-brand"><img src="logo.png" alt="Logo"><span>${t("app_name")}</span></div>
+  <div class="px-3 small sidebar-role">${escapeHTML(isAdminRole ? t("main_committee") : session.name)}</div>
   <nav class="sidebar-nav">
-    <div class="nav-section">Main</div>
-    <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>Dashboard</a>
-    ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>Activity History</a>` : ""}
-    <a href="reports.html"><i class="bi bi-bar-chart"></i>Reports</a>
-    ${!isSub ? `<a href="donations.html"><i class="bi bi-gift"></i>Donations</a>` : ""}
+    <div class="nav-section">${t("nav_main")}</div>
+    <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>${t("dashboard")}</a>
+    ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>${t("activity_history")}</a>` : ""}
+    <a href="reports.html"><i class="bi bi-bar-chart"></i>${t("reports")}</a>
+    ${!isSub ? `<a href="donations.html"><i class="bi bi-gift"></i>${t("donations")}</a>` : ""}
     ${
       !isSub
         ? `<div class="nav-dropdown ${pradeshikamNavPages.includes(currentPage) ? "open" : ""}">
-      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-diagram-3"></i>Pradeshikam</span><i class="bi bi-chevron-down nav-chevron"></i></button>
+      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-diagram-3"></i>${t("pradeshikam")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
       <div class="nav-dropdown-menu">
-        <a href="members.html"><i class="bi bi-people"></i>Members</a>
-        <a href="payments.html"><i class="bi bi-receipt"></i>Collections</a>
-        <a href="submissions.html"><i class="bi bi-bank"></i>Submissions</a>
-        ${isAdminRole ? `<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>Pradeshikams</a>` : ""}
+        <a href="members.html"><i class="bi bi-people"></i>${t("members")}</a>
+        <a href="payments.html"><i class="bi bi-receipt"></i>${t("collections")}</a>
+        <a href="submissions.html"><i class="bi bi-bank"></i>${t("submissions")}</a>
+        ${isAdminRole ? `<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>${t("pradeshikams")}</a>` : ""}
       </div>
     </div>`
         : ""
@@ -46,28 +46,37 @@ if (session) {
     ${
       isAdminRole
         ? `<div class="nav-dropdown ${subCommitteePages.includes(currentPage) ? "open" : ""}" id="subCommitteeNav">
-      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-people"></i>Sub Committees</span><i class="bi bi-chevron-down nav-chevron"></i></button>
+      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-people"></i>${t("sub_committees")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
       <div class="nav-dropdown-menu"></div>
     </div>
-    <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>Sub Committee Expenses</a>
-    <a href="subcommittee-allocation.html"><i class="bi bi-cash-stack"></i>Sub Committee Allocation</a>`
+    <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("sub_committee_expenses")}</a>
+    <a href="subcommittee-allocation.html"><i class="bi bi-cash-stack"></i>${t("sub_committee_allocation")}</a>`
         : ""
     }
     ${
       isSub
-        ? `<a href="subcommittee-collections.html"><i class="bi ${myCommittee?.icon || "bi-cash-coin"}"></i>Collection</a>
-    <a href="subcommittee-submissions.html"><i class="bi bi-bank"></i>Submission</a>
-    <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>Expense</a>
-    ${myCommittee?.financeAccess ? `<a href="members.html"><i class="bi bi-people"></i>Members</a>` : ""}`
+        ? `<a href="subcommittee-collections.html"><i class="bi ${myCommittee?.icon || "bi-cash-coin"}"></i>${t("collection")}</a>
+    <a href="subcommittee-submissions.html"><i class="bi bi-bank"></i>${t("submission")}</a>
+    <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("expense")}</a>
+    ${myCommittee?.financeAccess ? `<a href="members.html"><i class="bi bi-people"></i>${t("members")}</a><a href="add-member.html"><i class="bi bi-person-plus"></i>${t("add_member")}</a>` : ""}`
         : ""
     }
-    <div class="nav-section">System</div>
-    <a href="#" onclick="logout();return false"><i class="bi bi-box-arrow-right"></i>Logout</a>
+    <div class="nav-section">${t("nav_system")}</div>
+    <a href="#" onclick="logout();return false"><i class="bi bi-box-arrow-right"></i>${t("logout")}</a>
   </nav>
-  ${isAdminRole ? `<div class="sidebar-footer"><button class="btn btn-sm btn-outline-light w-100" onclick="resetPrototype()">Reset Prototype Data</button></div>` : ""}
+  <div class="sidebar-utility-row">
+    <button type="button" class="sidebar-utility-btn" onclick="toggleFcmsLang()" title="${t("language")}"><i class="bi bi-translate"></i>${fcmsLang() === "ml" ? "EN" : "മലയാളം"}</button>
+    <button type="button" class="sidebar-utility-btn" id="themeToggleBtn" title="${t("dark_mode")}"><i class="bi ${fcmsTheme() === "dark" ? "bi-sun" : "bi-moon-stars"}"></i></button>
+  </div>
+  ${isAdminRole ? `<div class="sidebar-footer"><button class="btn btn-sm btn-outline-light w-100" onclick="resetPrototype()">${t("reset_prototype_data")}</button></div>` : ""}
 </aside>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-<main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">Fund Collection Management System</div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${isAdminRole ? "Main Committee" : isSub ? "Sub Committee" : "Pradeshikam"}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;
+<main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">${t("app_full_name")}</div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${isAdminRole ? t("main_committee") : isSub ? t("sub_committee") : t("pradeshikam")}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;
+  document.getElementById("themeToggleBtn").addEventListener("click", () => {
+    toggleFcmsTheme();
+    document.querySelector("#themeToggleBtn i").className =
+      "bi " + (fcmsTheme() === "dark" ? "bi-sun" : "bi-moon-stars");
+  });
   if (isAdminRole) {
     document.querySelector("#subCommitteeNav .nav-dropdown-menu").innerHTML =
       db.subCommittees

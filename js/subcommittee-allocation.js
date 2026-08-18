@@ -37,8 +37,7 @@ if (s.role !== "admin") {
     document.getElementById("allocCancel").addEventListener("click", () => {
       document.getElementById("allocForm").reset();
       document.getElementById("editAllocId").value = "";
-      document.getElementById("allocFormTitle").textContent =
-        "New Allocation";
+      document.getElementById("allocFormTitle").textContent = "New Allocation";
       document.getElementById("allocDate").value = todayValue();
       document.getElementById("allocCancel").classList.add("d-none");
     });
@@ -81,8 +80,7 @@ if (s.role !== "admin") {
           collectedByPhone: normalizePhone(
             document.getElementById("allocPhone").value,
           ),
-          collectedByPhoneCode: document.getElementById("allocPhoneCode")
-            .value,
+          collectedByPhoneCode: document.getElementById("allocPhoneCode").value,
           remarks: document.getElementById("allocRemarks").value.trim(),
         };
         db.subCommitteeAllocations[idx] = updated;
@@ -105,8 +103,7 @@ if (s.role !== "admin") {
           collectedByPhone: normalizePhone(
             document.getElementById("allocPhone").value,
           ),
-          collectedByPhoneCode: document.getElementById("allocPhoneCode")
-            .value,
+          collectedByPhoneCode: document.getElementById("allocPhoneCode").value,
           remarks: document.getElementById("allocRemarks").value.trim(),
           createdAt: new Date().toISOString(),
           recordedBy: actorLabel(),
@@ -162,7 +159,9 @@ if (s.role !== "admin") {
     document
       .querySelectorAll(".edit-alloc")
       .forEach((btn) =>
-        btn.addEventListener("click", () => startEditAllocation(btn.dataset.id)),
+        btn.addEventListener("click", () =>
+          startEditAllocation(btn.dataset.id),
+        ),
       );
   }
   function startEditAllocation(id) {
@@ -184,15 +183,13 @@ if (s.role !== "admin") {
       block: "center",
     });
   }
-  function deleteAllocation(id) {
+  async function deleteAllocation(id) {
     const a = db.subCommitteeAllocations.find((x) => x.id === id);
     if (!a) return;
-    if (
-      !confirm(
-        `Delete allocation of ${money(a.amount)} to ${committeeName(a.subCommitteeId)}?`,
-      )
-    )
-      return;
+    const ok = await confirmDialog(
+      `Delete allocation of ${money(a.amount)} to ${committeeName(a.subCommitteeId)}?`,
+    );
+    if (!ok) return;
     addActivity(db, {
       action: "Sub Committee Allocation Deleted",
       entityType: "subCommitteeAllocation",
@@ -205,6 +202,7 @@ if (s.role !== "admin") {
       (x) => x.id !== id,
     );
     saveDB(db);
+    toast("Allocation deleted.", "success");
     render();
   }
   render();

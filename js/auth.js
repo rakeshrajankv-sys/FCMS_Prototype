@@ -5,6 +5,22 @@ function requireAuth() {
     location.href = "index.html";
     return null;
   }
+  const db = getDB();
+  const freshUser =
+    db.users.find((u) => u.id === s.id) ||
+    db.users.find((u) => u.username === s.username);
+  if (freshUser) {
+    const patched = {
+      id: freshUser.id,
+      role: freshUser.role,
+      name: freshUser.name,
+      username: freshUser.username,
+      pradeshikamId: freshUser.pradeshikamId,
+      subCommitteeId: freshUser.subCommitteeId,
+    };
+    if (JSON.stringify(patched) !== JSON.stringify(s)) setSession(patched);
+    return patched;
+  }
   return s;
 }
 function isAdmin() {

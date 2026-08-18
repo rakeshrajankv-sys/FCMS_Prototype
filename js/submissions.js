@@ -232,7 +232,7 @@ function renderRows(rows, pid) {
   );
   return html;
 }
-function deleteSubmission(id) {
+async function deleteSubmission(id) {
   const sub = db.submissions.find((x) => x.id === id);
   if (!sub) return;
   if (
@@ -240,7 +240,10 @@ function deleteSubmission(id) {
     Number(sub.pradeshikamId) !== Number(s.pradeshikamId)
   )
     return;
-  if (!confirm(`Delete this submission of ${money(sub.amount || 0)}?`)) return;
+  const ok = await confirmDialog(
+    `Delete this submission of ${money(sub.amount || 0)}?`,
+  );
+  if (!ok) return;
   addActivity(db, {
     action: "Submission Deleted",
     entityType: "submission",
@@ -252,6 +255,7 @@ function deleteSubmission(id) {
   });
   db.submissions = db.submissions.filter((x) => x.id !== id);
   saveDB(db);
+  toast("Submission deleted.", "success");
   render();
 }
 render();

@@ -42,13 +42,15 @@ function render() {
         })
         .join("")}</tbody></table></div>`;
   document.querySelectorAll(".delete-payment").forEach((btn) =>
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const pid = btn.dataset.id,
         p = db.payments.find((x) => x.id === pid);
       if (!p) return;
       const m = db.members.find((x) => x.id === p.memberId);
-      if (!confirm(`Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`))
-        return;
+      const ok = await confirmDialog(
+        `Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`,
+      );
+      if (!ok) return;
       addActivity(db, {
         action: "Payment Deleted",
         entityType: "payment",
@@ -61,6 +63,7 @@ function render() {
       });
       db.payments = db.payments.filter((x) => x.id !== pid);
       saveDB(db);
+      toast("Payment deleted.", "success");
       rows = rows.filter((x) => x.id !== pid);
       render();
     }),

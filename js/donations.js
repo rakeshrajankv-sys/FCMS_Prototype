@@ -172,17 +172,15 @@ function render() {
       btn.addEventListener("click", () => deleteDonation(btn.dataset.id)),
     );
 }
-function deleteDonation(id) {
+async function deleteDonation(id) {
   const d = db.donations.find((x) => x.id === id);
   if (!d) return;
   if (s.role !== "admin" && Number(d.pradeshikamId) !== Number(s.pradeshikamId))
     return;
-  if (
-    !confirm(
-      `Delete donation receipt ${d.receiptNumber} for ${money(d.amount)}?`,
-    )
-  )
-    return;
+  const ok = await confirmDialog(
+    `Delete donation receipt ${d.receiptNumber} for ${money(d.amount)}?`,
+  );
+  if (!ok) return;
   addActivity(db, {
     action: "Donation Deleted",
     entityType: "donation",
@@ -195,6 +193,7 @@ function deleteDonation(id) {
   });
   db.donations = db.donations.filter((x) => x.id !== id);
   saveDB(db);
+  toast("Donation deleted.", "success");
   render();
 }
 if (listOnly)

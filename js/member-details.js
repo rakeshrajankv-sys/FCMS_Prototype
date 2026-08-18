@@ -40,48 +40,53 @@ if (!member) {
   <div class="col-lg-8"><div class="panel"><div class="d-flex justify-content-between mb-3"><div class="panel-title">Payment History</div><span class="small text-muted">${payments.length} receipt(s)</span></div>
   ${payments.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Amount</th><th>Mode</th><th>Status</th><th>Date</th><th>Remarks</th>${s.role === "admin" ? `<th>Actions</th>` : ""}</tr></thead><tbody>${payments.map((p) => `<tr><td data-label="Receipt"><b>${escapeHTML(p.receiptNumber)}</b></td><td data-label="Amount" class="fw-semibold">${money(p.amount)}</td><td data-label="Mode">${escapeHTML(p.paymentMode)}</td><td data-label="Status">${p.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Date">${new Date(p.paymentDate).toLocaleDateString("en-IN")}</td><td data-label="Remarks">${escapeHTML(p.remarks || "-")}</td>${s.role === "admin" ? `<td data-label="Actions"><div class="d-flex gap-1"><a class="btn btn-sm btn-light" href="edit-payment.html?id=${encodeURIComponent(p.id)}" title="Edit"><i class="bi bi-pencil"></i></a><button class="btn btn-sm btn-outline-danger delete-payment" data-id="${escapeHTML(p.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td>` : ""}</tr>`).join("")}</tbody></table></div>` : `<div class="empty-state"><i class="bi bi-receipt"></i>No payments yet.</div>`}
   </div></div></div>`;
-  document.getElementById("deleteMemberBtn").addEventListener("click", () => {
-    if (
-      !confirm(
+  document
+    .getElementById("deleteMemberBtn")
+    .addEventListener("click", async () => {
+      const ok = await confirmDialog(
         `Delete ${member.name}? This removes the member and active receipts, but keeps a record in Activity History.`,
-      )
-    )
-      return;
-    const memberPayments = db.payments.filter((p) => p.memberId === member.id);
-    memberPayments.forEach((p) =>
+      );
+      if (!ok) return;
+      const memberPayments = db.payments.filter(
+        (p) => p.memberId === member.id,
+      );
+      memberPayments.forEach((p) =>
+        addActivity(db, {
+          action: "Payment Deleted",
+          entityType: "payment",
+          entityId: p.id,
+          memberId: member.id,
+          pradeshikamId: member.pradeshikamId,
+          summary: `Receipt ${p.receiptNumber} removed with member`,
+          details: `Receipt ${p.receiptNumber} for ${money(p.amount)} was removed because member ${member.name} was deleted.`,
+          oldValue: paymentSnapshot(p),
+        }),
+      );
       addActivity(db, {
-        action: "Payment Deleted",
-        entityType: "payment",
-        entityId: p.id,
+        action: "Member Deleted",
+        entityType: "member",
+        entityId: member.id,
         memberId: member.id,
         pradeshikamId: member.pradeshikamId,
-        summary: `Receipt ${p.receiptNumber} removed with member`,
-        details: `Receipt ${p.receiptNumber} for ${money(p.amount)} was removed because member ${member.name} was deleted.`,
-        oldValue: paymentSnapshot(p),
-      }),
-    );
-    addActivity(db, {
-      action: "Member Deleted",
-      entityType: "member",
-      entityId: member.id,
-      memberId: member.id,
-      pradeshikamId: member.pradeshikamId,
-      summary: `${member.name} deleted`,
-      details: `Member ${member.memberCode} and ${memberPayments.length} active receipt(s) deleted.`,
-      oldValue: memberSnapshot(member),
+        summary: `${member.name} deleted`,
+        details: `Member ${member.memberCode} and ${memberPayments.length} active receipt(s) deleted.`,
+        oldValue: memberSnapshot(member),
+      });
+      db.payments = db.payments.filter((p) => p.memberId !== member.id);
+      db.members = db.members.filter((m) => m.id !== member.id);
+      saveDB(db);
+      toast(`${member.name} deleted.`, "success");
+      location.href = "members.html";
     });
-    db.payments = db.payments.filter((p) => p.memberId !== member.id);
-    db.members = db.members.filter((m) => m.id !== member.id);
-    saveDB(db);
-    location.href = "members.html";
-  });
   document.querySelectorAll(".delete-payment").forEach((btn) =>
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const pid = btn.dataset.id,
         p = db.payments.find((x) => x.id === pid);
       if (!p || s.role !== "admin") return;
-      if (!confirm(`Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`))
-        return;
+      const ok = await confirmDialog(
+        `Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`,
+      );
+      if (!ok) return;
       addActivity(db, {
         action: "Payment Deleted",
         entityType: "payment",

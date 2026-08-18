@@ -51,7 +51,7 @@ function render() {
       ? `<div class="panel mb-4"><label class="form-label">Sub Committee</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
       : "";
   document.getElementById("page-content").innerHTML =
-    `${pageTitle(`${escapeHTML(c.name)} — Collections`, "", `<button id="exportSC" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button>`)}
+    `${pageTitle(`${escapeHTML(c.name)} — Collections`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>` : ""}<button id="exportSC" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button></div>`)}
 ${selector}
 <div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value" id="scTotal">₹0</div></div></div></div>
 <div class="panel mb-4"><div class="panel-title mb-3">Add Collection</div><form id="scForm" novalidate><div class="row g-3">
@@ -304,7 +304,7 @@ ${selector}
     );
   });
 }
-function deleteCollection(id) {
+async function deleteCollection(id) {
   const x = (db.subCommitteeCollections || []).find((c) => c.id === id);
   if (!x) return;
   if (
@@ -312,12 +312,10 @@ function deleteCollection(id) {
     Number(x.subCommitteeId) !== Number(s.subCommitteeId)
   )
     return;
-  if (
-    !confirm(
-      `Delete collection receipt ${x.receiptNumber} for ${money(x.amount)}?`,
-    )
-  )
-    return;
+  const ok = await confirmDialog(
+    `Delete collection receipt ${x.receiptNumber} for ${money(x.amount)}?`,
+  );
+  if (!ok) return;
   addActivity(db, {
     action: "Sub Committee Collection Deleted",
     entityType: "subCommitteeCollection",
@@ -330,6 +328,7 @@ function deleteCollection(id) {
     (c) => c.id !== id,
   );
   saveDB(db);
+  toast("Collection deleted.", "success");
   render();
 }
 render();

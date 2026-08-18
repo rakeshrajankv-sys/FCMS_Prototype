@@ -6,8 +6,15 @@ if (s.role === "subcommittee") {
 } else {
   renderMainDashboard(db, s);
 }
-function statCard(icon, label, value) {
-  return `<div class="col-6 col-xl-3"><div class="stat-card"><div class="stat-icon"><i class="bi ${icon}"></i></div><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div></div>`;
+function statCard(icon, label, value, color = "blue") {
+  return `<div class="col-6 col-xl-3"><div class="stat-card"><div class="stat-icon stat-icon-${color}"><i class="bi ${icon}"></i></div><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div></div>`;
+}
+function radialProgress(pct, label = "") {
+  const r = 48,
+    c = 2 * Math.PI * r,
+    clamped = Math.max(0, Math.min(100, pct)),
+    offset = c - (clamped / 100) * c;
+  return `<div class="radial-progress"><svg viewBox="0 0 116 116"><circle class="ring-bg" cx="58" cy="58" r="${r}"></circle><circle class="ring-fg" cx="58" cy="58" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${offset}"></circle></svg><div class="ring-label"><b>${clamped}%</b>${label ? `<span>${label}</span>` : ""}</div></div>`;
 }
 function renderSubCommitteeDashboard(db, s) {
   const c = db.subCommittees.find(
@@ -41,28 +48,35 @@ function renderSubCommitteeDashboard(db, s) {
       .reduce((a, x) => a + Number(x.amount || 0), 0),
   }));
   document.getElementById("page-content").innerHTML = `
-${pageTitle(`${escapeHTML(c.name)} Dashboard`, "", `<a href="subcommittee-collections.html" class="btn btn-primary"><i class="bi ${committeeIcon} me-2"></i>Add Collection</a>`)}
+${pageTitle(`${escapeHTML(c.name)} Dashboard`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>` : ""}<a href="subcommittee-collections.html" class="btn ${c.financeAccess ? "btn-outline-primary" : "btn-primary"}"><i class="bi ${committeeIcon} me-2"></i>${t("add_collection")}</a></div>`)}
 <div class="row g-3 mb-4">
-${statCard("bi-cash-stack", "Total Collected", money(collected))}
-${statCard("bi-bank", "Submitted to Office", money(submitted))}
-${statCard("bi-hourglass-split", "Remaining to Submit", money(remainingToSubmit))}
-${statCard("bi-cash-coin", "Received from Office", money(received))}
-${statCard("bi-receipt-cutoff", "Total Expenses", money(spent))}
-${statCard("bi-wallet2", "Remaining After Expense", money(remainingAfterExpense))}
+${statCard("bi-cash-stack", t("total_collected"), money(collected), "green")}
+${statCard("bi-bank", t("submitted_to_office"), money(submitted), "blue")}
+${statCard("bi-hourglass-split", t("remaining_to_submit"), money(remainingToSubmit), "amber")}
+${statCard("bi-cash-coin", t("received_from_office"), money(received), "purple")}
+${statCard("bi-receipt-cutoff", t("total_expenses"), money(spent), "red")}
+${statCard("bi-wallet2", t("remaining_after_expense"), money(remainingAfterExpense), "blue")}
 </div>
 <div class="row g-3 mb-4">
-<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3"><div><div class="panel-title">Collection Progress</div><div class="small text-muted mt-1">Collected: <b>${money(collected)}</b> · Submitted: <b>${money(submitted)}</b> · Remaining to Submit: <b>${money(remainingToSubmit)}</b></div></div><span class="small text-muted">${submittedPct}%</span></div><div class="progress mb-3" style="height:12px"><div class="progress-bar bg-primary" style="width:${submittedPct}%"></div></div><div class="row g-2 text-center">${bySource
-    .filter((x) => x.count > 0)
-    .map(
-      (x) =>
-        `<div class="col-6 col-md-4"><div class="h5 fw-bold mb-1">${x.count}</div><span class="status-badge status-green">${escapeHTML(x.type)} · ${money(x.amount)}</span></div>`,
-    )
-    .join("") || `<div class="col-12 text-muted small py-2">No collections recorded yet.</div>`}</div></div></div>
-<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Quick Actions</div><div class="d-grid gap-2"><a class="quick-action" href="subcommittee-collections.html"><span class="quick-icon"><i class="bi ${committeeIcon}"></i></span><span><b class="d-block small">Add Collection</b></span></a><a class="quick-action" href="subcommittee-submissions.html"><span class="quick-icon"><i class="bi bi-bank"></i></span><span><b class="d-block small">Submit to Office</b></span></a><a class="quick-action" href="subcommittee-expense.html"><span class="quick-icon"><i class="bi bi-receipt-cutoff"></i></span><span><b class="d-block small">Add Expense</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">Reports</b></span></a>${c.financeAccess ? `<a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-people"></i></span><span><b class="d-block small">Members</b></span></a><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">Add Member</b></span></a>` : ""}</div></div></div>
+<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3"><div class="d-flex align-items-center gap-3">${radialProgress(submittedPct)}<div><div class="panel-title">${t("collection_progress")}</div><div class="small text-muted mt-1">${t("total_collected")}: <b>${money(collected)}</b><br>${t("submitted_to_office")}: <b>${money(submitted)}</b><br>${t("remaining_to_submit")}: <b>${money(remainingToSubmit)}</b></div></div></div></div><div class="row g-2 text-center">${
+    bySource
+      .filter((x) => x.count > 0)
+      .map(
+        (x) =>
+          `<div class="col-6 col-md-4"><div class="h5 fw-bold mb-1">${x.count}</div><span class="status-badge status-green">${escapeHTML(x.type)} · ${money(x.amount)}</span></div>`,
+      )
+      .join("") ||
+    `<div class="col-12 text-muted small py-2">No collections recorded yet.</div>`
+  }</div></div></div>
+<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">${t("quick_actions")}</div><div class="d-grid gap-2"><a class="quick-action" href="subcommittee-collections.html"><span class="quick-icon"><i class="bi ${committeeIcon}"></i></span><span><b class="d-block small">${t("add_collection")}</b></span></a><a class="quick-action" href="subcommittee-submissions.html"><span class="quick-icon"><i class="bi bi-bank"></i></span><span><b class="d-block small">Submit to Office</b></span></a><a class="quick-action" href="subcommittee-expense.html"><span class="quick-icon"><i class="bi bi-receipt-cutoff"></i></span><span><b class="d-block small">${t("add_expense")}</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">${t("reports")}</b></span></a>${c.financeAccess ? `<a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-people"></i></span><span><b class="d-block small">${t("members")}</b></span></a><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">${t("add_member")}</b></span></a>` : ""}</div></div></div>
 </div>
-<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Recent Collections</div><a href="subcommittee-collections.html" class="small text-decoration-none">View all</a></div>${renderSubCommitteeRecent(db, c.id, committeeIcon)}</div>`;
+<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">${t("recent_collections")}</div><a href="subcommittee-collections.html" class="small text-decoration-none">${t("view_all")}</a></div>${renderSubCommitteeRecent(db, c.id, committeeIcon)}</div>`;
 }
-function renderSubCommitteeRecent(db, committeeId, committeeIcon = "bi-cash-coin") {
+function renderSubCommitteeRecent(
+  db,
+  committeeId,
+  committeeIcon = "bi-cash-coin",
+) {
   const rows = (db.subCommitteeCollections || [])
     .filter((x) => Number(x.subCommitteeId) === Number(committeeId))
     .sort(
@@ -134,27 +148,24 @@ function renderMainDashboard(db, s) {
   const subCommitteeAllocated =
     s.role === "admin" ? subCommitteeAllocationTotal(null, db) : 0;
   document.getElementById("page-content").innerHTML = `
-${pageTitle("Dashboard", "", `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Add Member</a>`)}
+${pageTitle("Dashboard", "", `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>`)}
 <div class="row g-3 mb-4">
-${statCard("bi-cash-stack", "Total Collected", money(total + (s.role === "admin" ? subCommitteeCollected : 0)))}
-${statCard("bi-people", "Collected by Pradeshikam", money(memberCollected))}
-${statCard("bi-gift", "Received from Donations", money(donations))}
-${s.role === "admin" ? statCard("bi-mic", "Collected by Sub Committee", money(subCommitteeCollected)) : statCard("bi-person-check", "Total Members", members.length)}
-${statCard("bi-wallet2", "Submitted to Office", money(submitted))}
-${statCard("bi-hourglass-split", "Remaining Balance", money(remainingBalance))}
-${s.role === "admin" ? statCard("bi-cash-coin", "Given to Sub Committee", money(subCommitteeAllocated)) : ""}
-${s.role === "admin" ? statCard("bi-person-check", "Total Members", members.length) : ""}
+${statCard("bi-cash-stack", "Total Collected", money(total + (s.role === "admin" ? subCommitteeCollected : 0)), "green")}
+${statCard("bi-people", "Collected by Pradeshikam", money(memberCollected), "blue")}
+${statCard("bi-gift", "Received from Donations", money(donations), "purple")}
+${s.role === "admin" ? statCard("bi-bank2", "Collected by Sub Committee", money(subCommitteeCollected), "blue") : statCard("bi-person-check", "Total Members", members.length, "purple")}
+${statCard("bi-wallet2", "Submitted to Office", money(submitted), "green")}
+${statCard("bi-hourglass-split", "Remaining Balance", money(remainingBalance), "amber")}
+${s.role === "admin" ? statCard("bi-cash-coin", "Given to Sub Committee", money(subCommitteeAllocated), "amber") : ""}
+${s.role === "admin" ? statCard("bi-person-check", "Total Members", members.length, "purple") : ""}
 </div>
 ${heldTotal > 0 ? `<div class="alert alert-primary d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4"><span><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} on hold — receipts issued, payment pending confirmation.</span><a href="payments.html" class="btn btn-sm btn-primary">Review Hold Payments</a></div>` : ""}
 <div class="row g-3 mb-4">
-<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3"><div><div class="panel-title">Pradeshikam Collection Progress</div><div class="small text-muted mt-1">Required: <b>${money(stats.expected)}</b> · Remaining: <b>${money(remaining)}</b></div></div><span class="small text-muted">${stats.expected ? Math.round((stats.paid / stats.expected) * 100) : 0}%</span></div><div class="progress mb-3" style="height:12px"><div class="progress-bar bg-primary" style="width:${stats.expected ? Math.min(100, (stats.paid / stats.expected) * 100) : 0}%"></div></div><div class="row text-center"><div class="col-4"><div class="h5 fw-bold mb-1">${stats.green}</div><span class="status-badge status-green">● Fully Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.yellow}</div><span class="status-badge status-yellow">● Mostly Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.red}</div><span class="status-badge status-red">● Less Paid</span></div></div></div></div>
-<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Quick Actions</div><div class="d-grid gap-2"><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">Add Member</b></span></a><a class="quick-action" href="donations.html"><span class="quick-icon"><i class="bi bi-gift"></i></span><span><b class="d-block small">Donation</b></span></a><a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-search"></i></span><span><b class="d-block small">Find Member</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">Reports</b></span></a></div></div></div></div>
+<div class="col-lg-8"><div class="panel h-100"><div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3"><div class="d-flex align-items-center gap-3">${radialProgress(stats.expected ? Math.round((stats.paid / stats.expected) * 100) : 0)}<div><div class="panel-title">Pradeshikam Collection Progress</div><div class="small text-muted mt-1">Required: <b>${money(stats.expected)}</b><br>Remaining: <b>${money(remaining)}</b></div></div></div></div><div class="row text-center"><div class="col-4"><div class="h5 fw-bold mb-1">${stats.green}</div><span class="status-badge status-green">● Fully Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.yellow}</div><span class="status-badge status-yellow">● Mostly Paid</span></div><div class="col-4"><div class="h5 fw-bold mb-1">${stats.red}</div><span class="status-badge status-red">● Less Paid</span></div></div></div></div>
+<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">${t("quick_actions")}</div><div class="d-grid gap-2"><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">${t("add_member")}</b></span></a><a class="quick-action" href="donations.html"><span class="quick-icon"><i class="bi bi-gift"></i></span><span><b class="d-block small">${t("add_donation")}</b></span></a><a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-search"></i></span><span><b class="d-block small">${t("find_member")}</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">${t("reports")}</b></span></a></div></div></div></div>
 ${s.role === "admin" ? renderPradeshikamOverview(db) : ""}
 ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
 <div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Recent Collections & Donations</div><div class="d-flex gap-3"><a href="payments.html" class="small text-decoration-none">Collections</a><a href="donations.html?view=list" class="small text-decoration-none">Donations</a></div></div>${renderRecentTransactions(db, pid)}</div>`;
-  function statCard(icon, label, value) {
-    return `<div class="col-6 col-xl-3"><div class="stat-card"><div class="stat-icon"><i class="bi ${icon}"></i></div><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div></div>`;
-  }
   function renderRecentTransactions(db, pid) {
     const rows = [];
     db.payments.forEach((p) => {
@@ -231,7 +242,7 @@ ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
           balance = Math.max(0, collected - submitted),
           allocated = subCommitteeAllocationTotal(c.id, db),
           spent = subCommitteeExpenseTotal(c.id, db);
-        return `<div class="col-md-6 col-xl-4"><div class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between align-items-center mb-2"><b><i class="bi ${c.icon || 'bi-mic'} me-2"></i>${escapeHTML(c.name)}</b></div><div class="row g-2 small"><div class="col-6"><span class="text-muted d-block">Collected</span><b>${money(collected)}</b></div><div class="col-6"><span class="text-muted d-block">Submitted</span><b>${money(submitted)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Remaining</span><b>${money(balance)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Given by Office</span><b>${money(allocated)}</b></div><div class="col-12 mt-2"><span class="text-muted d-block">Spent</span><b>${money(spent)}</b></div></div><div class="d-flex gap-2 flex-wrap mt-3"><a href="subcommittee-collections.html?committee=${c.id}" class="btn btn-sm btn-light">Collections</a><a href="subcommittee-submissions.html?committee=${c.id}" class="btn btn-sm btn-light">Submissions</a><a href="subcommittee-expense.html?committee=${c.id}" class="btn btn-sm btn-light">Expenses</a></div></div></div>`;
+        return `<div class="col-md-6 col-xl-4"><div class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between align-items-center mb-2"><b><i class="bi ${c.icon || "bi-mic"} me-2"></i>${escapeHTML(c.name)}</b></div><div class="row g-2 small"><div class="col-6"><span class="text-muted d-block">Collected</span><b>${money(collected)}</b></div><div class="col-6"><span class="text-muted d-block">Submitted</span><b>${money(submitted)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Remaining</span><b>${money(balance)}</b></div><div class="col-6 mt-2"><span class="text-muted d-block">Given by Office</span><b>${money(allocated)}</b></div><div class="col-12 mt-2"><span class="text-muted d-block">Spent</span><b>${money(spent)}</b></div></div><div class="d-flex gap-2 flex-wrap mt-3"><a href="subcommittee-collections.html?committee=${c.id}" class="btn btn-sm btn-light">Collections</a><a href="subcommittee-submissions.html?committee=${c.id}" class="btn btn-sm btn-light">Submissions</a><a href="subcommittee-expense.html?committee=${c.id}" class="btn btn-sm btn-light">Expenses</a></div></div></div>`;
       })
       .join("")}</div></div>`;
   }

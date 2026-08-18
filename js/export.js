@@ -1,6 +1,6 @@
 function exportCSV(data, filename) {
   if (!data.length) {
-    alert("No data to export.");
+    toast("No data to export.", "warning");
     return;
   }
   const keys = Object.keys(data[0]),

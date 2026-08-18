@@ -107,7 +107,7 @@ function render() {
       btn.addEventListener("click", () => deleteSubmission(btn.dataset.id)),
     );
 }
-function deleteSubmission(id) {
+async function deleteSubmission(id) {
   const sub = (db.subCommitteeSubmissions || []).find((x) => x.id === id);
   if (!sub) return;
   if (
@@ -115,7 +115,10 @@ function deleteSubmission(id) {
     Number(sub.subCommitteeId) !== Number(s.subCommitteeId)
   )
     return;
-  if (!confirm(`Delete this submission of ${money(sub.amount || 0)}?`)) return;
+  const ok = await confirmDialog(
+    `Delete this submission of ${money(sub.amount || 0)}?`,
+  );
+  if (!ok) return;
   addActivity(db, {
     action: "Sub Committee Submission Deleted",
     entityType: "subCommitteeSubmission",
@@ -128,6 +131,7 @@ function deleteSubmission(id) {
     (x) => x.id !== id,
   );
   saveDB(db);
+  toast("Submission deleted.", "success");
   render();
 }
 render();

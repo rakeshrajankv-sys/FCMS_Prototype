@@ -226,7 +226,7 @@ ${
     );
   });
 }
-function deleteExpense(id) {
+async function deleteExpense(id) {
   const x = (db.subCommitteeExpenses || []).find((e) => e.id === id);
   if (!x) return;
   if (
@@ -234,8 +234,10 @@ function deleteExpense(id) {
     Number(x.subCommitteeId) !== Number(s.subCommitteeId)
   )
     return;
-  if (!confirm(`Delete expense of ${money(x.amount)} for "${x.description}"?`))
-    return;
+  const ok = await confirmDialog(
+    `Delete expense of ${money(x.amount)} for "${x.description}"?`,
+  );
+  if (!ok) return;
   addActivity(db, {
     action: "Sub Committee Expense Deleted",
     entityType: "subCommitteeExpense",
@@ -246,6 +248,7 @@ function deleteExpense(id) {
   });
   db.subCommitteeExpenses = db.subCommitteeExpenses.filter((e) => e.id !== id);
   saveDB(db);
+  toast("Expense deleted.", "success");
   render();
 }
 render();
