@@ -3057,3 +3057,54 @@ body.login-page.fcms-login-exit::after { animation-play-state: paused !important
   body.login-page.fcms-login-exit .login-shell { animation: none !important; }
 }
 
+
+/* Final mobile hamburger sizing polish: compact, centered, and touch-friendly. */
+@media (max-width: 900px) {
+  .topbar .mobile-menu {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    left: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    overflow: hidden !important;
+  }
+
+  .topbar .mobile-menu i,
+  .topbar .mobile-menu .bi-list {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .topbar .mobile-menu {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    left: 10px !important;
+    border-radius: 11px !important;
+  }
+
+  .topbar .mobile-menu i,
+  .topbar .mobile-menu .bi-list {
+    font-size: 17px !important;
+  }
+}
