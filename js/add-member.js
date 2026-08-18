@@ -38,7 +38,7 @@ ${pageTitle("Add Member", "", "")}
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
