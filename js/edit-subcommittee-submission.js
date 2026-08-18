@@ -11,9 +11,9 @@ if (!item || s.role !== "admin") {
   );
   document.getElementById("page-content").innerHTML =
     `${pageTitle("Edit Submission")}<div class="panel form-card"><div class="receipt-box mb-4"><div class="d-flex justify-content-between"><span>Sub Committee</span><b>${escapeHTML(committee?.name || "-")}</b></div></div><form id="editForm"><div class="row g-3">
-<div class="col-md-6"><label class="form-label">Amount *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(item.amount)}"></div>
-<div class="col-md-6"><label class="form-label">Date *</label><input id="date" type="date" class="form-control" required value="${new Date(item.date || item.createdAt).toISOString().slice(0, 10)}"></div>
-<div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="3">${escapeHTML(item.remarks || "")}</textarea></div>
+<div class="col-md-6"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(item.amount)}"></div>
+<div class="col-md-6"><label class="form-label">Date / തീയതി *</label><input id="date" type="date" class="form-control" required value="${new Date(item.date || item.createdAt).toISOString().slice(0, 10)}"></div>
+<div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="3">${escapeHTML(item.remarks || "")}</textarea></div>
 </div><div id="formError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><a href="subcommittee-submissions.html?committee=${item.subCommitteeId}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div></form></div>`;
   document.getElementById("editForm").addEventListener("submit", (e) => {
     e.preventDefault();

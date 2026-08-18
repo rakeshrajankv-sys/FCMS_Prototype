@@ -53,7 +53,7 @@
         );
     const selector =
       s.role === "admin"
-        ? `<div class="panel mb-4"><label class="form-label">Sub Committee</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
+        ? `<div class="panel mb-4"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
         : "";
     document.getElementById("page-content").innerHTML =
       `${pageTitle(`${escapeHTML(c.name)} — Expenses`, "", `<button id="exportExp" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button>`)}
@@ -62,11 +62,11 @@
   ${
     canAddOrEdit
       ? `<div class="panel form-card mb-4" id="expFormWrap"><div class="panel-title mb-3" id="expFormTitle">Add Expense</div><form id="expForm" novalidate><input type="hidden" id="editExpId"><div class="row g-3">
-  <div class="col-md-4"><label class="form-label">Amount *</label><input id="expAmount" type="number" min="1" step="1" class="form-control" required></div>
-  <div class="col-md-4"><label class="form-label">Date *</label><input id="expDate" type="date" class="form-control" required></div>
-  <div class="col-md-4"><label class="form-label">Bill (optional)</label><input id="expBill" type="file" accept="image/*,.pdf" class="form-control"></div>
-  <div class="col-md-6"><label class="form-label">Description *</label><input id="expDesc" class="form-control" required placeholder="What was this spent on?"></div>
-  <div class="col-md-6"><label class="form-label">Remarks</label><input id="expRemarks" class="form-control"></div>
+  <div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="expAmount" type="number" min="1" step="1" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label">Date / തീയതി *</label><input id="expDate" type="date" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label">Bill (optional) / ബിൽ (ഓപ്ഷണൽ)</label><input id="expBill" type="file" accept="image/*,.pdf" class="form-control"></div>
+  <div class="col-md-6"><label class="form-label">Description / വിവരണം *</label><input id="expDesc" class="form-control" required placeholder="What was this spent on?"></div>
+  <div class="col-md-6"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="expRemarks" class="form-control"></div>
   </div><div id="expError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><button type="button" id="expCancel" class="btn btn-light d-none">Cancel</button><button class="btn btn-primary" id="expSubmitBtn"><i class="bi bi-receipt-cutoff me-1"></i>Save Expense</button></div></form></div>`
       : ""
   }
@@ -89,7 +89,7 @@
       : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Bill</th><th>Remarks</th>${canAddOrEdit ? "<th>Actions</th>" : ""}</tr></thead><tbody>${rows
           .map(
             (x) =>
-              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Description">${escapeHTML(x.description || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Bill">${x.billDataUrl ? `<a href="${x.billDataUrl}" download="${escapeHTML(x.billName || "bill")}" class="btn btn-sm btn-light" title="View/Download Bill"><i class="bi bi-paperclip"></i></a>` : "-"}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td>${canAddOrEdit ? `<td data-label="Actions"><div class="d-flex gap-1">${isAdmin ? `<button class="btn btn-sm btn-light edit-exp" data-id="${escapeHTML(x.id)}" title="Edit"><i class="bi bi-pencil"></i></button>` : ""}<button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td>` : ""}</tr>`,
+              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Description">${escapeHTML(x.description || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Bill">${x.billDataUrl ? `<a href="${x.billDataUrl}" download="${escapeHTML(x.billName || "bill")}" class="btn btn-sm btn-light" title="View/Download Bill"><i class="bi bi-paperclip"></i></a>` : "-"}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td>${canAddOrEdit ? `<td data-label="Actions"><div class="d-flex gap-1">${isAdmin ? `<button class="btn btn-sm btn-light edit-exp" data-id="${escapeHTML(x.id)}" title="Edit"><i class="bi bi-pencil"></i></button>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}</div></td>` : ""}</tr>`,
           )
           .join("")}</tbody></table></div>`;
     document
@@ -201,6 +201,8 @@
             billName,
             createdAt: new Date().toISOString(),
             recordedBy: actorLabel(),
+            recordedByUserId: s.id,
+            recordedByRole: s.role,
           };
           db.subCommitteeExpenses.push(expense);
           addActivity(db, {
@@ -233,11 +235,8 @@
   async function deleteExpense(id) {
     const x = (db.subCommitteeExpenses || []).find((e) => e.id === id);
     if (!x) return;
-    if (
-      s.role !== "admin" &&
-      Number(x.subCommitteeId) !== Number(s.subCommitteeId)
-    )
-      return;
+    if (s.role === "subcommittee" && (Number(x.subCommitteeId) !== Number(s.subCommitteeId) || x.recordedByUserId !== s.id)) return;
+    if (s.role !== "admin" && s.role !== "subcommittee") return;
     const ok = await confirmDialog(
       `Delete expense of ${money(x.amount)} for "${x.description}"?`,
     );

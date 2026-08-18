@@ -11,7 +11,7 @@ function renderSubCommitteeReport() {
     (x) => Number(x.id) === Number(s.subCommitteeId),
   );
   document.getElementById("page-content").innerHTML =
-    `${pageTitle(`${escapeHTML(c?.name || "Sub Committee")} Reports`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="submissions">Submissions</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div>`;
+    `${pageTitle(`${escapeHTML(c?.name || "Sub Committee")} Reports`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="submissions">Submissions</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div>`;
   const collected = subCommitteeCollectionTotal(c.id, db),
     submitted = subCommitteeSubmittedTotal(c.id, db),
     received = subCommitteeAllocationTotal(c.id, db),
@@ -23,16 +23,11 @@ function renderSubCommitteeReport() {
     if (type === "collections") {
       const data = (db.subCommitteeCollections || [])
         .filter((x) => Number(x.subCommitteeId) === Number(c.id))
-        .map((x) => ({
-          Date: new Date(x.date || x.createdAt).toLocaleString("en-IN"),
-          Source: x.sourceType || "Person",
-          Name: x.donorName || "",
-          Place: x.place || "",
-          Receipt: x.receiptNumber || "",
-          Amount: x.amount,
-          PaymentMode: x.paymentMode || "",
-          Remarks: x.remarks || "",
-        }));
+        .flatMap((x) => {
+          const base = [{ Date: new Date(x.date || x.createdAt).toLocaleString("en-IN"), Source: x.sourceType || "Person", Name: x.donorName || "", Place: x.place || "", Receipt: x.receiptNumber || "", Amount: x.amount, PaymentMode: x.paymentMode || "", Remarks: x.remarks || "" }];
+          const extra = (db.subCommitteeCollectionPayments || []).filter(p => p.collectionId === x.id).map(p => ({ Date: new Date(p.date || p.createdAt).toLocaleString("en-IN"), Source: "Additional Payment", Name: x.donorName || "", Place: x.place || "", Receipt: p.receiptNumber || "", Amount: p.amount, PaymentMode: p.paymentMode || "", Remarks: p.remarks || "" }));
+          return base.concat(extra);
+        });
       exportCSV(data, "fcms-subcommittee-collections.csv");
     } else if (type === "expenses") {
       const data = (db.subCommitteeExpenses || [])
@@ -60,7 +55,7 @@ function renderSubCommitteeReport() {
 }
 function renderMainReport() {
   document.getElementById("page-content").innerHTML =
-    `${pageTitle("Reports")}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Pradeshikam</label><select id="pr" class="form-select">${s.role === "admin" ? `<option value="">All Pradeshikams</option>` : ""}${db.pradeshikams
+    `${pageTitle("Reports")}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pr" class="form-select">${s.role === "admin" ? `<option value="">All Pradeshikams</option>` : ""}${db.pradeshikams
       .filter((p) => s.role === "admin" || p.id === s.pradeshikamId)
       .map(
         (p) =>
@@ -68,7 +63,7 @@ function renderMainReport() {
       )
       .join(
         "",
-      )}</select></div><div class="col-md-3"><label class="form-label">Status</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div><div class="col-md-3"><label class="form-label">Report</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option>${s.role === "admin" ? `<option value="subcommittee">Sub Committee Collections</option><option value="subcommitteeExpenses">Sub Committee Expenses</option>` : ""}</select></div><div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div>`;
+      )}</select></div><div class="col-md-3"><label class="form-label">Status / നില</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div><div class="col-md-3"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option>${s.role === "admin" ? `<option value="subcommittee">Sub Committee Collections</option><option value="subcommitteeExpenses">Sub Committee Expenses</option><option value="subcommitteeOverview">Sub Committee Overview</option>` : ""}</select></div><div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div>`;
   function selectedPid() {
     return document.getElementById("pr").value;
   }
@@ -103,8 +98,9 @@ function renderMainReport() {
       ex = ms.reduce((a, m) => a + Number(m.requiredAmount), 0),
       pd = ms.reduce((a, m) => a + memberStats(m, db).paid, 0),
       ds = visibleDonations().reduce((a, d) => a + Number(d.amount || 0), 0);
+    const overview = db.subCommittees.map((c) => { const collected=subCommitteeCollectionTotal(c.id,db), submitted=subCommitteeSubmittedTotal(c.id,db), received=subCommitteeAllocationTotal(c.id,db), spent=subCommitteeExpenseTotal(c.id,db); return {c,collected,submitted,received,spent}; });
     document.getElementById("summary").innerHTML =
-      `<div class="row g-3"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Members</div><div class="stat-value">${ms.length}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected by Pradeshikam</div><div class="stat-value">${money(pd)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Donations</div><div class="stat-value">${money(ds)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Total Received</div><div class="stat-value">${money(pd + ds)}</div></div></div></div><div class="small text-muted mt-3">Member required amount: ${money(ex)} · Member balance: ${money(Math.max(0, ex - pd))}</div>`;
+      `<div class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Members</div><div class="stat-value">${ms.length}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected by Pradeshikam</div><div class="stat-value">${money(pd)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Donations</div><div class="stat-value">${money(ds)}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Total Received</div><div class="stat-value">${money(pd + ds)}</div></div></div></div><div class="small text-muted mb-4">Member required amount: ${money(ex)} · Member balance: ${money(Math.max(0, ex - pd))}</div><div class="panel border-0 p-0"><div class="panel-title mb-3">Sub Committee Overview</div><div class="table-responsive"><table class="table"><thead><tr><th>Sub Committee</th><th>Collected</th><th>Submitted</th><th>Remaining</th><th>Received from Office</th><th>Spent</th><th>Balance</th></tr></thead><tbody>${overview.map(x=>`<tr><td><b>${escapeHTML(x.c.name)}</b></td><td>${money(x.collected)}</td><td>${money(x.submitted)}</td><td>${money(Math.max(0,x.collected-x.submitted))}</td><td>${money(x.received)}</td><td>${money(x.spent)}</td><td class="fw-semibold">${money(Math.max(0,x.received-x.spent))}</td></tr>`).join("")}</tbody></table></div></div>`;
   }
   ["pr", "st", "type"].forEach((id) =>
     document.getElementById(id).addEventListener("change", renderSummary),
@@ -206,6 +202,12 @@ function renderMainReport() {
         };
       });
       exportCSV(data, "fcms-subcommittee-expenses.csv");
+    } else if (type === "subcommitteeOverview") {
+      const data = db.subCommittees.map((c) => {
+        const collected = subCommitteeCollectionTotal(c.id, db), submitted = subCommitteeSubmittedTotal(c.id, db), received = subCommitteeAllocationTotal(c.id, db), spent = subCommitteeExpenseTotal(c.id, db);
+        return { SubCommittee: c.name, Collected: collected, Submitted: submitted, RemainingToSubmit: Math.max(0, collected-submitted), ReceivedFromOffice: received, Spent: spent, RemainingAfterExpense: Math.max(0, received-spent) };
+      });
+      exportCSV(data, "fcms-subcommittee-overview.csv");
     }
   });
   renderSummary();

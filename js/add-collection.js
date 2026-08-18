@@ -11,7 +11,7 @@ const allowed =
         (m) => Number(m.pradeshikamId) === Number(s.pradeshikamId),
       );
 document.getElementById("page-content").innerHTML =
-  `${pageTitle("Add Collection", "Select a member to enter a collection.")}<div class="panel"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Search Member</label><input id="q" class="form-control" placeholder="Search name, phone or house number"></div><div class="col-lg-5 d-flex align-items-end"><div class="small text-muted">Select a member below to continue to the collection form.</div></div></div><div id="results" class="mt-3"></div></div>`;
+  `${pageTitle("Add Collection", "Select a member to enter a collection.")}<div class="panel"><div class="row g-3"><div class="col-lg-7"><label class="form-label">Search Member / അംഗത്തെ തിരയുക</label><input id="q" class="form-control" placeholder="Search name, phone or house number"></div><div class="col-lg-5 d-flex align-items-end"><div class="small text-muted">Select a member below to continue to the collection form.</div></div></div><div id="results" class="mt-3"></div></div>`;
 function render() {
   const q = document.getElementById("q").value.trim().toLowerCase();
   const arr = allowed

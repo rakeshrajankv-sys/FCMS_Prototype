@@ -48,23 +48,23 @@ function render() {
   }
   const selector =
     s.role === "admin"
-      ? `<div class="panel mb-4"><label class="form-label">Sub Committee</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
+      ? `<div class="panel mb-4"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
       : "";
   document.getElementById("page-content").innerHTML =
     `${pageTitle(`${escapeHTML(c.name)} — Collections`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>` : ""}<button id="exportSC" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button></div>`)}
 ${selector}
 <div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value" id="scTotal">₹0</div></div></div></div>
 <div class="panel mb-4"><div class="panel-title mb-3">Add Collection</div><form id="scForm" novalidate><div class="row g-3">
-<div class="col-md-3"><label class="form-label">Source *</label><select id="scSource" class="form-select" required><option value="Member">Member</option><option value="Person">Person</option><option value="Shop">Shop</option><option value="Organization">Organization</option><option value="Other">Other</option></select></div>
-<div class="col-md-3" id="scMemberField"><label class="form-label">Member *</label><div class="member-picker"><input id="scMemberSearch" class="form-control" placeholder="Search name, phone or house number" autocomplete="off"><input id="scMember" type="hidden"><div id="scMemberResults" class="member-results d-none"></div><div id="scSelectedMember" class="selected-member d-none"></div></div></div>
-<div class="col-md-3" id="scNameField"><label class="form-label">Name *</label><input id="scName" class="form-control"></div>
-<div class="col-md-3"><label class="form-label">Place *</label><input id="scPlace" class="form-control" required placeholder="Collection location"></div>
-<div class="col-md-3" id="scPhoneField"><label class="form-label">Phone Number</label><div class="phone-field"><select id="scPhoneCode" class="form-select" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="scPhone" class="form-control" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number"></div></div>
-<div class="col-md-3"><label class="form-label">Amount *</label><input id="scAmount" type="number" min="1" step="1" class="form-control" required></div>
-<div class="col-md-3"><label class="form-label">Receipt Number *</label><input id="scReceipt" class="form-control" required></div>
-<div class="col-md-3"><label class="form-label">Payment Mode *</label><select id="scMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div>
-<div class="col-md-3"><label class="form-label">Date *</label><input id="scDate" type="date" class="form-control" required></div>
-<div class="col-12"><label class="form-label">Remarks</label><input id="scRemarks" class="form-control"></div>
+<div class="col-md-3"><label class="form-label">Source / ഉറവിടം *</label><select id="scSource" class="form-select" required><option value="Member">Member</option><option value="Person">Person</option><option value="Shop">Shop</option><option value="Organization">Organization</option><option value="Other">Other</option></select></div>
+<div class="col-md-3" id="scMemberField"><label class="form-label">Member / അംഗം *</label><div class="member-picker"><input id="scMemberSearch" class="form-control" placeholder="Search name, phone or house number" autocomplete="off"><input id="scMember" type="hidden"><div id="scMemberResults" class="member-results d-none"></div><div id="scSelectedMember" class="selected-member d-none"></div></div></div>
+<div class="col-md-3" id="scNameField"><label class="form-label">Name / പേര് *</label><input id="scName" class="form-control"></div>
+<div class="col-md-3"><label class="form-label">Place / സ്ഥലം *</label><input id="scPlace" class="form-control" required placeholder="Collection location"></div>
+<div class="col-md-3" id="scPhoneField"><label class="form-label">Phone Number / ഫോൺ നമ്പർ</label><div class="phone-field"><select id="scPhoneCode" class="form-select" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="scPhone" class="form-control" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number"></div></div>
+<div class="col-md-3"><label class="form-label">Amount / തുക *</label><input id="scAmount" type="number" min="1" step="1" class="form-control" required></div>
+<div class="col-md-3"><label class="form-label">Receipt Number / രസീത് നമ്പർ *</label><input id="scReceipt" class="form-control" required></div>
+<div class="col-md-3"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="scMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div>
+<div class="col-md-3"><label class="form-label">Date / തീയതി *</label><input id="scDate" type="date" class="form-control" required></div>
+<div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="scRemarks" class="form-control"></div>
 </div><div id="scError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary"><i class="bi ${scCommitteeIcon()} me-1"></i>Save Collection</button></div></form></div>
 <div class="panel"><div class="row g-2 mb-3"><div class="col-md-8"><input id="scSearch" class="form-control" placeholder="Search name, place, receipt"></div><div class="col-md-4"><select id="scFilterSource" class="form-select"><option value="">All sources</option><option>Member</option><option>Person</option><option>Shop</option><option>Organization</option><option>Other</option></select></div></div><div id="scTable"></div></div>`;
   document.getElementById("scDate").value = todayValue();
@@ -175,7 +175,7 @@ ${selector}
       : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Source</th><th>Name</th><th>Place</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${arr
           .map(
             (x) =>
-              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`,
+              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}<a class="btn btn-sm btn-primary" href="subcommittee-add-payment.html?id=${encodeURIComponent(x.id)}" title="Add Payment"><i class="bi bi-plus-circle"></i></a></div></td></tr>`,
           )
           .join("")}</tbody></table></div>`;
     document
@@ -271,6 +271,9 @@ ${selector}
       ).toISOString(),
       remarks: document.getElementById("scRemarks").value.trim(),
       createdAt: new Date().toISOString(),
+      recordedBy: actorLabel(),
+      recordedByUserId: s.id,
+      recordedByRole: s.role,
     };
     db.subCommitteeCollections.push(collection);
     addActivity(db, {
@@ -307,11 +310,8 @@ ${selector}
 async function deleteCollection(id) {
   const x = (db.subCommitteeCollections || []).find((c) => c.id === id);
   if (!x) return;
-  if (
-    s.role !== "admin" &&
-    Number(x.subCommitteeId) !== Number(s.subCommitteeId)
-  )
-    return;
+  if (s.role === "subcommittee" && (Number(x.subCommitteeId) !== Number(s.subCommitteeId) || x.recordedByUserId !== s.id)) return;
+  if (s.role !== "admin" && s.role !== "subcommittee") return;
   const ok = await confirmDialog(
     `Delete collection receipt ${x.receiptNumber} for ${money(x.amount)}?`,
   );
@@ -327,6 +327,7 @@ async function deleteCollection(id) {
   db.subCommitteeCollections = db.subCommitteeCollections.filter(
     (c) => c.id !== id,
   );
+  db.subCommitteeCollectionPayments = (db.subCommitteeCollectionPayments || []).filter((p) => p.collectionId !== id);
   saveDB(db);
   toast("Collection deleted.", "success");
   render();

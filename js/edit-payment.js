@@ -14,11 +14,11 @@ if (!payment || !member) {
 ${pageTitle("Edit Collection")}
 <div class="panel form-card"><div class="receipt-box mb-4"><div class="d-flex justify-content-between"><span>Member</span><b>${escapeHTML(member.name)}</b></div><div class="d-flex justify-content-between mt-2"><span>Receipt</span><b>${escapeHTML(payment.receiptNumber)}</b></div></div>
 <form id="editPaymentForm"><div class="row g-3">
-<div class="col-md-4"><label class="form-label">Receipt Number *</label><input id="receipt" class="form-control" required value="${escapeHTML(payment.receiptNumber)}"></div>
-<div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(payment.amount)}"></div>
-<div class="col-md-4"><label class="form-label">Payment Mode *</label><select id="mode" class="form-select" required><option ${payment.paymentMode === "Cash" ? "selected" : ""}>Cash</option><option ${payment.paymentMode === "UPI" ? "selected" : ""}>UPI</option><option ${payment.paymentMode === "Bank" ? "selected" : ""}>Bank</option><option ${payment.paymentMode === "Cheque" ? "selected" : ""}>Cheque</option></select></div>
-<div class="col-md-4"><label class="form-label">Status *</label><select id="status" class="form-select" required><option value="completed" ${(payment.status || "completed") === "completed" ? "selected" : ""}>Completed</option><option value="hold" ${payment.status === "hold" ? "selected" : ""}>Hold (payment not yet received)</option></select></div>
-<div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="3">${escapeHTML(payment.remarks || "")}</textarea></div>
+<div class="col-md-4"><label class="form-label">Receipt Number / രസീത് നമ്പർ *</label><input id="receipt" class="form-control" required value="${escapeHTML(payment.receiptNumber)}"></div>
+<div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(payment.amount)}"></div>
+<div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="mode" class="form-select" required><option ${payment.paymentMode === "Cash" ? "selected" : ""}>Cash</option><option ${payment.paymentMode === "UPI" ? "selected" : ""}>UPI</option><option ${payment.paymentMode === "Bank" ? "selected" : ""}>Bank</option><option ${payment.paymentMode === "Cheque" ? "selected" : ""}>Cheque</option></select></div>
+<div class="col-md-4"><label class="form-label">Status / നില *</label><select id="status" class="form-select" required><option value="completed" ${(payment.status || "completed") === "completed" ? "selected" : ""}>Completed</option><option value="hold" ${payment.status === "hold" ? "selected" : ""}>Hold (payment not yet received)</option></select></div>
+<div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="3">${escapeHTML(payment.remarks || "")}</textarea></div>
 </div><div id="formError" class="alert alert-danger d-none mt-3"></div>
 <div class="d-flex justify-content-end gap-2 mt-4"><a href="member-details.html?id=${encodeURIComponent(member.id)}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div>
 </form></div>`;

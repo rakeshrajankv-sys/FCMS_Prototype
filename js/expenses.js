@@ -51,13 +51,13 @@ else {
     <form id="form">
       <input type="hidden" id="editId">
       <div class="row g-3">
-        <div class="col-md-4"><label class="form-label">Committee *</label><select id="committee" class="form-select" required>${choices.map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}</select></div>
-        <div class="col-md-4"><label class="form-label">Expense Details *</label><input id="title" class="form-control" required placeholder="What was the expense for?"></div>
-        <div class="col-md-4"><label class="form-label">Amount *</label><input id="amount" type="number" min="1" class="form-control" required></div>
-        <div class="col-md-4"><label class="form-label">Date *</label><input id="date" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div>
-        <div class="col-md-4"><label class="form-label">Phone Number</label><input id="phone" class="form-control" inputmode="numeric" maxlength="10" placeholder="Optional"></div>
-        <div class="col-md-4"><label class="form-label">Remarks</label><input id="remarks" class="form-control"></div>
-        <div class="col-md-6"><label class="form-label">Upload Bill</label><input id="bill" type="file" class="form-control" accept="image/*,.pdf"></div>
+        <div class="col-md-4"><label class="form-label">Committee / കമ്മിറ്റി *</label><select id="committee" class="form-select" required>${choices.map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}</select></div>
+        <div class="col-md-4"><label class="form-label">Expense Details / ചെലവ് വിവരങ്ങൾ *</label><input id="title" class="form-control" required placeholder="What was the expense for?"></div>
+        <div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="1" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Date / തീയതി *</label><input id="date" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div>
+        <div class="col-md-4"><label class="form-label">Phone Number / ഫോൺ നമ്പർ</label><input id="phone" class="form-control" inputmode="numeric" maxlength="10" placeholder="Optional"></div>
+        <div class="col-md-4"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="remarks" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Upload Bill / ബിൽ അപ്‌ലോഡ് ചെയ്യുക</label><input id="bill" type="file" class="form-control" accept="image/*,.pdf"></div>
       </div>
       <div id="err" class="alert alert-danger d-none mt-3"></div>
       <div class="d-flex justify-content-end gap-2 mt-3"><button type="button" id="cancel" class="btn btn-light">Cancel</button><button class="btn btn-primary">Save Expense</button></div>

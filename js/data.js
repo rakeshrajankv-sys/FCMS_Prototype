@@ -82,6 +82,7 @@ function seedDemoData() {
       submissions: [],
       subCommittees: DEFAULT_SUBCOMMITTEES,
       subCommitteeCollections: [],
+      subCommitteeCollectionPayments: [],
       subCommitteeSubmissions: [],
       subCommitteeAllocations: [],
       subCommitteeExpenses: [],
@@ -148,6 +149,7 @@ function seedDemoData() {
   db.activities ||= [];
   db.submissions ||= [];
   db.subCommitteeCollections ||= [];
+  db.subCommitteeCollectionPayments ||= [];
   db.subCommitteeSubmissions ||= [];
   db.subCommitteeAllocations ||= [];
   db.subCommitteeExpenses ||= [];
@@ -314,14 +316,21 @@ function totalReceived(pradeshikamId = null, db = getDB()) {
     memberCollectionTotal(pradeshikamId, db) + donationTotal(pradeshikamId, db)
   );
 }
+function subCommitteeCollectionPaymentTotal(subCommitteeCollectionId = null, db = getDB()) {
+  return (db.subCommitteeCollectionPayments || [])
+    .filter((p) => subCommitteeCollectionId == null || p.collectionId === subCommitteeCollectionId)
+    .reduce((a, p) => a + Number(p.amount || 0), 0);
+}
 function subCommitteeCollectionTotal(subCommitteeId = null, db = getDB()) {
-  return (db.subCommitteeCollections || [])
+  const base = (db.subCommitteeCollections || [])
     .filter(
       (c) =>
         subCommitteeId == null ||
         Number(c.subCommitteeId) === Number(subCommitteeId),
     )
     .reduce((a, c) => a + Number(c.amount || 0), 0);
+  const ids = new Set((db.subCommitteeCollections || []).filter((c) => subCommitteeId == null || Number(c.subCommitteeId) === Number(subCommitteeId)).map((c) => c.id));
+  return base + (db.subCommitteeCollectionPayments || []).filter((p) => ids.has(p.collectionId)).reduce((a, p) => a + Number(p.amount || 0), 0);
 }
 function subCommitteeSubmittedTotal(subCommitteeId = null, db = getDB()) {
   return (db.subCommitteeSubmissions || [])

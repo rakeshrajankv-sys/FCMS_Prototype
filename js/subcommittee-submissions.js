@@ -42,12 +42,12 @@ function render() {
       );
   const selector =
     s.role === "admin"
-      ? `<div class="panel mb-4"><label class="form-label">Sub Committee</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
+      ? `<div class="panel mb-4"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
       : "";
   document.getElementById("page-content").innerHTML =
     `${pageTitle(`${escapeHTML(c.name)} — Submissions`)} ${selector}<div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(collected)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(subm)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(remaining)}</div></div></div></div>
-<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount *</label><input id="subAmount" type="number" min="0" max="${remaining}" class="form-control" value="0"></div><div class="col-md-4"><label class="form-label">Submission Date *</label><input id="subDate" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div><div class="col-md-4"><label class="form-label">Remarks</label><input id="subRemarks" class="form-control"></div></div><div id="subError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${remaining <= 0 ? "disabled" : ""}>Save Submission</button></div></form></div>
-<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Submission History</div><span class="small text-muted">${rows.length} submission(s)</span></div>${!rows.length ? `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>` : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Amount</th><th>Recorded By</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Recorded By">${escapeHTML(x.recordedBy || "-")}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-submission.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-sub" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`}</div>`;
+<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="subAmount" type="number" min="0" max="${remaining}" class="form-control" value="0"></div><div class="col-md-4"><label class="form-label">Submission Date / സമർപ്പിച്ച തീയതി *</label><input id="subDate" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div><div class="col-md-4"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="subRemarks" class="form-control"></div></div><div id="subError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${remaining <= 0 ? "disabled" : ""}>Save Submission</button></div></form></div>
+<div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Submission History</div><span class="small text-muted">${rows.length} submission(s)</span></div>${!rows.length ? `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>` : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Amount</th><th>Recorded By</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Recorded By">${escapeHTML(x.recordedBy || "-")}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-submission.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sub" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}</div></td></tr>`).join("")}</tbody></table></div>`}</div>`;
   if (s.role === "admin")
     document
       .getElementById("committeeSelect")
@@ -88,6 +88,8 @@ function render() {
       remarks: document.getElementById("subRemarks").value.trim(),
       createdAt: new Date().toISOString(),
       recordedBy: actorLabel(),
+      recordedByUserId: s.id,
+      recordedByRole: s.role,
     };
     db.subCommitteeSubmissions.push(submission);
     addActivity(db, {
@@ -110,11 +112,8 @@ function render() {
 async function deleteSubmission(id) {
   const sub = (db.subCommitteeSubmissions || []).find((x) => x.id === id);
   if (!sub) return;
-  if (
-    s.role !== "admin" &&
-    Number(sub.subCommitteeId) !== Number(s.subCommitteeId)
-  )
-    return;
+  if (s.role === "subcommittee" && (Number(sub.subCommitteeId) !== Number(s.subCommitteeId) || sub.recordedByUserId !== s.id)) return;
+  if (s.role !== "admin" && s.role !== "subcommittee") return;
   const ok = await confirmDialog(
     `Delete this submission of ${money(sub.amount || 0)}?`,
   );
