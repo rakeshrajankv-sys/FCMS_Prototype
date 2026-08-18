@@ -53,5 +53,7 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
     pradeshikamId: user.pradeshikamId,
     subCommitteeId: user.subCommitteeId,
   });
-  location.href = "dashboard.html";
+  document.body.classList.add("fcms-login-exit");
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  window.setTimeout(() => { location.href = "dashboard.html"; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 600 : 740));
 });

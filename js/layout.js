@@ -109,8 +109,26 @@ function markActive() {
 }
 function logout() {
   clearSession();
-  location.href = "index.html";
+  document.body.classList.add("fcms-page-exit");
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  window.setTimeout(() => { location.href = "index.html"; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 400 : 500));
 }
+
+// Smooth visual transition for normal in-app navigation. This only delays navigation;
+// it does not replace, alter, or remove any existing link/function behavior.
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.("a[href]");
+  if (!link || event.defaultPrevented || link.target === "_blank" || link.hasAttribute("download")) return;
+  const href = link.getAttribute("href");
+  if (!href || href.startsWith("#") || href.startsWith("javascript:") || link.hasAttribute("data-no-transition")) return;
+  let url;
+  try { url = new URL(href, location.href); } catch (_) { return; }
+  if (url.origin !== location.origin || url.pathname === location.pathname && url.search === location.search) return;
+  event.preventDefault();
+  document.body.classList.add("fcms-page-exit");
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  window.setTimeout(() => { location.href = url.href; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 400 : 500));
+}, true);
 function pageTitle(title, sub = "", button = "") {
   return `<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div class="page-title"><h1>${title}</h1></div>${button}</div>`;
 }
