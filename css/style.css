@@ -2835,3 +2835,63 @@ html[lang="ml"] .form-label {
   .fcms-404-page::after,
   .fcms-404-code { animation: none !important; }
 }
+
+/* Login entrance: subtle upward reveal when the page opens */
+.login-page .login-shell {
+  animation: fcms-login-shell-rise 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.login-page .login-brand {
+  animation: fcms-login-brand-rise 1.55s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
+.login-page .login-card {
+  animation: fcms-login-card-rise 1.75s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+  will-change: transform, opacity;
+}
+
+@keyframes fcms-login-shell-rise {
+  from {
+    opacity: 0;
+    transform: translateY(42px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fcms-login-brand-rise {
+  from {
+    opacity: 0;
+    transform: translateY(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fcms-login-card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(58px) scale(0.97);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.002);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page .login-shell,
+  .login-page .login-brand,
+  .login-page .login-card {
+    animation: none;
+  }
+}
