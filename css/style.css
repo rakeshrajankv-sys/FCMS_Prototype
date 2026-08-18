@@ -168,6 +168,14 @@ html.fcms-lang-fade body {
 .sidebar-nav {
   padding: 8px 14px;
   overflow: auto;
+  /* Keep sidebar scrolling, but hide the browser's bulky scrollbar so it blends with the layout. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-nav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 .nav-section {
   font-size: 10px;
