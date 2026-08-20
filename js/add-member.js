@@ -38,7 +38,7 @@ ${pageTitle("Add Member", "", "")}
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
@@ -81,10 +81,12 @@ function renderRows() {
     .querySelectorAll(
       ".member-gender,.member-age,.member-phone,.member-country,.member-marital,.member-collectable",
     )
-    .forEach((el) => el.addEventListener("input", () => {
-      updateCollectableUI(el.dataset.i);
-      updatePreview();
-    }));
+    .forEach((el) =>
+      el.addEventListener("input", () => {
+        updateCollectableUI(el.dataset.i);
+        updatePreview();
+      }),
+    );
   document
     .querySelectorAll(".member-name")
     .forEach((el) => el.addEventListener("input", renderPayers));
@@ -105,13 +107,15 @@ function getDraftMembers() {
       phone: normalizePhone(document.getElementById(`phone-${i}`)?.value || ""),
       collectable:
         age >= 21
-          ? document.querySelector(`input[name="collectable-${i}"]:checked`)?.value !== "no"
+          ? document.querySelector(`input[name="collectable-${i}"]:checked`)
+              ?.value !== "no"
           : false,
       requiredAmount: requiredAmount(
         gender,
         age,
         age >= 21
-          ? document.querySelector(`input[name="collectable-${i}"]:checked`)?.value !== "no"
+          ? document.querySelector(`input[name="collectable-${i}"]:checked`)
+              ?.value !== "no"
           : false,
       ),
       receiptNumber:
