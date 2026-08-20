@@ -109,12 +109,11 @@ function markActive() {
 }
 async function logout() {
   const confirmed = await confirmDialog(
-    "Are you sure you want to log out? / നിങ്ങൾക്ക് ലോഗ്ഔട്ട് ചെയ്യണമെന്ന് ഉറപ്പാണോ?",
+    t("logout_confirm_message"),
     {
-      title: "Confirm Logout / ലോഗ്ഔട്ട് സ്ഥിരീകരിക്കുക",
-      confirmLabel: "Logout / ലോഗ്ഔട്ട്",
-      variant: "logout",
-      icon: "bi-box-arrow-right",
+      title: t("logout_confirm_title"),
+      confirmLabel: t("logout_confirm_button"),
+      cancelLabel: t("cancel"),
     },
   );
   if (!confirmed) return;
