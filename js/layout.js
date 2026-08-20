@@ -107,7 +107,17 @@ function markActive() {
     current.closest(".nav-dropdown")?.classList.add("open");
   }
 }
-function logout() {
+async function logout() {
+  const confirmed = await confirmDialog(
+    "Are you sure you want to log out? / നിങ്ങൾക്ക് ലോഗ്ഔട്ട് ചെയ്യണമെന്ന് ഉറപ്പാണോ?",
+    {
+      title: "Confirm Logout / ലോഗ്ഔട്ട് സ്ഥിരീകരിക്കുക",
+      confirmLabel: "Logout / ലോഗ്ഔട്ട്",
+      variant: "logout",
+      icon: "bi-box-arrow-right",
+    },
+  );
+  if (!confirmed) return;
   clearSession();
   document.body.classList.add("fcms-page-exit");
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;

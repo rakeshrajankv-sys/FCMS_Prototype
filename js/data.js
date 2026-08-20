@@ -156,6 +156,9 @@ function seedDemoData() {
   db.members.forEach((m) => {
     m.countryCode ||= "+91";
     m.maritalStatus ||= "Single";
+    // Preserve existing records while giving the new collectability setting
+    // a safe default for older data.
+    if (m.collectable == null) m.collectable = Number(m.requiredAmount || 0) > 0;
   });
   db.donations.forEach((d) => {
     d.sourceType ||= "Member";
@@ -227,14 +230,11 @@ function formatPhone(v, countryCode = "+91") {
   const digits = normalizePhone(v);
   return digits ? `${countryCode || "+91"} ${digits}` : "";
 }
-function requiredAmount(gender, age) {
-  return Number(age) >= 21
-    ? gender === "Male"
-      ? 8000
-      : gender === "Female"
-        ? 2000
-        : 0
-    : 0;
+function requiredAmount(gender, age, collectable = true) {
+  // The ₹8,000 / ₹2,000 contribution applies only when the member is
+  // 21+ and has been marked as collectable.
+  if (Number(age) < 21 || !collectable) return 0;
+  return gender === "Male" ? 8000 : gender === "Female" ? 2000 : 0;
 }
 function statusFor(required, paid) {
   required = Number(required) || 0;
@@ -442,6 +442,7 @@ function memberSnapshot(m) {
     houseNumber: m.houseNumber || "",
     pradeshikamId: m.pradeshikamId,
     requiredAmount: m.requiredAmount,
+    collectable: m.collectable !== false,
     receiptNumber: m.receiptNumber || "",
   };
 }

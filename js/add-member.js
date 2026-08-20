@@ -38,7 +38,7 @@ ${pageTitle("Add Member", "", "")}
 </div>
 <div id="allocationPreview" class="d-none"></div>
 <div id="formError" class="alert alert-danger d-none mt-3"></div>
-<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
+<div class="d-flex justify-content-end gap-2 mt-4"><a href="members.html" class="btn btn-light">Cancel</a><button type="button" id="saveHoldBtn" class="btn btn-outline-primary"><i class="bi bi-hourglass-split me-1"></i>Save Member &amp; Hold</button><button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Save Members</button></div>
 </form></div>`;
 
 function selectedPradeshikamId() {
@@ -54,7 +54,21 @@ function todayValue() {
 }
 document.getElementById("transactionDate").value = todayValue();
 function memberRow(i) {
-  return `<div class="panel mb-3 household-member-row"><div class="d-flex justify-content-between align-items-center mb-3"><div class="fw-bold">Member ${i + 1}</div><span class="small text-muted" id="req-${i}">Required: ₹0</span></div><div class="row g-3"><div class="col-md-4"><label class="form-label">Name / പേര് *</label><input id="name-${i}" class="form-control member-name" data-i="${i}" required></div><div class="col-md-2"><label class="form-label">Gender / ലിംഗം *</label><select id="gender-${i}" class="form-select member-gender" data-i="${i}" required><option value="">Select</option><option>Male</option><option>Female</option></select></div><div class="col-md-2"><label class="form-label">Age / പ്രായം *</label><input id="age-${i}" type="number" min="1" max="100" class="form-control member-age" data-i="${i}" required></div><div class="col-md-2"><label class="form-label">Marital Status / വൈവാഹിക നില *</label><select id="marital-${i}" class="form-select member-marital" data-i="${i}" required><option value="">Select</option><option>Single</option><option>Married</option><option>Widower</option></select></div><div class="col-md-3"><label class="form-label">Phone / ഫോൺ *</label><div class="phone-field"><select id="country-${i}" class="form-select member-country" data-i="${i}" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="phone-${i}" class="form-control member-phone" data-i="${i}" inputmode="numeric" type="tel" maxlength="10" placeholder="10-digit number" required></div></div>${document.getElementById("receiptMode")?.value === "each" ? `<div class="col-md-4"><label class="form-label">Member Receipt / അംഗത്തിന്റെ രസീത് *</label><input id="memberReceipt-${i}" class="form-control member-receipt" data-i="${i}" required></div>` : ""}</div></div>`;
+  return `<section class="panel mb-3 household-member-row">
+    <div class="member-row-head">
+      <div class="member-row-title-wrap"><div class="member-avatar"><i class="bi bi-person"></i></div><div><div class="member-row-title">Member ${i + 1}</div><div class="member-row-subtitle">Member details / അംഗത്തിന്റെ വിവരങ്ങൾ</div></div></div>
+      <span class="member-required" id="req-${i}">Required: ₹0</span>
+    </div>
+    <div class="member-form-grid">
+      <div class="member-field member-field-name"><label class="form-label">Name / പേര് *</label><input id="name-${i}" class="form-control member-name" data-i="${i}" required placeholder="Enter name / പേര് നൽകുക"></div>
+      <div class="member-field"><label class="form-label">Gender / ലിംഗം *</label><select id="gender-${i}" class="form-select member-gender" data-i="${i}" required><option value="">Select / തിരഞ്ഞെടുക്കുക</option><option>Male / പുരുഷൻ</option><option>Female / സ്ത്രീ</option></select></div>
+      <div class="member-field"><label class="form-label">Age / പ്രായം *</label><input id="age-${i}" type="number" min="1" max="100" class="form-control member-age" data-i="${i}" required placeholder="Age / പ്രായം"></div>
+      <div class="member-field member-field-collectable"><div id="collectable-${i}" class="collectable-option" hidden><label class="form-label d-block">Collectable? / പിരിവ് വേണോ?</label><div class="collectable-choices"><label class="collectable-choice"><input class="form-check-input member-collectable" type="radio" name="collectable-${i}" id="collectable-yes-${i}" value="yes" checked><span>Yes / വേണം</span></label><label class="collectable-choice"><input class="form-check-input member-collectable" type="radio" name="collectable-${i}" id="collectable-no-${i}" value="no"><span>No / വേണ്ട</span></label></div></div></div>
+      <div class="member-field member-field-marital"><label class="form-label">Marital Status / വൈവാഹിക നില *</label><select id="marital-${i}" class="form-select member-marital" data-i="${i}" required><option value="">Select / തിരഞ്ഞെടുക്കുക</option><option>Single / അവിവാഹിതൻ</option><option>Married / വിവാഹിതൻ</option><option>Widower / വിധവൻ</option></select></div>
+      <div class="member-field member-field-phone"><label class="form-label">Phone / ഫോൺ *</label><div class="phone-field"><select id="country-${i}" class="form-select member-country" data-i="${i}" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="phone-${i}" class="form-control member-phone" data-i="${i}" inputmode="numeric" type="tel" maxlength="10" placeholder="10-digit number / 10 അക്ക നമ്പർ" required></div></div>
+      ${document.getElementById("receiptMode")?.value === "each" ? `<div class="member-field member-field-receipt"><label class="form-label">Member Receipt / അംഗത്തിന്റെ രസീത് *</label><input id="memberReceipt-${i}" class="form-control member-receipt" data-i="${i}" required></div>` : ""}
+    </div>
+  </section>`;
 }
 function renderRows() {
   const count = Number(document.getElementById("memberCount").value) || 1;
@@ -65,9 +79,12 @@ function renderRows() {
   renderPayers();
   document
     .querySelectorAll(
-      ".member-gender,.member-age,.member-phone,.member-country,.member-marital",
+      ".member-gender,.member-age,.member-phone,.member-country,.member-marital,.member-collectable",
     )
-    .forEach((el) => el.addEventListener("input", updatePreview));
+    .forEach((el) => el.addEventListener("input", () => {
+      updateCollectableUI(el.dataset.i);
+      updatePreview();
+    }));
   document
     .querySelectorAll(".member-name")
     .forEach((el) => el.addEventListener("input", renderPayers));
@@ -86,11 +103,32 @@ function getDraftMembers() {
       maritalStatus: document.getElementById(`marital-${i}`)?.value || "",
       countryCode: document.getElementById(`country-${i}`)?.value || "+91",
       phone: normalizePhone(document.getElementById(`phone-${i}`)?.value || ""),
-      requiredAmount: requiredAmount(gender, age),
+      collectable:
+        age >= 21
+          ? document.querySelector(`input[name="collectable-${i}"]:checked`)?.value !== "no"
+          : false,
+      requiredAmount: requiredAmount(
+        gender,
+        age,
+        age >= 21
+          ? document.querySelector(`input[name="collectable-${i}"]:checked`)?.value !== "no"
+          : false,
+      ),
       receiptNumber:
         document.getElementById(`memberReceipt-${i}`)?.value.trim() || "",
     };
   });
+}
+function updateCollectableUI(index) {
+  const age = Number(document.getElementById(`age-${index}`)?.value) || 0;
+  const wrap = document.getElementById(`collectable-${index}`);
+  if (!wrap) return;
+  const show = age >= 21;
+  wrap.hidden = !show;
+  if (!show) {
+    const yes = document.getElementById(`collectable-yes-${index}`);
+    if (yes) yes.checked = true;
+  }
 }
 function renderPayers() {
   const current = document.getElementById("payerIndex")?.value || "0";
