@@ -193,6 +193,15 @@ function getDB() {
 }
 function saveDB(db) {
   localStorage.setItem(FCMS_KEY, JSON.stringify(db));
+  // Remember that the current page has just successfully persisted data.
+  // On a browser Back navigation, the submitted form page is skipped so
+  // stale values are never restored. Normal reloads clear this marker.
+  try {
+    sessionStorage.setItem(
+      "fcms_last_saved_page",
+      JSON.stringify({ path: location.pathname + location.search, at: Date.now() }),
+    );
+  } catch (_) {}
 }
 function uid(prefix = "id") {
   return (
@@ -343,11 +352,11 @@ function subCommitteeSubmittedTotal(subCommitteeId = null, db = getDB()) {
 }
 function subCommitteeAllocationTotal(subCommitteeId = null, db = getDB()) {
   return (db.subCommitteeAllocations || [])
-    .filter(
-      (x) =>
-        subCommitteeId == null ||
-        Number(x.subCommitteeId) === Number(subCommitteeId),
-    )
+    .filter((x) => {
+      if (subCommitteeId == null) return true;
+      const id = x.subCommitteeId ?? x.committeeId;
+      return id !== "other" && Number(id) === Number(subCommitteeId);
+    })
     .reduce((a, x) => a + Number(x.amount || 0), 0);
 }
 function subCommitteeExpenseTotal(subCommitteeId = null, db = getDB()) {
@@ -358,6 +367,51 @@ function subCommitteeExpenseTotal(subCommitteeId = null, db = getDB()) {
         Number(x.subCommitteeId) === Number(subCommitteeId),
     )
     .reduce((a, x) => a + Number(x.amount || 0), 0);
+}
+
+// Stable aliases used by the sub-committee dashboard/report pages.
+function subCommitteeTotal(subCommitteeId = null, db = getDB()) {
+  return subCommitteeCollectionTotal(subCommitteeId, db);
+}
+function subCommitteeSubmissionTotal(subCommitteeId = null, db = getDB()) {
+  return subCommitteeSubmittedTotal(subCommitteeId, db);
+}
+function subCommitteeBalance(subCommitteeId = null, db = getDB()) {
+  const allocated = subCommitteeAllocationTotal(subCommitteeId, db);
+  const collected = subCommitteeCollectionTotal(subCommitteeId, db);
+  const submitted = subCommitteeSubmittedTotal(subCommitteeId, db);
+  const expenses = subCommitteeExpenseTotal(subCommitteeId, db);
+  return Math.max(0, allocated + collected - submitted - expenses);
+}
+function mainOfficeReceivedTotal(db = getDB()) {
+  const pradeshikamSubmissions = (db.submissions || []).reduce(
+    (a, x) => a + Number(x.amount || Number(x.memberAmount || 0) + Number(x.donationAmount || 0)),
+    0,
+  );
+  const subCommitteeSubmissions = (db.subCommitteeSubmissions || []).reduce(
+    (a, x) => a + Number(x.amount || 0),
+    0,
+  );
+  return pradeshikamSubmissions + subCommitteeSubmissions;
+}
+function mainOfficeExpenseTotal(db = getDB()) {
+  return (db.mainExpenses || []).reduce((a, x) => a + Number(x.amount || 0), 0);
+}
+function mainOfficeAvailableBalance(
+  db = getDB(),
+  excludeAllocationId = null,
+  excludeMainExpenseId = null,
+) {
+  const allocated = (db.subCommitteeAllocations || [])
+    .filter((x) => x.id !== excludeAllocationId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  const mainExpenses = (db.mainExpenses || [])
+    .filter((x) => x.id !== excludeMainExpenseId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  const otherExpenses = (db.subCommitteeExpenses || [])
+    .filter((x) => String(x.subCommitteeId) === "other" && x.id !== excludeMainExpenseId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  return Math.max(0, mainOfficeReceivedTotal(db) - mainExpenses - otherExpenses - allocated);
 }
 function subCommitteeCollectionSnapshot(c) {
   if (!c) return null;
@@ -379,6 +433,7 @@ function subCommitteeExpenseSnapshot(x) {
   return {
     amount: Number(x.amount),
     description: x.description || "",
+    expensePurpose: x.expensePurpose || "",
     subCommitteeId: x.subCommitteeId,
     date: x.date || x.createdAt,
     remarks: x.remarks || "",

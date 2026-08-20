@@ -14,7 +14,7 @@ if (!member) {
   document.getElementById("page-content").innerHTML =
     `${pageTitle("Edit Member")}
 <div class="panel form-card"><form id="editMemberForm"><div class="row g-3">
-<div class="col-md-6"><label class="form-label">Name / പേര് * <span class="name-language-hint">English only / ഇംഗ്ലീഷ് മാത്രം</span></label><input id="name" class="form-control" required value="${escapeHTML(member.name)}"></div>
+<div class="col-md-6"><label class="form-label">Name / പേര് *</label><input id="name" class="form-control" required value="${escapeHTML(member.name)}"></div>
 <div class="col-md-3"><label class="form-label">Gender / ലിംഗം *</label><select id="gender" class="form-select" required><option ${member.gender === "Male" ? "selected" : ""}>Male</option><option ${member.gender === "Female" ? "selected" : ""}>Female</option></select></div>
 <div class="col-md-3"><label class="form-label">Age / പ്രായം *</label><input id="age" type="number" min="1" max="100" class="form-control" required value="${member.age}"></div>
 <div class="col-md-4"><div id="collectableWrap" class="collectable-option" hidden><label class="form-label d-block">Collectable? / പിരിവ് വേണോ?</label><div class="d-flex flex-wrap gap-3"><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="collectable" id="collectableYes" value="yes"><label class="form-check-label" for="collectableYes">Yes / വേണം</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="collectable" id="collectableNo" value="no"><label class="form-check-label" for="collectableNo">No / വേണ്ട</label></div></div></div></div>

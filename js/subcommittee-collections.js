@@ -46,10 +46,11 @@ function render() {
     );
     return;
   }
+  const committeeLocked = s.role === "subcommittee" || scParams.has("committee");
   const selector =
-    s.role === "admin"
+    s.role === "admin" && !committeeLocked
       ? `<div class="panel mb-4"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="committeeSelect" class="form-select">${db.subCommittees.map((x) => `<option value="${x.id}" ${Number(x.id) === Number(c.id) ? "selected" : ""}>${escapeHTML(x.name)}</option>`).join("")}</select></div>`
-      : "";
+      : `<div class="panel mb-4 fcms-locked-committee"><div class="d-flex align-items-center justify-content-between gap-3"><div><div class="form-label mb-1">Sub Committee / ഉപസമിതി</div><div class="fw-bold fs-5">${escapeHTML(c.name)}</div></div><span class="badge rounded-pill text-bg-light"><i class="bi bi-lock-fill me-1"></i>Selected</span></div></div>`;
   document.getElementById("page-content").innerHTML =
     `${pageTitle(`${escapeHTML(c.name)} — Collections`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>` : ""}<button id="exportSC" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button></div>`)}
 ${selector}
@@ -189,7 +190,7 @@ ${selector}
   document
     .getElementById("scFilterSource")
     .addEventListener("change", renderTable);
-  if (s.role === "admin")
+  if (s.role === "admin" && !committeeLocked)
     document
       .getElementById("committeeSelect")
       .addEventListener("change", (e) => {

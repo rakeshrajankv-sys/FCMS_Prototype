@@ -61,6 +61,18 @@ const FCMS_I18N = {
     logout_confirm_message: "Are you sure you want to log out?",
     logout_confirm_button: "Logout",
     name_english_only: "Name must be entered in English only.",
+    welcome_back: "Welcome back",
+    sign_in_continue: "Sign in to continue",
+    enter_username: "Enter username",
+    enter_password: "Enter password",
+    login: "Login",
+    voucher_receipt_required: "Voucher / Receipt is required before saving this allocation.",
+    receipt_bill_required: "Receipt / Bill is required before saving this expense.",
+    allocation_exceeds_office_balance: "Allocation cannot exceed the Main Office available balance of {amount}.",
+    allocation_below_existing_expenses: "This allocation cannot be reduced below the committee's existing expenses of {amount}.",
+    expense_exceeds_available_balance: "Expense cannot exceed the committee's available allocated balance of {amount}.",
+    no_allocated_funds_expense: "This Sub Committee has no allocated funds, so an expense cannot be recorded.",
+    allocation_delete_blocked: "This allocation cannot be deleted because {amount} has already been spent by this Sub Committee.",
   },
   ml: {
     app_name: "ഫണ്ട് കളക്ഷൻ",
@@ -114,6 +126,18 @@ const FCMS_I18N = {
     logout_confirm_message: "നിങ്ങൾക്ക് ലോഗ്ഔട്ട് ചെയ്യണമെന്ന് ഉറപ്പാണോ?",
     logout_confirm_button: "ലോഗ്ഔട്ട്",
     name_english_only: "പേര് ഇംഗ്ലീഷിൽ മാത്രം നൽകുക.",
+    welcome_back: "തിരികെ സ്വാഗതം",
+    sign_in_continue: "തുടരാൻ ലോഗിൻ ചെയ്യുക",
+    enter_username: "യൂസർനെയിം നൽകുക",
+    enter_password: "പാസ്‌വേഡ് നൽകുക",
+    login: "ലോഗിൻ",
+    voucher_receipt_required: "വൗച്ചർ / രസീത് അപ്‌ലോഡ് ചെയ്യാതെ വിഹിതം സേവ് ചെയ്യാൻ കഴിയില്ല.",
+    receipt_bill_required: "രസീത് / ബിൽ അപ്‌ലോഡ് ചെയ്യാതെ ചെലവ് സേവ് ചെയ്യാൻ കഴിയില്ല.",
+    allocation_exceeds_office_balance: "വിഹിതം മെയിൻ ഓഫീസിന്റെ ലഭ്യമായ ബാക്കി തുകയായ {amount} കവിയാൻ കഴിയില്ല.",
+    allocation_below_existing_expenses: "ഈ വിഹിതം കമ്മിറ്റി ഇതിനകം ചെലവാക്കിയ {amount}-ൽ താഴെയാക്കാൻ കഴിയില്ല.",
+    expense_exceeds_available_balance: "ചെലവ് കമ്മിറ്റിക്ക് ലഭ്യമായ വിഹിത ബാക്കി തുകയായ {amount} കവിയാൻ കഴിയില്ല.",
+    no_allocated_funds_expense: "ഈ സബ് കമ്മിറ്റിക്ക് വിഹിതം അനുവദിച്ചിട്ടില്ല. അതിനാൽ ചെലവ് രേഖപ്പെടുത്താൻ കഴിയില്ല.",
+    allocation_delete_blocked: "ഈ വിഹിതം ഇല്ലാതാക്കാൻ കഴിയില്ല. ഈ സബ് കമ്മിറ്റി ഇതിനകം {amount} ചെലവഴിച്ചിട്ടുണ്ട്.",
   },
 };
 function fcmsLang() {
@@ -146,6 +170,28 @@ function toggleFcmsLang() {
   }, 160);
 }
 
+
+
+/* ---------- Prevent submitted forms from returning via browser Back ---------- */
+(function () {
+  function skipStaleSavedFormOnBack() {
+    try {
+      const nav = performance.getEntriesByType("navigation")[0];
+      if (!nav || nav.type !== "back_forward") return;
+      const raw = sessionStorage.getItem("fcms_last_saved_page");
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      const current = location.pathname + location.search;
+      if (saved?.path !== current || Date.now() - Number(saved.at || 0) > 120000) {
+        if (Date.now() - Number(saved?.at || 0) > 120000) sessionStorage.removeItem("fcms_last_saved_page");
+        return;
+      }
+      sessionStorage.removeItem("fcms_last_saved_page");
+      history.go(-1);
+    } catch (_) {}
+  }
+  window.addEventListener("pageshow", skipStaleSavedFormOnBack);
+})();
 
 /* ---------- Malayalam UI coverage for dynamically rendered pages ---------- */
 const FCMS_ML_TEXT = {

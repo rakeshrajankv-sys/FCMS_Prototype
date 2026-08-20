@@ -1,13 +1,13 @@
 function getCommitteeContext() {
   const s = currentSession();
   const requested = new URLSearchParams(location.search).get("committee");
-  const committeeId = s?.role === "subcommittee" ? s.committeeId : requested;
-  const committee = SUB_COMMITTEE_DEFS.find((c) => c.id === committeeId);
+  const committeeId = s?.role === "subcommittee" ? s.subCommitteeId : requested;
+  const committee = (getDB().subCommittees || []).find((c) => Number(c.id) === Number(committeeId));
   if (
     !s ||
     !committee ||
     (s.role !== "admin" &&
-      (s.role !== "subcommittee" || s.committeeId !== committeeId))
+      (s.role !== "subcommittee" || Number(s.subCommitteeId) !== Number(committeeId)))
   ) {
     location.href = "dashboard.html";
     return null;
@@ -15,8 +15,8 @@ function getCommitteeContext() {
   return { s, committee };
 }
 function subCommitteeRows(db, committeeId) {
-  return (db.subcommitteeCollections || []).filter(
-    (x) => x.committeeId === committeeId,
+  return (db.subCommitteeCollections || []).filter(
+    (x) => Number(x.subCommitteeId) === Number(committeeId),
   );
 }
 function subCommitteeDonorLabel(x, db) {

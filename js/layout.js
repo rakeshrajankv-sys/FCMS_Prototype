@@ -22,7 +22,7 @@ if (session) {
   document.getElementById("app").innerHTML = `
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><img src="logo.png" alt="Logo"><span>${t("app_name")}</span></div>
+  <div class="sidebar-brand"><img src="logo.png?v=20260821logo2" alt="Logo"><span>${t("app_name")}</span></div>
   <div class="px-3 small sidebar-role">${escapeHTML(isAdminRole ? t("main_committee") : session.name)}</div>
   <nav class="sidebar-nav">
     <div class="nav-section">${t("nav_main")}</div>

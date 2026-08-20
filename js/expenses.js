@@ -52,6 +52,7 @@ else {
       <input type="hidden" id="editId">
       <div class="row g-3">
         <div class="col-md-4"><label class="form-label">Committee / കമ്മിറ്റി *</label><select id="committee" class="form-select" required>${choices.map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}</select></div>
+        <div class="col-md-6 d-none" id="otherPurposeWrap"><label class="form-label">Purpose / ഉദ്ദേശ്യം *</label><input id="otherPurpose" class="form-control" /></div>
         <div class="col-md-4"><label class="form-label">Expense Details / ചെലവ് വിവരങ്ങൾ *</label><input id="title" class="form-control" required placeholder="What was the expense for?"></div>
         <div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="1" class="form-control" required></div>
         <div class="col-md-4"><label class="form-label">Date / തീയതി *</label><input id="date" type="date" class="form-control" value="${new Date().toISOString().slice(0, 10)}" required></div>
@@ -72,8 +73,20 @@ else {
       </div>
       <button id="export" class="btn btn-sm btn-light"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel / CSV</button>
     </div>
-    ${filtered.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Committee</th><th>Date</th><th>Details</th><th>Amount</th><th>Phone</th><th>Bill</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${filtered.map((x) => `<tr><td>${escapeHTML(choices.find((c) => c.id === x.committeeId)?.name || x.committeeId || "Other")}</td><td>${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td>${escapeHTML(x.title || "")}</td><td class="fw-semibold">${money(x.amount)}</td><td>${escapeHTML(x.phone || "-")}</td><td>${x.billData ? `<a href="${x.billData}" target="_blank" class="btn btn-sm btn-light">View</a>` : "-"}</td><td>${escapeHTML(x.remarks || "-")}</td><td><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit" data-id="${x.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger del" data-id="${x.id}"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">No expenses recorded for this committee.</div>`}
+    ${filtered.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Committee</th><th>Purpose</th><th>Date</th><th>Details</th><th>Amount</th><th>Phone</th><th>Bill</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${filtered.map((x) => `<tr><td>${escapeHTML(choices.find((c) => c.id === x.committeeId)?.name || x.committeeId || "Other")}</td><td>${escapeHTML(x.expensePurpose || "-")}</td><td>${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td>${escapeHTML(x.title || "")}</td><td class="fw-semibold">${money(x.amount)}</td><td>${escapeHTML(x.phone || "-")}</td><td>${x.billData ? `<a href="${x.billData}" target="_blank" class="btn btn-sm btn-light">View</a>` : "-"}</td><td>${escapeHTML(x.remarks || "-")}</td><td><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit" data-id="${x.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger del" data-id="${x.id}"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">No expenses recorded for this committee.</div>`}
   </div>`;
+
+    const committeeSelect = document.getElementById("committee");
+    const otherPurposeWrap = document.getElementById("otherPurposeWrap");
+    const otherPurpose = document.getElementById("otherPurpose");
+    function syncOtherPurpose() {
+      const isOther = committeeSelect.value === "other";
+      otherPurposeWrap.classList.toggle("d-none", !isOther);
+      otherPurpose.required = isOther;
+      if (!isOther) otherPurpose.value = "";
+    }
+    committeeSelect.addEventListener("change", syncOtherPurpose);
+    syncOtherPurpose();
 
     document.querySelectorAll(".expense-tab").forEach(
       (b) =>
@@ -91,6 +104,8 @@ else {
         .slice(0, 10);
       document.getElementById("committee").value =
         selectedCommittee === "all" ? "souvenir" : selectedCommittee;
+      document.getElementById("otherPurpose").value = "";
+      syncOtherPurpose();
       document.getElementById("err").classList.add("d-none");
     }
 
@@ -111,15 +126,34 @@ else {
       const amount = Number(document.getElementById("amount").value),
         err = document.getElementById("err"),
         editId = document.getElementById("editId").value;
+      err.classList.add("d-none");
       if (amount <= 0) {
         err.textContent = "Enter a valid amount.";
         err.classList.remove("d-none");
         return;
       }
+      if (document.getElementById("committee").value === "other" && !document.getElementById("otherPurpose").value.trim()) {
+        err.textContent = "Please enter the purpose for the Other expense.";
+        err.classList.remove("d-none");
+        document.getElementById("otherPurpose").focus();
+        return;
+      }
+
+      // Main-office expenses must be funded by money actually received by
+      // the office. When editing, exclude the existing expense from the
+      // available-balance calculation so a user can change its amount.
+      const officeAvailable = mainOfficeAvailableBalance(db, null, editId || null);
+      if (amount > officeAvailable) {
+        err.textContent = `Expense exceeds the Main Office available balance of ${money(officeAvailable)}.`;
+        err.classList.remove("d-none");
+        return;
+      }
+
       const save = (billData) => {
         const x = {
           id: editId || uid("me"),
           committeeId: document.getElementById("committee").value,
+          expensePurpose: document.getElementById("committee").value === "other" ? document.getElementById("otherPurpose").value.trim() : "",
           title: document.getElementById("title").value.trim(),
           amount,
           date: document.getElementById("date").value,
@@ -171,6 +205,8 @@ else {
           document.getElementById("formWrap").style.display = "block";
           document.getElementById("editId").value = x.id;
           document.getElementById("committee").value = x.committeeId || "other";
+          document.getElementById("otherPurpose").value = x.expensePurpose || "";
+          syncOtherPurpose();
           document.getElementById("title").value = x.title || "";
           document.getElementById("amount").value = x.amount || "";
           document.getElementById("date").value = String(x.date || "").slice(
@@ -208,6 +244,7 @@ else {
         filtered.map((x) => ({
           Committee:
             choices.find((c) => c.id === x.committeeId)?.name || x.committeeId,
+          Purpose: x.expensePurpose || "",
           Date: x.date,
           Details: x.title,
           Amount: x.amount,
