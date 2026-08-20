@@ -3108,3 +3108,56 @@ body.login-page.fcms-login-exit::after { animation-play-state: paused !important
     font-size: 17px !important;
   }
 }
+
+
+/* Login page light/dark control — visual only. */
+.login-theme-wrap {
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  z-index: 50;
+}
+.login-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 999px;
+  color: #334155;
+  background: rgba(255,255,255,.58);
+  box-shadow: 0 10px 30px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.8);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  cursor: pointer;
+  font: 600 13px/1 Inter, system-ui, sans-serif;
+  transition: transform .2s var(--fcms-page-ease), box-shadow .2s ease, background .2s ease, border-color .2s ease;
+}
+.login-theme-toggle i { font-size: 16px; }
+.login-theme-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 34px rgba(15,23,42,.11), inset 0 1px 0 rgba(255,255,255,.85);
+}
+.login-theme-toggle:active { transform: translateY(0) scale(.98); }
+.login-theme-toggle:focus-visible {
+  outline: 3px solid rgba(37,99,235,.22);
+  outline-offset: 2px;
+}
+[data-theme="dark"] .login-theme-toggle {
+  color: #e5e7eb;
+  background: rgba(18,26,43,.76);
+  border-color: rgba(255,255,255,.10);
+  box-shadow: 0 12px 32px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.035);
+}
+[data-theme="dark"] .login-theme-toggle:hover {
+  background: rgba(25,35,56,.84);
+}
+@media (max-width: 480px) {
+  .login-theme-wrap { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
+  .login-theme-toggle { min-height: 38px; padding: 0 11px; gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-theme-toggle { transition: none !important; }
+}

@@ -15,6 +15,12 @@
     <link rel="stylesheet" href="css/style.css?v=20260818smooth2" />
   </head>
   <body class="login-page">
+    <div class="login-theme-wrap">
+      <button type="button" class="login-theme-toggle" id="loginThemeToggle" aria-label="Toggle light and dark mode" title="Light / Dark">
+        <i class="bi bi-moon-stars" aria-hidden="true"></i>
+        <span class="login-theme-label">Dark</span>
+      </button>
+    </div>
     <div class="login-shell">
       <div class="login-brand">
         <img class="brand-logo" src="logo.png" alt="Fund Collection logo" />
@@ -54,6 +60,26 @@
     </div>
     <script src="js/ui-kit.js?v=20260818d"></script>
     <script src="js/data.js?v=20260818d"></script>
-    <script src="js/auth.js?v=20260818smooth2"></script>
+    <script src="js/auth.js?v=20260820login-theme"></script>
+    <script>
+      (function () {
+        const btn = document.getElementById("loginThemeToggle");
+        if (!btn || typeof fcmsTheme !== "function" || typeof setFcmsTheme !== "function") return;
+        function syncLoginTheme() {
+          const dark = fcmsTheme() === "dark";
+          const icon = btn.querySelector("i");
+          const label = btn.querySelector(".login-theme-label");
+          if (icon) icon.className = "bi " + (dark ? "bi-sun" : "bi-moon-stars");
+          if (label) label.textContent = dark ? "Light" : "Dark";
+          btn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+          btn.setAttribute("title", dark ? "Light mode" : "Dark mode");
+        }
+        syncLoginTheme();
+        btn.addEventListener("click", function () {
+          setFcmsTheme(fcmsTheme() === "dark" ? "light" : "dark");
+          syncLoginTheme();
+        });
+      })();
+    </script>
   </body>
 </html>
