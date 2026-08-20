@@ -3295,3 +3295,191 @@ body {
 @media (max-width: 576px) {
   .name-language-hint { font-size: .66rem; margin-left: .25rem; }
 }
+
+/* =====================================================================
+   FCMS PREMIUM RESPONSIVE UI — visual layer only
+   No JavaScript, data, navigation, permissions, or business logic changed.
+   ===================================================================== */
+:root {
+  --ui-radius-sm: 12px;
+  --ui-radius-md: 16px;
+  --ui-radius-lg: 20px;
+  --ui-shadow-soft: 0 8px 26px rgba(15, 23, 42, .055);
+  --ui-shadow-float: 0 18px 44px rgba(15, 23, 42, .085);
+  --ui-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* Make every page feel like one cohesive application. */
+html, body { min-height: 100%; }
+body { overflow-x: hidden; }
+button, input, select, textarea { font: inherit; }
+::selection { background: rgba(79,111,255,.18); }
+
+/* Softer, cleaner application shell */
+.main { min-height: 100vh; }
+.page-content { max-width: 1680px; margin: 0 auto; }
+
+/* Page header */
+.page-title { min-width: 0; }
+.page-title h1 { line-height: 1.18; }
+.page-title p { line-height: 1.55; }
+
+/* Cards stay tactile but never jump on touch devices. */
+.panel, .stat-card, .quick-action, .house-card {
+  box-shadow: var(--ui-shadow-soft);
+}
+@media (hover:hover) and (pointer:fine) {
+  .panel:hover, .stat-card:hover, .quick-action:hover, .house-card:hover {
+    box-shadow: var(--ui-shadow-float);
+  }
+}
+
+/* Better form rhythm and readability */
+.form-label {
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: .42rem;
+}
+.form-text, .text-muted, small { line-height: 1.45; }
+.form-control::placeholder { color: #94a3b8; opacity: 1; }
+.input-group > .form-control, .input-group > .form-select { min-width: 0; }
+
+/* Focus ring is clear for keyboard and touch accessibility. */
+.form-control:focus-visible, .form-select:focus-visible,
+.btn:focus-visible, .sidebar a:focus-visible, .nav-dropdown-toggle:focus-visible,
+.topbar-tool:focus-visible, .mobile-menu:focus-visible {
+  outline: 3px solid rgba(79,111,255,.18);
+  outline-offset: 2px;
+}
+
+/* Tables: cleaner headers and comfortable rows */
+.table > :not(caption) > * > * { padding: .78rem .7rem; }
+.table thead th { font-weight: 750; }
+.table tbody tr:last-child td { border-bottom: 0; }
+
+/* Empty states feel intentional instead of blank. */
+.empty-state {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+}
+
+/* Interactive cards/buttons get a tiny lift, never excessive 3D. */
+@media (hover:hover) and (pointer:fine) {
+  .btn:not(:disabled):hover { transform: translateY(-1px); }
+  .quick-action:hover .quick-icon { transform: translateY(-1px) scale(1.04); }
+}
+
+/* Smooth, lightweight page reveal. */
+.page-content { animation: fcms-premium-enter .42s var(--ui-ease) both; }
+@keyframes fcms-premium-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Mobile navigation: compact, stable hamburger and comfortable drawer. */
+@media (max-width: 900px) {
+  .mobile-menu {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 !important;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 12px;
+  }
+  .mobile-menu i { font-size: 19px; line-height: 1; }
+  .topbar { gap: 8px; }
+  .topbar > .d-none.d-md-block { display: none !important; }
+  .sidebar { width: min(300px, 88vw); }
+  .sidebar-overlay { backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+}
+
+/* Tablet / small laptop */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .page-content { padding: 24px; }
+  .topbar { padding: 0 22px; }
+  .panel, .stat-card { border-radius: 17px; }
+}
+
+/* Phones: stack naturally and prevent cramped toolbars. */
+@media (max-width: 768px) {
+  .page-content { padding: 15px 13px 28px; }
+  .page-title h1 { font-size: 22px; }
+  .page-title h1::after { width: 30px; height: 3px; margin-top: 7px; }
+  .panel, .stat-card, .quick-action, .house-card { border-radius: 15px; }
+  .panel, .stat-card { padding: 16px; }
+  .stat-label { margin-top: 12px; }
+  .stat-value { font-size: 21px; }
+  .action-buttons { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .action-buttons .btn { width: 100%; }
+
+  /* Any Bootstrap row used for forms becomes a clean single-column flow. */
+  .row.g-3, .row.g-4 { --bs-gutter-x: .8rem; --bs-gutter-y: .8rem; }
+  .row.g-3 > [class*="col-"], .row.g-4 > [class*="col-"] { width: 100%; }
+
+  /* Member / household cards: readable on narrow screens. */
+  .household-member-row, .house-card { padding: 13px; }
+  .member-hero { padding: 18px; border-radius: 15px; }
+  .summary-metric { min-width: 0; }
+
+  /* Keep long Malayalam labels from colliding with controls. */
+  .form-label { font-size: 13px; line-height: 1.45; }
+  .form-control, .form-select { min-height: 44px; font-size: 14px; }
+  .btn { min-height: 44px; }
+
+  /* Dropdowns and search results should stay inside the viewport. */
+  .member-results { max-width: 100%; }
+  .member-result { min-height: 46px; }
+}
+
+@media (max-width: 520px) {
+  .topbar { height: 62px; min-height: 62px; padding: 0 9px; }
+  .mobile-menu { width: 38px; height: 38px; flex-basis: 38px; border-radius: 11px; }
+  .mobile-menu i { font-size: 18px; }
+  .topbar-tools { gap: 3px; padding: 2px; }
+  .topbar-tool { width: 35px; min-width: 35px; height: 34px; min-height: 34px; border-radius: 9px; }
+  .user-pill { padding: 3px; border-radius: 999px; }
+  .avatar { width: 36px; height: 36px; }
+  .page-content { padding: 12px 10px 22px; }
+  .panel, .stat-card { padding: 14px; border-radius: 14px; }
+  .page-title h1 { font-size: 20px; }
+  .action-buttons { grid-template-columns: 1fr; }
+  .member-view-tabs { gap: 4px; }
+  .member-view-tab { min-height: 42px; padding: 9px 7px; }
+}
+
+@media (max-width: 380px) {
+  .topbar-tools { margin-left: 0; }
+  .topbar-tool { width: 33px; min-width: 33px; }
+  .avatar { width: 34px; height: 34px; }
+  .page-content { padding-left: 8px; padding-right: 8px; }
+}
+
+/* Dark mode consistency for the refreshed controls. */
+[data-theme="dark"] .form-label { color: #e6ebf5; }
+[data-theme="dark"] .form-control::placeholder { color: #64748b; }
+[data-theme="dark"] .table thead th { background: #16213a; }
+[data-theme="dark"] .empty-state i { color: #64748b; }
+[data-theme="dark"] .household-member-row,
+[data-theme="dark"] .house-card,
+[data-theme="dark"] .summary-metric { background: rgba(18,27,47,.72); border-color: rgba(255,255,255,.075); }
+[data-theme="dark"] .member-result { background: #121a2b; color: #e6ebf5; }
+[data-theme="dark"] .member-result:hover { background: #18233b; }
+[data-theme="dark"] .selected-member { background: rgba(37,99,235,.10); border-color: rgba(96,165,250,.18); }
+
+/* Malayalam: give labels and controls a little more breathing room. */
+html[lang="ml"] .form-label,
+html[lang="ml"] .btn,
+html[lang="ml"] .sidebar a,
+html[lang="ml"] .nav-dropdown-toggle,
+html[lang="ml"] .table,
+html[lang="ml"] .panel-title { line-height: 1.55; }
+
+/* Disable decorative motion on touch/reduced-motion environments. */
+@media (hover:none), (prefers-reduced-motion:reduce) {
+  .main::before, .sidebar-brand i, .status-hold { animation: none !important; }
+  .panel:hover, .stat-card:hover, .quick-action:hover, .house-card:hover { transform: none !important; }
+}
