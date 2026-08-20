@@ -15,11 +15,6 @@
     <link rel="stylesheet" href="css/style.css?v=20260821logo2" />
   </head>
   <body class="login-page">
-    <div class="login-theme-controls" aria-label="Appearance controls">
-      <button type="button" class="login-theme-btn" id="loginThemeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-        <i class="bi bi-moon-stars"></i><span>Dark</span>
-      </button>
-    </div>
     <div class="login-slideshow" aria-hidden="true">
       <div class="login-slide is-active"><img src="assets/login/slide-01.webp" alt="" loading="eager" /></div>
       <div class="login-slide"><img src="assets/login/slide-02.webp" alt="" loading="lazy" /></div>
@@ -37,9 +32,16 @@
         <p>Fund Collection Management System</p>
       </div>
       <div class="login-card">
-        <div class="text-center mb-4">
-          <h2 data-i18n="welcome_back">Welcome back</h2>
-          <p class="text-muted mb-0" data-i18n="sign_in_continue">Sign in to continue</p>
+        <div class="login-heading mb-4">
+          <div class="login-heading-copy">
+            <h2 data-i18n="welcome_back">Welcome back</h2>
+            <p class="text-muted mb-0" data-i18n="sign_in_continue">Sign in to continue</p>
+          </div>
+          <div class="login-theme-controls" aria-label="Appearance controls">
+            <button type="button" class="login-theme-btn" id="loginThemeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+              <i class="bi bi-moon-stars"></i><span>Dark</span>
+            </button>
+          </div>
         </div>
         <form id="loginForm">
           <div class="mb-3">

@@ -4023,3 +4023,108 @@ html[data-theme="dark"] pre { color: #dbeafe; }
   .login-brand .brand-logo,
   .sidebar-brand img { transition: none !important; animation: none !important; }
 }
+
+
+/* ===== Login polish: transparent logo + in-card appearance control ===== */
+.login-brand .brand-logo {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 10px 22px rgba(15, 23, 42, .18))
+    drop-shadow(0 0 18px rgba(96, 165, 250, .10));
+}
+
+/* Keep the logo visually separated from busy slideshow backgrounds without adding
+   an opaque box behind it. */
+.login-brand {
+  position: relative;
+}
+.login-brand::before {
+  content: "";
+  position: absolute;
+  width: min(250px, 70vw);
+  height: 150px;
+  left: 50%;
+  top: -10px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(255,255,255,.18) 0%,
+    rgba(255,255,255,.07) 42%,
+    transparent 72%
+  );
+  filter: blur(12px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.login-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.login-heading-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.login-heading-copy h2 {
+  margin-bottom: 6px;
+}
+.login-heading-copy p {
+  line-height: 1.45;
+}
+
+.login-heading .login-theme-controls {
+  position: static;
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+.login-heading .login-theme-btn {
+  min-height: 38px;
+  padding: 0 12px;
+  background: rgba(255,255,255,.58);
+  color: #334155;
+  border-color: rgba(148,163,184,.30);
+  box-shadow: 0 8px 22px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.65);
+}
+.login-heading .login-theme-btn:hover {
+  background: rgba(255,255,255,.76);
+}
+
+html[data-theme="dark"] .login-heading .login-theme-btn {
+  background: rgba(15,23,42,.68);
+  color: #e2e8f0;
+  border-color: rgba(148,163,184,.30);
+  box-shadow: 0 8px 22px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+}
+html[data-theme="dark"] .login-heading .login-theme-btn:hover {
+  background: rgba(30,41,59,.82);
+}
+html[data-theme="dark"] .login-brand .brand-logo {
+  filter:
+    drop-shadow(0 10px 24px rgba(0,0,0,.42))
+    drop-shadow(0 0 20px rgba(96,165,250,.16));
+}
+
+@media (max-width: 576px) {
+  .login-heading {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .login-heading .login-theme-btn {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  .login-heading .login-theme-btn span {
+    display: none;
+  }
+  .login-brand::before {
+    width: 220px;
+    height: 125px;
+  }
+}
