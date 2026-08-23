@@ -198,6 +198,49 @@ function toggleFcmsLang() {
 const FCMS_ML_TEXT = {
   // User-provided Pradeshikam names
   "All Pradeshikams": "എല്ലാ പ്രദേശങ്ങളും",
+  "View Reports": "റിപ്പോർട്ടുകൾ കാണുക",
+  "Pradeshikam Reports": "പ്രദേശിക റിപ്പോർട്ടുകൾ",
+  "Selected": "തിരഞ്ഞെടുത്തത്",
+  "Choose Image": "ചിത്രം തിരഞ്ഞെടുക്കുക",
+  "No image selected": "ചിത്രം തിരഞ്ഞെടുത്തിട്ടില്ല",
+  "Receipt / bill attached to this expense": "ഈ ചെലവിനോടൊപ്പം രസീത് / ബിൽ ചേർത്തിട്ടുണ്ട്",
+  "Voucher / receipt attached to this allocation": "ഈ വിഹിതത്തിനോടൊപ്പം വൗച്ചർ / രസീത് ചേർത്തിട്ടുണ്ട്",
+  "Search name, phone or house number": "പേര്, ഫോൺ നമ്പർ അല്ലെങ്കിൽ വീട് നമ്പർ തിരയുക",
+  "Search name, place, receipt": "പേര്, സ്ഥലം അല്ലെങ്കിൽ രസീത് തിരയുക",
+  "Search receipt, member or phone": "രസീത്, അംഗം അല്ലെങ്കിൽ ഫോൺ തിരയുക",
+  "Search donor, house, receipt or Pradeshikam": "ദാതാവ്, വീട്, രസീത് അല്ലെങ്കിൽ പ്രദേശികം തിരയുക",
+  "Search member, receipt or action": "അംഗം, രസീത് അല്ലെങ്കിൽ പ്രവർത്തനം തിരയുക",
+  "Search donor, house, receipt": "ദാതാവ്, വീട് അല്ലെങ്കിൽ രസീത് തിരയുക",
+  "Search name, phone, house number or member ID": "പേര്, ഫോൺ നമ്പർ, വീട് നമ്പർ അല്ലെങ്കിൽ അംഗ ഐഡി തിരയുക",
+  "Take Photo": "ഫോട്ടോ എടുക്കുക",
+  "Choose File": "ഫയൽ തിരഞ്ഞെടുക്കുക",
+  "Upload": "അപ്‌ലോഡ് ചെയ്യുക",
+  "Upload Bill": "ബിൽ അപ്‌ലോഡ് ചെയ്യുക",
+  "Upload Voucher / Receipt": "വൗച്ചർ / രസീത് അപ്‌ലോഡ് ചെയ്യുക",
+  "View / Download Receipt / Bill": "രസീത് / ബിൽ കാണുക / ഡൗൺലോഡ് ചെയ്യുക",
+  "View voucher": "വൗച്ചർ കാണുക",
+  "Starting camera…": "ക്യാമറ ആരംഭിക്കുന്നു…",
+  "Camera is not available in this browser. Use Choose File instead.": "ഈ ബ്രൗസറിൽ ക്യാമറ ലഭ്യമല്ല. പകരം ഫയൽ തിരഞ്ഞെടുക്കുക.",
+  "Position the receipt inside the frame.": "രസീത് ഫ്രെയിമിനുള്ളിൽ ശരിയായി വയ്ക്കുക.",
+  "Camera access was blocked. Allow camera permission or use Choose File instead.": "ക്യാമറ ആക്സസ് തടഞ്ഞിരിക്കുന്നു. ക്യാമറ അനുമതി നൽകുക അല്ലെങ്കിൽ പകരം ഫയൽ തിരഞ്ഞെടുക്കുക.",
+  "Please choose an image (JPG, PNG, or WebP).": "ദയവായി ഒരു ചിത്രം തിരഞ്ഞെടുക്കുക (JPG, PNG, അല്ലെങ്കിൽ WebP).",
+  "Image must be under 8MB.": "ചിത്രത്തിന്റെ വലുപ്പം 8MB-ൽ താഴെയായിരിക്കണം.",
+  "Could not read that image. Please try again.": "ആ ചിത്രം വായിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+  "Sub Committee / ഉപസമിതി": "ഉപസമിതി",
+  "Member / അംഗം": "അംഗം",
+  "Place / സ്ഥലം": "സ്ഥലം",
+  "Amount / തുക": "തുക",
+  "Source / ഉറവിടം": "ഉറവിടം",
+  "Payment Mode / പേയ്മെന്റ് രീതി": "പേയ്മെന്റ് രീതി",
+  "Status / നില": "നില",
+  "Phone Number / ഫോൺ നമ്പർ": "ഫോൺ നമ്പർ",
+  "Receipt Number / രസീത് നമ്പർ": "രസീത് നമ്പർ",
+  "Remarks / അഭിപ്രായങ്ങൾ": "അഭിപ്രായങ്ങൾ",
+  "Description / വിവരണം": "വിവരണം",
+  "Purpose / ഉദ്ദേശ്യം": "ഉദ്ദേശ്യം",
+  "Collected By / ശേഖരിച്ചത്": "ശേഖരിച്ചത്",
+  "Date / തീയതി": "തീയതി",
+  "Source / ഉറവിടം *": "ഉറവിടം *",
   "Ambangad": "അമ്പങ്ങാട്",
   "Bara/Mukkunnoth": "ബാര / മുക്കുന്നോത്ത്",
   "Bedakam": "ബേഡകം",
@@ -220,6 +263,7 @@ const FCMS_ML_TEXT = {
   "Publicity Committee": "പ്രചാരണ കമ്മിറ്റി",
   "Audio Video Committee": "ഓഡിയോ വീഡിയോ കമ്മിറ്റി",
   "Finance Committee": "ഫിനാൻസ് കമ്മിറ്റി",
+  "Program Committee": "പ്രോഗ്രാം കമ്മിറ്റി",
 
   "Fund Collection": "ഫണ്ട് കളക്ഷൻ", "Fund Collection Management System": "ഫണ്ട് കളക്ഷൻ മാനേജ്‌മെന്റ് സിസ്റ്റം",
   "Main Committee": "മെയിൻ കമ്മിറ്റി", "Sub Committee": "സബ് കമ്മിറ്റി", "Sub Committees": "സബ് കമ്മിറ്റികൾ",
@@ -275,6 +319,15 @@ const FCMS_ML_TEXT = {
   "Select Pradeshikam": "പ്രദേശികം തിരഞ്ഞെടുക്കുക",
   "Select": "തിരഞ്ഞെടുക്കുക",
   "All sources": "എല്ലാ ഉറവിടങ്ങളും",
+  "View Activity": "പ്രവർത്തനങ്ങൾ കാണുക",
+  "Pradeshikam Activity": "പ്രദേശിക പ്രവർത്തനങ്ങൾ",
+  "Sub Committee Activity": "സബ് കമ്മിറ്റി പ്രവർത്തനങ്ങൾ",
+  "Sub Committee": "സബ് കമ്മിറ്റി",
+  "Pradeshikam": "പ്രദേശികം",
+  "Action": "പ്രവർത്തനം",
+  "User": "ഉപയോക്താവ്",
+  "All Sub Committees": "എല്ലാ സബ് കമ്മിറ്റികളും",
+  "All Pradeshikams": "എല്ലാ പ്രദേശികങ്ങളും",
   "All actions": "എല്ലാ പ്രവർത്തനങ്ങളും",
   "All users": "എല്ലാ ഉപയോക്താക്കളും",
   "All payment modes": "എല്ലാ പേയ്മെന്റ് രീതികളും",
@@ -683,12 +736,19 @@ function fcmsTranslateValue(value) {
     out = out.split(en).join(FCMS_ML_TEXT[en]);
   });
   // Field labels are bilingual in English mode (e.g. "Name / പേര് *").
-  // In Malayalam mode, avoid displaying the same Malayalam term twice.
+  // In Malayalam mode, display only the Malayalam half of bilingual labels.
+  // This also handles multi-part labels such as "Voucher / Receipt / വൗച്ചർ / രസീത്".
+  if (fcmsLang() === "ml") {
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/([\u0D00-\u0D7F][^\n]*?)\s*\/\s*([A-Za-z][A-Za-z0-9 .+&()-]*)$/u, "$1");
+  }
   out = out.replace(/([^\n/]+)\s*\/\s*\1(?=\s*(?:\*|$))/g, "$1");
   return out;
 }
 function applyFcmsMalayalamToDom(root=document.body) {
-  if (fcmsLang() !== "ml" || !root) return;
+  if (fcmsLang() !== "ml" || !root || document.body?.classList.contains("login-page")) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes=[]; let n;
   while ((n=walker.nextNode())) nodes.push(n);
@@ -704,7 +764,7 @@ function applyFcmsMalayalamToDom(root=document.body) {
   });
 }
 function initFcmsMalayalamObserver() {
-  if (fcmsLang() !== "ml" || window.__fcmsMlObserver) return;
+  if (fcmsLang() !== "ml" || window.__fcmsMlObserver || document.body?.classList.contains("login-page")) return;
   window.__fcmsMlObserver = new MutationObserver((mutations)=>{
     mutations.forEach((m)=>m.addedNodes.forEach((node)=>{
       if (node.nodeType===1) applyFcmsMalayalamToDom(node);

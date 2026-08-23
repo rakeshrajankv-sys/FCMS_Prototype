@@ -32,6 +32,7 @@ const SUBCOMMITTEE_DEFS = [
   { name: "Publicity Committee", icon: "bi-megaphone" },
   { name: "Audio Video Committee", icon: "bi-camera-video" },
   { name: "Finance Committee", icon: "bi-cash-coin", financeAccess: true },
+  { name: "Program Committee", icon: "bi-calendar-event" },
 ];
 const SUBCOMMITTEE_NAMES = SUBCOMMITTEE_DEFS.map((c) => c.name);
 const DEFAULT_SUBCOMMITTEES = SUBCOMMITTEE_DEFS.map((c, i) => ({
@@ -376,20 +377,42 @@ function subCommitteeTotal(subCommitteeId = null, db = getDB()) {
 function subCommitteeSubmissionTotal(subCommitteeId = null, db = getDB()) {
   return subCommitteeSubmittedTotal(subCommitteeId, db);
 }
-function subCommitteeBalance(subCommitteeId = null, db = getDB()) {
-  const allocated = subCommitteeAllocationTotal(subCommitteeId, db);
-  const collected = subCommitteeCollectionTotal(subCommitteeId, db);
-  const submitted = subCommitteeSubmittedTotal(subCommitteeId, db);
-  const expenses = subCommitteeExpenseTotal(subCommitteeId, db);
-  return Math.max(0, allocated + collected - submitted - expenses);
+function subCommitteeCollectionRemaining(subCommitteeId = null, db = getDB()) {
+  return Math.max(0, subCommitteeCollectionTotal(subCommitteeId, db) - subCommitteeSubmittedTotal(subCommitteeId, db));
 }
-function mainOfficeReceivedTotal(db = getDB()) {
+function subCommitteeExpenseBalance(subCommitteeId = null, db = getDB()) {
+  return Math.max(0, subCommitteeAllocationTotal(subCommitteeId, db) - subCommitteeExpenseTotal(subCommitteeId, db));
+}
+function subCommitteeBalance(subCommitteeId = null, db = getDB()) {
+  // Backward-compatible total view: collection cash remaining plus the separate expense budget remaining.
+  return subCommitteeCollectionRemaining(subCommitteeId, db) + subCommitteeExpenseBalance(subCommitteeId, db);
+}
+function mainOfficeNetBalance(
+  db = getDB(),
+  excludeAllocationId = null,
+  excludeMainExpenseId = null,
+  excludeSubmissionId = null,
+  excludeSubmissionType = null,
+) {
+  const allocated = (db.subCommitteeAllocations || [])
+    .filter((x) => x.id !== excludeAllocationId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  const mainExpenses = (db.mainExpenses || [])
+    .filter((x) => x.id !== excludeMainExpenseId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  const otherExpenses = (db.subCommitteeExpenses || [])
+    .filter((x) => String(x.subCommitteeId) === "other" && x.id !== excludeMainExpenseId)
+    .reduce((a, x) => a + Number(x.amount || 0), 0);
+  const received = mainOfficeReceivedTotal(db, excludeSubmissionId, excludeSubmissionType);
+  return received - mainExpenses - otherExpenses - allocated;
+}
+function mainOfficeReceivedTotal(db = getDB(), excludeSubmissionId = null, excludeSubmissionType = null) {
   const pradeshikamSubmissions = (db.submissions || []).reduce(
-    (a, x) => a + Number(x.amount || Number(x.memberAmount || 0) + Number(x.donationAmount || 0)),
+    (a, x) => a + ((excludeSubmissionType === "pradeshikam" && x.id === excludeSubmissionId) ? 0 : Number(x.amount || Number(x.memberAmount || 0) + Number(x.donationAmount || 0))),
     0,
   );
   const subCommitteeSubmissions = (db.subCommitteeSubmissions || []).reduce(
-    (a, x) => a + Number(x.amount || 0),
+    (a, x) => a + ((excludeSubmissionType === "subcommittee" && x.id === excludeSubmissionId) ? 0 : Number(x.amount || 0)),
     0,
   );
   return pradeshikamSubmissions + subCommitteeSubmissions;
@@ -401,17 +424,13 @@ function mainOfficeAvailableBalance(
   db = getDB(),
   excludeAllocationId = null,
   excludeMainExpenseId = null,
+  excludeSubmissionId = null,
+  excludeSubmissionType = null,
 ) {
-  const allocated = (db.subCommitteeAllocations || [])
-    .filter((x) => x.id !== excludeAllocationId)
-    .reduce((a, x) => a + Number(x.amount || 0), 0);
-  const mainExpenses = (db.mainExpenses || [])
-    .filter((x) => x.id !== excludeMainExpenseId)
-    .reduce((a, x) => a + Number(x.amount || 0), 0);
-  const otherExpenses = (db.subCommitteeExpenses || [])
-    .filter((x) => String(x.subCommitteeId) === "other" && x.id !== excludeMainExpenseId)
-    .reduce((a, x) => a + Number(x.amount || 0), 0);
-  return Math.max(0, mainOfficeReceivedTotal(db) - mainExpenses - otherExpenses - allocated);
+  return Math.max(0, mainOfficeNetBalance(db, excludeAllocationId, excludeMainExpenseId, excludeSubmissionId, excludeSubmissionType));
+}
+function mainOfficeDeficit(db = getDB()) {
+  return Math.max(0, -mainOfficeNetBalance(db));
 }
 function subCommitteeCollectionSnapshot(c) {
   if (!c) return null;
@@ -461,6 +480,7 @@ function addActivity(
     entityId,
     memberId,
     pradeshikamId,
+    subCommitteeId = null,
     summary,
     details,
     oldValue = null,
@@ -478,6 +498,7 @@ function addActivity(
     entityId,
     memberId: memberId || null,
     pradeshikamId: pradeshikamId || null,
+    subCommitteeId: subCommitteeId || newValue?.subCommitteeId || newValue?.committeeId || oldValue?.subCommitteeId || oldValue?.committeeId || null,
     summary,
     details: details || "",
     oldValue: oldValue === undefined ? null : oldValue,

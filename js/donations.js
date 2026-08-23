@@ -281,7 +281,7 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     err.classList.remove("d-none");
     return;
   }
-  const receiptUsed = [...db.payments, ...(db.donations || [])].some(
+  const receiptUsed = (db.donations || []).some(
     (x) =>
       String(x.receiptNumber || "").toLowerCase() === receipt.toLowerCase(),
   );

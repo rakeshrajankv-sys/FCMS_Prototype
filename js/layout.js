@@ -11,7 +11,6 @@ if (session) {
   const pradeshikamNavPages = [
     "members.html",
     "payments.html",
-    "submissions.html",
     "pradeshikams.html",
   ];
   const subCommitteePages = [
@@ -37,10 +36,14 @@ if (session) {
       <div class="nav-dropdown-menu">
         <a href="members.html"><i class="bi bi-people"></i>${t("members")}</a>
         <a href="payments.html"><i class="bi bi-receipt"></i>${t("collections")}</a>
-        <a href="submissions.html"><i class="bi bi-bank"></i>${t("submissions")}</a>
         ${isAdminRole ? `<a href="pradeshikams.html"><i class="bi bi-diagram-3"></i>${t("pradeshikams")}</a>` : ""}
       </div>
     </div>`
+        : ""
+    }
+    ${
+      !isAdminRole && !isSub
+        ? `<a href="submissions.html"><i class="bi bi-bank"></i>${t("submissions")}</a>`
         : ""
     }
     ${
@@ -50,13 +53,14 @@ if (session) {
       <div class="nav-dropdown-menu"></div>
     </div>
     <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("sub_committee_expenses")}</a>
-    <a href="subcommittee-allocation.html"><i class="bi bi-cash-stack"></i>${t("sub_committee_allocation")}</a>`
+    <a href="subcommittee-allocation.html"><i class="bi bi-cash-stack"></i>${t("sub_committee_allocation")}</a>
+    <a href="submissions.html"><i class="bi bi-bank"></i>${t("submissions")}</a>`
         : ""
     }
     ${
       isSub
         ? `<a href="subcommittee-collections.html"><i class="bi ${myCommittee?.icon || "bi-cash-coin"}"></i>${t("collection")}</a>
-    <a href="subcommittee-submissions.html"><i class="bi bi-bank"></i>${t("submission")}</a>
+    <a href="submissions.html"><i class="bi bi-bank"></i>${t("submission")}</a>
     <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("expense")}</a>
     ${myCommittee?.financeAccess ? `<a href="members.html"><i class="bi bi-people"></i>${t("members")}</a><a href="add-member.html"><i class="bi bi-person-plus"></i>${t("add_member")}</a>` : ""}`
         : ""
@@ -64,7 +68,7 @@ if (session) {
     <div class="nav-section">${t("nav_system")}</div>
     <a href="#" onclick="logout();return false"><i class="bi bi-box-arrow-right"></i>${t("logout")}</a>
   </nav>
-  ${isAdminRole ? `<div class="sidebar-footer"><button class="btn btn-sm btn-outline-light w-100" onclick="resetPrototype()">${t("reset_prototype_data")}</button></div>` : ""}
+
 </aside>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">${t("app_full_name")}</div><div class="topbar-tools"><button type="button" class="topbar-tool lang-tool" onclick="toggleFcmsLang()" title="${t("language")}" aria-label="${t("language")}"><i class="bi bi-translate"></i><span>${fcmsLang() === "ml" ? "ML" : "EN"}</span></button><button type="button" class="topbar-tool theme-tool" id="themeToggleBtn" title="${t("dark_mode")}" aria-label="${t("dark_mode")}"><i class="bi ${fcmsTheme() === "dark" ? "bi-sun" : "bi-moon-stars"}"></i></button></div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${isAdminRole ? t("main_committee") : isSub ? t("sub_committee") : t("pradeshikam")}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;

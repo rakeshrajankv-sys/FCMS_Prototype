@@ -42,7 +42,7 @@ if (!donation) {
       const receipt = document.getElementById("receipt").value.trim(),
         amount = Number(document.getElementById("amount").value),
         err = document.getElementById("formError"),
-        dup = [...db.payments, ...(db.donations || [])].find(
+        dup = (db.donations || []).find(
           (x) =>
             x !== donation &&
             String(x.receiptNumber || "").toLowerCase() ===

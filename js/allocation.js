@@ -3,6 +3,7 @@ if (!s || s.role !== "admin") location.href = "dashboard.html";
 else {
   let db = getDB();
   markActive();
+  function oldCommitteeToNumber(v) { return v === "other" ? null : Number(v); }
   function render() {
     const rows = [...(db.subcommitteeAllocations || [])].sort(
       (a, b) =>
@@ -48,9 +49,47 @@ else {
         document.getElementById("otherPurpose").focus();
         return;
       }
+      const newCommitteeId = document.getElementById("committee").value;
+      if (editId) {
+        const old = db.subcommitteeAllocations.find((y) => y.id === editId);
+        if (old && old.committeeId !== "other") {
+          const oldSpent = subCommitteeExpenseTotal(old.committeeId, db);
+          if (oldCommitteeToNumber(old.committeeId) !== oldCommitteeToNumber(newCommitteeId) && oldSpent > 0 && Number(old.amount || 0) - amount < oldSpent) {
+            err.textContent = `The old committee already has ${money(oldSpent)} in expenses; the existing allocation cannot be reduced below that amount.`;
+            err.classList.remove("d-none");
+            return;
+          }
+        }
+        if (newCommitteeId !== "other") {
+          const newSpent = subCommitteeExpenseTotal(newCommitteeId, db);
+          if (amount < newSpent) {
+            err.textContent = `Allocation cannot be reduced below this committee's existing expenses of ${money(newSpent)}.`;
+            err.classList.remove("d-none");
+            return;
+          }
+        }
+        const availableOffice = mainOfficeAvailableBalance(db, editId);
+        if (amount > availableOffice) {
+          err.textContent = `Allocation cannot exceed the Main Office available balance of ${money(availableOffice)}.`;
+          err.classList.remove("d-none");
+          return;
+        }
+      } else {
+        const availableOffice = mainOfficeAvailableBalance(db);
+        if (amount > availableOffice) {
+          err.textContent = `Allocation cannot exceed the Main Office available balance of ${money(availableOffice)}.`;
+          err.classList.remove("d-none");
+          return;
+        }
+        if (newCommitteeId !== "other" && amount < subCommitteeExpenseTotal(newCommitteeId, db)) {
+          err.textContent = `Allocation cannot be less than this committee's existing expenses of ${money(subCommitteeExpenseTotal(newCommitteeId, db))}.`;
+          err.classList.remove("d-none");
+          return;
+        }
+      }
       const x = {
         id: editId || uid("sca"),
-        committeeId: document.getElementById("committee").value,
+        committeeId: newCommitteeId,
         purpose: document.getElementById("committee").value === "other" ? document.getElementById("otherPurpose").value.trim() : "",
         amount,
         date: document.getElementById("date").value,
@@ -108,11 +147,21 @@ else {
     );
     document.querySelectorAll(".del").forEach(
       (b) =>
-        (b.onclick = () => {
+        (b.onclick = async () => {
           const x = db.subcommitteeAllocations.find(
             (y) => y.id === b.dataset.id,
           );
-          if (!x || !confirm("Delete this allocation?")) return;
+          if (!x) return;
+          const committeeId = x.committeeId || x.subCommitteeId;
+          if (committeeId !== "other") {
+            const spent = subCommitteeExpenseTotal(committeeId, db);
+            const remainingAfterDelete = Math.max(0, subCommitteeAllocationTotal(committeeId, db) - Number(x.amount || 0));
+            if (remainingAfterDelete < spent) {
+              toast(`This allocation cannot be deleted because ${money(spent)} has already been spent by this Sub Committee.`, "danger");
+              return;
+            }
+          }
+          if (!(await confirmDialog(`Delete this allocation?`))) return;
           db.subcommitteeAllocations = db.subcommitteeAllocations.filter(
             (y) => y.id !== x.id,
           );

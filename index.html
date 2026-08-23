@@ -12,7 +12,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     />
-    <link rel="stylesheet" href="css/style.css?v=20260821logo2" />
+    <link rel="stylesheet" href="css/style.css?v=20260823ui5" />
   </head>
   <body class="login-page">
     <div class="login-slideshow" aria-hidden="true">
@@ -34,8 +34,8 @@
       <div class="login-card">
         <div class="login-heading mb-4">
           <div class="login-heading-copy">
-            <h2 data-i18n="welcome_back">Welcome back</h2>
-            <p class="text-muted mb-0" data-i18n="sign_in_continue">Sign in to continue</p>
+            <h2>Welcome back</h2>
+            <p class="text-muted mb-0">Sign in to continue</p>
           </div>
           <div class="login-theme-controls" aria-label="Appearance controls">
             <button type="button" class="login-theme-btn" id="loginThemeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
@@ -50,7 +50,7 @@
               id="username"
               class="form-control form-control-lg"
               required
-              placeholder="Enter username" data-i18n-placeholder="enter_username"
+              placeholder="Enter username"
             />
           </div>
           <div class="mb-3">
@@ -60,7 +60,7 @@
               type="password"
               class="form-control form-control-lg"
               required
-              placeholder="Enter password" data-i18n-placeholder="enter_password"
+              placeholder="Enter password"
             />
           </div>
           <div id="loginError" class="alert alert-danger d-none"></div>
@@ -70,8 +70,8 @@
         </form>
       </div>
     </div>
-    <script src="js/ui-kit.js?v=20260821mlfix1"></script>
-    <script src="js/data.js?v=20260818d"></script>
+    <script src="js/ui-kit.js?v=20260822mlfix1"></script>
+    <script src="js/data.js?v=20260821program1"></script>
     <script src="js/auth.js?v=20260818smooth2"></script>
     <script>
       (function(){
@@ -85,7 +85,6 @@
         }
         btn?.addEventListener("click",()=>{ toggleFcmsTheme(); sync(); });
         sync();
-        applyFcmsTranslations();
       })();
     </script>
     <script>

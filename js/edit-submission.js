@@ -32,6 +32,24 @@ if (s.role !== "admin") {
           err.classList.remove("d-none");
           return;
         }
+        const submittedMemberExcludingCurrent = (db.submissions || []).filter(x => Number(x.pradeshikamId) === Number(sub.pradeshikamId) && x.id !== sub.id).reduce((sum,x) => sum + Number(x.memberAmount || 0), 0);
+        const submittedDonationExcludingCurrent = (db.submissions || []).filter(x => Number(x.pradeshikamId) === Number(sub.pradeshikamId) && x.id !== sub.id).reduce((sum,x) => sum + Number(x.donationAmount || 0), 0);
+        const availableMember = memberCollectionTotal(sub.pradeshikamId, db) - submittedMemberExcludingCurrent;
+        const availableDonation = donationTotal(sub.pradeshikamId, db) - submittedDonationExcludingCurrent;
+        if (ma > availableMember || da > availableDonation) {
+          err.textContent = `Submission cannot exceed the available source balance. Member remaining: ${money(Math.max(0, availableMember))}; Donation remaining: ${money(Math.max(0, availableDonation))}.`;
+          err.classList.remove("d-none");
+          return;
+        }
+        const officeNet = mainOfficeNetBalance(db, null, null, sub.id, "pradeshikam");
+        const proposedOfficeNet = officeNet + (ma + da);
+        const committedOffice = mainOfficeNetBalance(db);
+        const proposedDelta = (ma + da) - Number(sub.amount || 0);
+        if (committedOffice + proposedDelta < 0) {
+          err.textContent = `This edit would put Main Office into a deficit of ${money(Math.abs(committedOffice + proposedDelta))}. Reduce the submission or clear existing commitments first.`;
+          err.classList.remove("d-none");
+          return;
+        }
         const old = { ...sub };
         Object.assign(sub, {
           memberAmount: ma,

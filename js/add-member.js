@@ -261,9 +261,7 @@ function saveHousehold(hold) {
     receiptMode === "one" ? [masterReceipt] : draft.map((m) => m.receiptNumber);
   const allExisting = [
     ...db.payments.map((p) => p.receiptNumber),
-    ...(db.donations || []).map((d) => d.receiptNumber),
     ...db.payments.map((p) => p.masterReceiptNumber).filter(Boolean),
-    ...(db.donations || []).map((d) => d.masterReceiptNumber).filter(Boolean),
   ];
   if (
     receipts.some((r) =>

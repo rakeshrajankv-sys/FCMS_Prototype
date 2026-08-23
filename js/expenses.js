@@ -29,6 +29,7 @@ else {
 
     document.getElementById("page-content").innerHTML = `
   ${pageTitle("Expenses", "Record and manage expenses by committee", `<button id="add" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Add Expense</button>`)}
+  ${mainOfficeDeficit(db)>0?`<div class="alert alert-danger d-flex align-items-center gap-2 mb-4"><i class="bi bi-exclamation-triangle-fill"></i><span>Main Office deficit: ${money(mainOfficeDeficit(db))}. New expenses are blocked until sufficient funds are received or existing commitments are reduced.</span></div>`:""}
   <div class="row g-3 mb-4">
     ${card("bi-receipt", "Total Expenses", total)}
     ${card("bi-diagram-2", "Sub Committee Expenses", subTotal)}
