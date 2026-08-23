@@ -69,12 +69,20 @@ function renderRows() {
     )
     .forEach((el) => el.addEventListener("input", () => {
       updateCollectableUI(el.dataset.i);
+      updateRequiredAmountUI();
       updatePreview();
     }));
   document
     .querySelectorAll(".member-name")
     .forEach((el) => el.addEventListener("input", renderPayers));
   updatePreview();
+}
+function updateRequiredAmountUI() {
+  const members = getDraftMembers();
+  members.forEach((m) => {
+    const el = document.getElementById(`req-${m.index}`);
+    if (el) el.textContent = `Required: ${money(m.requiredAmount)}`;
+  });
 }
 function getDraftMembers() {
   const count = Number(document.getElementById("memberCount").value) || 1;

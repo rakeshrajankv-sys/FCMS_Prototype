@@ -241,10 +241,15 @@ function formatPhone(v, countryCode = "+91") {
   return digits ? `${countryCode || "+91"} ${digits}` : "";
 }
 function requiredAmount(gender, age, collectable = true) {
-  // The ₹8,000 / ₹2,000 contribution applies only when the member is
-  // 21+ and has been marked as collectable.
-  if (Number(age) < 21 || !collectable) return 0;
-  return gender === "Male" ? 8000 : gender === "Female" ? 2000 : 0;
+  // Required contribution is calculated from the current form values.
+  // Normalize inputs so typing/pasting an age or gender in a slightly
+  // different format cannot make the amount intermittently disappear.
+  const normalizedAge = Number.parseInt(String(age ?? "").trim(), 10);
+  const normalizedGender = String(gender ?? "").trim().toLowerCase();
+  if (!Number.isFinite(normalizedAge) || normalizedAge < 21 || collectable === false) return 0;
+  if (normalizedGender === "male") return 8000;
+  if (normalizedGender === "female") return 2000;
+  return 0;
 }
 function statusFor(required, paid) {
   required = Number(required) || 0;

@@ -23,6 +23,14 @@ if (!member) {
 <div class="col-md-4"><label class="form-label">House Number / വീടിന്റെ നമ്പർ *</label><input id="house" class="form-control" required value="${escapeHTML(member.houseNumber || "")}"></div>
 <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pradeshikam" class="form-select">${db.pradeshikams.map((p) => `<option value="${p.id}" ${Number(member.pradeshikamId) === Number(p.id) ? "selected" : ""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
 </div><div class="receipt-box mt-4">Required amount: <b>${money(member.requiredAmount)}</b></div><div id="formError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><a href="member-details.html?id=${encodeURIComponent(member.id)}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div></form></div>`;
+  function syncRequiredAmountUI() {
+    const age = document.getElementById("age")?.value || "";
+    const gender = document.getElementById("gender")?.value || "";
+    const collectable = document.querySelector('input[name="collectable"]:checked')?.value !== "no";
+    const amount = requiredAmount(gender, age, Number.parseInt(age, 10) >= 21 ? collectable : false);
+    const box = document.querySelector(".receipt-box");
+    if (box) box.innerHTML = `Required amount: <b>${money(amount)}</b>`;
+  }
   function syncCollectableUI() {
     const age = Number(document.getElementById("age").value) || 0;
     const wrap = document.getElementById("collectableWrap");
@@ -34,13 +42,18 @@ if (!member) {
       if (yes) yes.checked = true;
       if (no) no.checked = false;
     }
+    syncRequiredAmountUI();
   }
   const initialCollectable = member.collectable !== false;
   document.getElementById("collectableYes").checked = initialCollectable;
   document.getElementById("collectableNo").checked = !initialCollectable;
   document.getElementById("age").addEventListener("input", syncCollectableUI);
+  document.getElementById("age").addEventListener("change", syncCollectableUI);
+  document.getElementById("gender").addEventListener("change", syncRequiredAmountUI);
+  document.getElementById("gender").addEventListener("input", syncRequiredAmountUI);
   document.querySelectorAll('input[name="collectable"]').forEach((el) => el.addEventListener("change", syncCollectableUI));
   syncCollectableUI();
+  syncRequiredAmountUI();
 
   document.getElementById("editMemberForm").addEventListener("submit", (e) => {
     e.preventDefault();

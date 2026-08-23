@@ -32,7 +32,7 @@ ${rows("Submissions",["Date","Amount","Receipt/Voucher","Remarks"],r.submissions
 
 function renderSubCommitteeReport() {
   const c=db.subCommittees.find(x=>Number(x.id)===Number(s.subCommitteeId));
-  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="report-filter-field"><label class="form-label">Report</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
+  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
   const id=c?.id;
   const render=()=>{ const r=scFilterRows(id), docs=documentRows(id); document.getElementById("scSummary").innerHTML=`<div class="row g-3"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value">${money(subCommitteeCollectionTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(subCommitteeSubmittedTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Received from Office</div><div class="stat-value">${money(subCommitteeAllocationTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">${money(subCommitteeExpenseTotal(id,db))}</div></div></div></div>`;
     const type=document.getElementById("scType").value; let html="";
@@ -51,20 +51,20 @@ function renderMainReport(){
   const isAdmin = s.role === "admin";
   const fixedPradeshikam = s.role === "pradeshikam" ? s.pradeshikamId : "";
 
-  document.getElementById("page-content").innerHTML = `<div class="reports-page">${pageTitle("Reports","View financial and operational reports.")}
-  <div class="panel report-filter-panel mb-4">
-    <div class="report-scope-row">
-      <div class="report-scope-field">
-        <label class="form-label">View Reports <span aria-hidden="true">*</span></label>
+  document.getElementById("page-content").innerHTML = `${pageTitle("Reports","View financial and operational reports.")}
+  <div class="panel mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">View Reports / റിപ്പോർട്ടുകൾ കാണുക *</label>
         <select id="reportScope" class="form-select">
-          <option value="pradeshikam">Pradeshikam Reports</option>
-          ${isAdmin ? '<option value="subcommittee">Sub Committee Reports</option>' : ''}
+          <option value="pradeshikam">Pradeshikam Reports / പ്രദേശിക റിപ്പോർട്ടുകൾ</option>
+          ${isAdmin ? '<option value="subcommittee">Sub Committee Reports / ഉപസമിതി റിപ്പോർട്ടുകൾ</option>' : ''}
         </select>
       </div>
+      <div class="col-md-9" id="reportControls"></div>
     </div>
-    <div id="reportControls" class="report-controls"></div>
   </div>
-  <div class="panel report-summary-panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div></div>`;
+  <div class="panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div>`;
 
   const scopeEl = document.getElementById("reportScope");
   const controlsEl = document.getElementById("reportControls");
@@ -72,19 +72,19 @@ function renderMainReport(){
   function renderControls(){
     const scope = scopeEl.value;
     if(scope === "subcommittee" && isAdmin){
-      controlsEl.innerHTML = `<div class="report-filter-grid report-filter-grid--three">
-        <div class="report-filter-field"><label class="form-label">Sub Committee</label><select id="sc" class="form-select"><option value="">All Sub Committees</option>${db.subCommittees.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}<option value="other">Other</option></select></div>
-        <div class="report-filter-field"><label class="form-label">Report</label><select id="type" class="form-select">
+      controlsEl.innerHTML = `<div class="row g-2 align-items-end">
+        <div class="col-md-5"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="sc" class="form-select"><option value="">All Sub Committees</option>${db.subCommittees.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}<option value="other">Other</option></select></div>
+        <div class="col-md-5"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select">
           <option value="subcommitteeOverview">Sub Committee Overview</option><option value="subcommittee">Collections</option><option value="subcommitteePayments">Additional Payments</option><option value="subcommitteeAllocations">Allocations</option><option value="subcommitteeExpenses">Expenses</option><option value="subcommitteeSubmissions">Submissions</option><option value="subcommitteeDocuments">Documents</option><option value="subcommitteeFull">Full Report</option>
         </select></div>
-        <div class="report-filter-field report-filter-action"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
       </div>`;
     } else {
-      controlsEl.innerHTML = `<div class="report-filter-grid report-filter-grid--four">
-        <div class="report-filter-field"><label class="form-label">Pradeshikam</label><select id="pr" class="form-select" ${!isAdmin?'disabled':''}>${isAdmin?'<option value="">All Pradeshikams</option>':''}${db.pradeshikams.filter(p=>isAdmin||Number(p.id)===Number(fixedPradeshikam)).map(p=>`<option value="${p.id}" ${!isAdmin?'selected':''}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
-        <div class="report-filter-field"><label class="form-label">Status</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div>
-        <div class="report-filter-field"><label class="form-label">Report</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option></select></div>
-        <div class="report-filter-field report-filter-action"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
+      controlsEl.innerHTML = `<div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pr" class="form-select" ${!isAdmin?'disabled':''}>${isAdmin?'<option value="">All Pradeshikams</option>':''}${db.pradeshikams.filter(p=>isAdmin||Number(p.id)===Number(fixedPradeshikam)).map(p=>`<option value="${p.id}" ${!isAdmin?'selected':''}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
+        <div class="col-md-2"><label class="form-label">Status / നില</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div>
+        <div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option></select></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
       </div>`;
     }
     bindControls();
