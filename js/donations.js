@@ -11,7 +11,7 @@ const visibleMembers =
         (m) => Number(m.pradeshikamId) === Number(s.pradeshikamId),
       );
 document.getElementById("page-content").innerHTML = `
-${pageTitle("Donations", "", `<button id="exportDonations" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV</button>`)}
+${pageTitle("Donations", "", `<button id="exportDonations" class="btn btn-outline-primary export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button>`)}
 <div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Donations</div><div class="stat-value" id="donationTotal">₹0</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Member Donations</div><div class="stat-value" id="memberDonationTotal">₹0</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Other Donations</div><div class="stat-value" id="otherDonationTotal">₹0</div></div></div></div>
 <div class="panel mb-4" id="donationAddPanel"><div class="panel-title mb-3">Add Donation</div><form id="donationForm" novalidate><div class="row g-3">
 <div class="col-md-4"><label class="form-label">Donation Source / സംഭാവനയുടെ ഉറവിടം *</label><select id="sourceType" class="form-select" required><option value="Member">Member</option><option value="Shop">Shop</option><option value="Organization">Organization</option><option value="Other">Other</option></select></div>

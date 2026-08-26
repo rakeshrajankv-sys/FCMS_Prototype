@@ -30,8 +30,8 @@ const allActions=[...new Set([...(db.activities||[]).map(a=>a.action),
 ])].filter(Boolean).sort();
 
 const content=document.getElementById("page-content");
-content.innerHTML=`${pageTitle("Activity History","Complete audit trail for Pradeshikam and Sub Committee activity.",`<button id="exportActivity" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>Export History</button>`)}
-<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">View Activity / പ്രവർത്തനങ്ങൾ കാണുക *</label><select id="activityScope" class="form-select"><option value="pradeshikam">Pradeshikam Activity / പ്രദേശിക പ്രവർത്തനങ്ങൾ</option><option value="subcommittee">Sub Committee Activity / ഉപസമിതി പ്രവർത്തനങ്ങൾ</option></select></div><div class="col-md-8" id="activityControls"></div></div></div>
+content.innerHTML=`${pageTitle("Activity History","Complete audit trail for Pradeshikam and Sub Committee activity.",`<button id="exportActivity" class="btn btn-outline-primary export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button>`)}
+<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">View Activity / പ്രവർത്തനങ്ങൾ കാണുക *</label><select id="activityScope" class="form-select"><option value="pradeshikam">${t("pradeshikam_activity")}</option><option value="subcommittee">${t("subcommittee_activity")}</option></select></div><div class="col-md-8" id="activityControls"></div></div></div>
 <div class="panel"><div id="activityList"></div></div>`;
 
 const scopeEl=document.getElementById("activityScope"), controlsEl=document.getElementById("activityControls");

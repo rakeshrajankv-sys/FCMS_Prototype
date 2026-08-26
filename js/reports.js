@@ -32,7 +32,7 @@ ${rows("Submissions",["Date","Amount","Receipt/Voucher","Remarks"],r.submissions
 
 function renderSubCommitteeReport() {
   const c=db.subCommittees.find(x=>Number(x.id)===Number(s.subCommitteeId));
-  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
+  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
   const id=c?.id;
   const render=()=>{ const r=scFilterRows(id), docs=documentRows(id); document.getElementById("scSummary").innerHTML=`<div class="row g-3"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value">${money(subCommitteeCollectionTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(subCommitteeSubmittedTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Received from Office</div><div class="stat-value">${money(subCommitteeAllocationTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">${money(subCommitteeExpenseTotal(id,db))}</div></div></div></div>`;
     const type=document.getElementById("scType").value; let html="";
@@ -57,8 +57,8 @@ function renderMainReport(){
       <div class="col-md-3">
         <label class="form-label">View Reports / റിപ്പോർട്ടുകൾ കാണുക *</label>
         <select id="reportScope" class="form-select">
-          <option value="pradeshikam">Pradeshikam Reports / പ്രദേശിക റിപ്പോർട്ടുകൾ</option>
-          ${isAdmin ? '<option value="subcommittee">Sub Committee Reports / ഉപസമിതി റിപ്പോർട്ടുകൾ</option>' : ''}
+          <option value="pradeshikam">${t("pradeshikam_reports")}</option>
+          ${isAdmin ? `<option value="subcommittee">${t("subcommittee_reports")}</option>` : ''}
         </select>
       </div>
       <div class="col-md-9" id="reportControls"></div>
@@ -77,14 +77,14 @@ function renderMainReport(){
         <div class="col-md-5"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select">
           <option value="subcommitteeOverview">Sub Committee Overview</option><option value="subcommittee">Collections</option><option value="subcommitteePayments">Additional Payments</option><option value="subcommitteeAllocations">Allocations</option><option value="subcommitteeExpenses">Expenses</option><option value="subcommitteeSubmissions">Submissions</option><option value="subcommitteeDocuments">Documents</option><option value="subcommitteeFull">Full Report</option>
         </select></div>
-        <div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div>
       </div>`;
     } else {
       controlsEl.innerHTML = `<div class="row g-2 align-items-end">
         <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pr" class="form-select" ${!isAdmin?'disabled':''}>${isAdmin?'<option value="">All Pradeshikams</option>':''}${db.pradeshikams.filter(p=>isAdmin||Number(p.id)===Number(fixedPradeshikam)).map(p=>`<option value="${p.id}" ${!isAdmin?'selected':''}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
         <div class="col-md-2"><label class="form-label">Status / നില</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div>
         <div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option></select></div>
-        <div class="col-md-2"><button id="download" class="btn btn-primary w-100"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Export</button></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div>
       </div>`;
     }
     bindControls();
