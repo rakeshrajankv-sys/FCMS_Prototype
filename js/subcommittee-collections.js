@@ -176,7 +176,7 @@ ${selector}
       : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Source</th><th>Name</th><th>Place</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${arr
           .map(
             (x) =>
-              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}<a class="btn btn-sm btn-primary" href="subcommittee-add-payment.html?id=${encodeURIComponent(x.id)}" title="Add Payment"><i class="bi bi-plus-circle"></i></a></div></td></tr>`,
+              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${(s.role === "admin" || (s.role === "subcommittee" && Number(x.subCommitteeId) === Number(s.subCommitteeId))) ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}<a class="btn btn-sm btn-primary" href="subcommittee-add-payment.html?id=${encodeURIComponent(x.id)}" title="Add Payment"><i class="bi bi-plus-circle"></i></a></div></td></tr>`,
           )
           .join("")}</tbody></table></div>`;
     document
@@ -267,6 +267,7 @@ ${selector}
       amount,
       receiptNumber: receipt,
       paymentMode: document.getElementById("scMode").value,
+      transactionId: fcmsGetUpiTransactionId("scMode"),
       date: new Date(
         document.getElementById("scDate").value + "T12:00:00",
       ).toISOString(),
@@ -286,7 +287,7 @@ ${selector}
       details: `${collection.sourceType} at ${collection.place}, receipt ${receipt}.`,
       newValue: subCommitteeCollectionSnapshot(collection),
     });
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     form.reset();
     render();
   });
@@ -300,6 +301,7 @@ ${selector}
       Receipt: x.receiptNumber || "",
       Amount: x.amount,
       PaymentMode: x.paymentMode || "",
+      TransactionID: x.transactionId || "",
       Remarks: x.remarks || "",
     }));
     exportCSV(
@@ -323,13 +325,13 @@ async function deleteCollection(id) {
     entityId: x.id,
     summary: `${committeeName(x.subCommitteeId)}: collection ${x.receiptNumber} deleted`,
     details: `${money(x.amount)} from ${x.donorName || "donor"}.`,
-    oldValue: subCommitteeCollectionSnapshot(x),
+    oldValue: { ...x, relatedPayments: (db.subCommitteeCollectionPayments || []).filter(p => p.collectionId === x.id).map(p => ({...p})) },
   });
   db.subCommitteeCollections = db.subCommitteeCollections.filter(
     (c) => c.id !== id,
   );
   db.subCommitteeCollectionPayments = (db.subCommitteeCollectionPayments || []).filter((p) => p.collectionId !== id);
-  saveDB(db);
+  fcmsClearPageDraft(); saveDB(db);
   toast("Collection deleted.", "success");
   render();
 }

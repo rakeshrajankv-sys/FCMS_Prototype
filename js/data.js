@@ -87,6 +87,7 @@ function seedDemoData() {
       subCommitteeSubmissions: [],
       subCommitteeAllocations: [],
       subCommitteeExpenses: [],
+      verifiedUsers: [],
     };
   db.pradeshikams ||= DEFAULT_PRADESHIKAMS;
   db.pradeshikams.forEach((p, i) => {
@@ -154,6 +155,7 @@ function seedDemoData() {
   db.subCommitteeSubmissions ||= [];
   db.subCommitteeAllocations ||= [];
   db.subCommitteeExpenses ||= [];
+  db.verifiedUsers ||= [];
   db.members.forEach((m) => {
     m.countryCode ||= "+91";
     m.maritalStatus ||= "Single";
@@ -448,6 +450,7 @@ function subCommitteeCollectionSnapshot(c) {
     place: c.place || "",
     subCommitteeId: c.subCommitteeId,
     paymentMode: c.paymentMode || "",
+    transactionId: c.transactionId || "",
     date: c.date || c.createdAt,
     remarks: c.remarks || "",
   };
@@ -475,7 +478,20 @@ function clearSession() {
 }
 function actorLabel() {
   const s = currentSession();
-  return s ? (s.role === "admin" ? "Main Committee" : s.name) : "System";
+  return s ? (s.name || (s.role === "admin" ? "Main Committee" : "User")) : "System";
+}
+function actorContext(db) {
+  const s = currentSession();
+  if (!s) return { actorUserId:null, actorPhone:null, actorPradeshikamId:null, actorSubCommitteeId:null, actorBelongsTo:"System" };
+  const pr = db?.pradeshikams?.find(p => Number(p.id) === Number(s.pradeshikamId));
+  const sc = db?.subCommittees?.find(c => Number(c.id) === Number(s.subCommitteeId));
+  return {
+    actorUserId: s.id || null,
+    actorPhone: s.verifiedPhone || null,
+    actorPradeshikamId: s.role === "pradeshikam" ? (s.pradeshikamId || null) : null,
+    actorSubCommitteeId: s.role === "subcommittee" ? (s.subCommitteeId || null) : null,
+    actorBelongsTo: s.role === "admin" ? "Main Committee" : s.role === "pradeshikam" ? (pr?.name || s.name || "Pradeshikam") : s.role === "subcommittee" ? (sc?.name || s.name || "Sub Committee") : "System",
+  };
 }
 function addActivity(
   db,
@@ -493,6 +509,7 @@ function addActivity(
   },
 ) {
   db.activities ||= [];
+  const actorMeta = actorContext(db);
   db.activities.unshift({
     id: uid("act"),
     timestamp: new Date().toISOString(),
@@ -508,7 +525,51 @@ function addActivity(
     details: details || "",
     oldValue: oldValue === undefined ? null : oldValue,
     newValue: newValue === undefined ? null : newValue,
+    actorPhone: actorMeta.actorPhone,
+    actorUserId: actorMeta.actorUserId,
+    actorPradeshikamId: actorMeta.actorPradeshikamId,
+    actorSubCommitteeId: actorMeta.actorSubCommitteeId,
+    actorBelongsTo: actorMeta.actorBelongsTo,
   });
+}
+
+function restoreDeletedActivity(db, activityId) {
+  const a = (db.activities || []).find(x => x.id === activityId);
+  if (!a || !String(a.action || "").includes("Deleted") || !a.oldValue) return { ok:false, message:"This activity cannot be restored." };
+  const map = {
+    member:"members", payment:"payments", donation:"donations", submission:"submissions",
+    subCommitteeCollection:"subCommitteeCollections", subCommitteeCollectionPayment:"subCommitteeCollectionPayments",
+    subCommitteeAllocation:"subCommitteeAllocations", subcommitteeAllocation:"subCommitteeAllocations",
+    subCommitteeExpense:"subCommitteeExpenses", subcommitteeExpense:"subCommitteeExpenses",
+    subCommitteeSubmission:"subCommitteeSubmissions"
+  };
+  const key = map[a.entityType];
+  if (!key) return { ok:false, message:"Restore is not supported for this record type." };
+  db[key] ||= [];
+  if (db[key].some(x => String(x.id) === String(a.entityId))) return { ok:false, message:"This record is already present." };
+  const restored = { ...a.oldValue, id:a.entityId };
+  const relatedPayments = Array.isArray(restored.relatedPayments) ? restored.relatedPayments.map(x => ({...x})) : [];
+  delete restored.relatedPayments;
+  if (a.entityType === "payment" && !restored.memberId) restored.memberId = a.memberId || null;
+  if (a.entityType === "member" && restored.pradeshikamId == null) restored.pradeshikamId = a.pradeshikamId || null;
+  if (String(a.entityType).toLowerCase().includes("subcommittee") && restored.subCommitteeId == null) restored.subCommitteeId = a.subCommitteeId || null;
+  restored.restoredAt = new Date().toISOString();
+  restored.restoredBy = actorLabel();
+  db[key].push(restored);
+  if (a.entityType === "subCommitteeCollection" && relatedPayments.length) {
+    db.subCommitteeCollectionPayments ||= [];
+    relatedPayments.forEach(p => { if (!db.subCommitteeCollectionPayments.some(x => String(x.id) === String(p.id))) db.subCommitteeCollectionPayments.push(p); });
+  }
+  addActivity(db,{
+    action:`${entityTypeRestoreLabel(a.entityType)} Restored`, entityType:a.entityType, entityId:a.entityId,
+    memberId:a.memberId, pradeshikamId:a.pradeshikamId, subCommitteeId:a.subCommitteeId,
+    summary:`Restored deleted record: ${a.summary || a.entityType}`, details:`Restored from Activity History after confirmation.`, newValue:restored
+  });
+  return { ok:true, restored };
+}
+function entityTypeRestoreLabel(type) {
+  const map={member:"Member",payment:"Payment",donation:"Donation",submission:"Submission",subCommitteeCollection:"Sub Committee Collection",subCommitteeCollectionPayment:"Sub Committee Collection Payment",subCommitteeAllocation:"Sub Committee Allocation",subcommitteeAllocation:"Sub Committee Allocation",subCommitteeExpense:"Sub Committee Expense",subcommitteeExpense:"Sub Committee Expense",subCommitteeSubmission:"Sub Committee Submission"};
+  return map[type] || "Record";
 }
 function memberSnapshot(m) {
   if (!m) return null;
@@ -534,6 +595,7 @@ function paymentSnapshot(p) {
     masterReceiptNumber: p.masterReceiptNumber || null,
     amount: Number(p.amount),
     paymentMode: p.paymentMode,
+    transactionId: p.transactionId || "",
     status: p.status || "completed",
     remarks: p.remarks || "",
     paymentDate: p.paymentDate,
@@ -548,6 +610,7 @@ function donationSnapshot(d) {
     donorName: d.donorName || "",
     pradeshikamId: d.pradeshikamId,
     paymentMode: d.paymentMode || "",
+    transactionId: d.transactionId || "",
     status: d.status || "completed",
     date: d.date || d.createdAt,
     remarks: d.remarks || "",
@@ -555,5 +618,7 @@ function donationSnapshot(d) {
 }
 function resetPrototype() {
   localStorage.removeItem(FCMS_KEY);
+  localStorage.removeItem("fcms_verified_devices_v1");
+  localStorage.removeItem("fcms_verified_devices_v2");
   location.href = "index.html";
 }

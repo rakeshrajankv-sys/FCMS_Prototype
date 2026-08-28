@@ -278,7 +278,7 @@
             newValue: subCommitteeExpenseSnapshot(expense),
           });
         }
-        saveDB(db);
+        fcmsClearPageDraft(); saveDB(db);
         render();
       });
     document.getElementById("exportExp").addEventListener("click", () => {
@@ -312,10 +312,10 @@
       entityId: x.id,
       summary: `${committeeName(x.subCommitteeId)}: expense of ${money(x.amount)} deleted`,
       details: "",
-      oldValue: subCommitteeExpenseSnapshot(x),
+      oldValue: { ...x },
     });
     db.subCommitteeExpenses = db.subCommitteeExpenses.filter((e) => e.id !== id);
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     toast("Expense deleted.", "success");
     render();
   }

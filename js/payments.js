@@ -13,7 +13,7 @@ let rows = db.payments
   .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
 document.getElementById("page-content").innerHTML = `
 ${pageTitle("Collections", "Every installment is stored as a separate receipt.")}
-<div class="panel"><div class="row g-2 mb-3"><div class="col-md-6"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div><div class="col-md-2">${s.role === "admin" ? `<select id="prFilter" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : ""}</div><div class="col-md-2"><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="col-md-2"><select id="statusFilter" class="form-select"><option value="">All statuses</option><option value="completed">Completed</option><option value="hold">Hold</option></select></div><div class="col-md-2 mt-2 mt-md-0"><button id="exportBtn" class="btn btn-outline-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div><div id="paymentTable"></div></div>`;
+<div class="panel"><div class="collection-filter-row mb-3"><div class="filter-search"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div>${s.role === "admin" ? `<div><select id="prFilter" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select></div>` : ""}<div><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><select id="statusFilter" class="form-select"><option value="">All statuses</option><option value="completed">Completed</option><option value="hold">Hold</option></select></div><div class="filter-export"><button id="exportBtn" class="btn btn-outline-primary export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div><div id="paymentTable"></div></div>`;
 function render() {
   const q = document.getElementById("search").value.toLowerCase(),
     mode = document.getElementById("mode").value,
@@ -59,10 +59,10 @@ function render() {
         pradeshikamId: m?.pradeshikamId,
         summary: `Receipt ${p.receiptNumber} deleted`,
         details: `Payment deleted by Main Committee.`,
-        oldValue: paymentSnapshot(p),
+        oldValue: { ...p },
       });
       db.payments = db.payments.filter((x) => x.id !== pid);
-      saveDB(db);
+      fcmsClearPageDraft(); saveDB(db);
       toast("Payment deleted.", "success");
       rows = rows.filter((x) => x.id !== pid);
       render();
@@ -89,6 +89,7 @@ document.getElementById("exportBtn").addEventListener("click", () =>
         Pradeshikam: pr?.name || "",
         Amount: p.amount,
         Mode: p.paymentMode,
+        TransactionID: p.transactionId || "",
         Status: p.status === "hold" ? "Hold" : "Completed",
         Date: new Date(p.paymentDate).toLocaleString("en-IN"),
         Remarks: p.remarks || "",

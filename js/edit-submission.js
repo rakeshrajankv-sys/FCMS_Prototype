@@ -69,7 +69,7 @@ if (s.role !== "admin") {
           oldValue: old,
           newValue: sub,
         });
-        saveDB(db);
+        fcmsClearPageDraft(); saveDB(db);
         location.href = `submissions.html?pradeshikam=${sub.pradeshikamId}`;
       });
   }

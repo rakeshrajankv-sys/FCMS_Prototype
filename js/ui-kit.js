@@ -19,6 +19,20 @@ const FCMS_I18N = {
     nav_system: "System",
     dashboard: "Dashboard",
     activity_history: "Activity History",
+    verified_users: "Verified Users",
+    verified_name: "Name",
+    verified_phone: "Phone Number",
+    verified_role: "Role",
+    verified_belongs_to: "Belongs To",
+    verified_device: "Device",
+    verified_first: "First Verified",
+    verified_last: "Last Verified",
+    verified_count: "Count",
+    verified_actions: "Actions",
+    search_verified_users: "Search Verified Users",
+    all_roles: "All Roles",
+    no_verified_users: "No Verified Users Found",
+    verified_view_activity: "View Activity",
     reports: "Reports",
     view_reports: "View Reports",
     pradeshikam_reports: "Pradeshikam Reports",
@@ -39,6 +53,9 @@ const FCMS_I18N = {
     expense: "Expense",
     logout: "Logout",
     reset_prototype_data: "Reset Prototype Data",
+    reset_prototype_title: "Reset Prototype Data",
+    reset_prototype_message: "This will permanently delete all prototype members, collections, payments, donations, expenses, submissions, allocations and activity data for every committee. Continue?",
+    reset_prototype_button: "Reset Data",
     add_member: "Add Member",
     add_collection: "Add Collection",
     add_expense: "Add Expense",
@@ -90,6 +107,20 @@ const FCMS_I18N = {
     nav_system: "സിസ്റ്റം",
     dashboard: "ഡാഷ്ബോർഡ്",
     activity_history: "പ്രവർത്തന ചരിത്രം",
+    verified_users: "സ്ഥിരീകരിച്ച ഉപയോക്താക്കൾ",
+    verified_name: "പേര്",
+    verified_phone: "ഫോൺ നമ്പർ",
+    verified_role: "പങ്ക്",
+    verified_belongs_to: "ബന്ധപ്പെട്ട കമ്മിറ്റി",
+    verified_device: "ഉപകരണം",
+    verified_first: "ആദ്യ സ്ഥിരീകരണം",
+    verified_last: "അവസാന സ്ഥിരീകരണം",
+    verified_count: "എണ്ണം",
+    verified_actions: "നടപടികൾ",
+    search_verified_users: "സ്ഥിരീകരിച്ച ഉപയോക്താക്കളെ തിരയുക",
+    all_roles: "എല്ലാ റോളുകളും",
+    no_verified_users: "സ്ഥിരീകരിച്ച ഉപയോക്താക്കളെ കണ്ടെത്തിയില്ല",
+    verified_view_activity: "പ്രവർത്തനം കാണുക",
     reports: "റിപ്പോർട്ടുകൾ",
     view_reports: "റിപ്പോർട്ടുകൾ കാണുക",
     pradeshikam_reports: "പ്രദേശിക റിപ്പോർട്ടുകൾ",
@@ -110,6 +141,9 @@ const FCMS_I18N = {
     expense: "ചെലവ്",
     logout: "ലോഗ്ഔട്ട്",
     reset_prototype_data: "പ്രോട്ടോടൈപ്പ് ഡാറ്റ റീസെറ്റ് ചെയ്യുക",
+    reset_prototype_title: "പ്രോട്ടോടൈപ്പ് ഡാറ്റ റീസെറ്റ് ചെയ്യുക",
+    reset_prototype_message: "എല്ലാ കമ്മിറ്റികളുടെയും പ്രോട്ടോടൈപ്പ് അംഗങ്ങൾ, പിരിവുകൾ, പേയ്മെന്റുകൾ, സംഭാവനകൾ, ചെലവുകൾ, സമർപ്പണങ്ങൾ, വിഹിതങ്ങൾ, പ്രവർത്തന ചരിത്രം എന്നിവ സ്ഥിരമായി ഇല്ലാതാകും. തുടരണമോ?",
+    reset_prototype_button: "ഡാറ്റ റീസെറ്റ് ചെയ്യുക",
     add_member: "അംഗത്തെ ചേർക്കുക",
     add_collection: "പിരിവ് ചേർക്കുക",
     add_expense: "ചെലവ് ചേർക്കുക",
@@ -207,8 +241,34 @@ function toggleFcmsLang() {
 })();
 
 /* ---------- Malayalam UI coverage for dynamically rendered pages ---------- */
+const FCMS_PRADESHIKAM_ML = {
+  "Ambangad": "അമ്പങ്ങാട്",
+  "Bara/Mukkunnoth": "ബാര / മുക്കുന്നോത്ത്",
+  "Bedakam": "ബേഡകം",
+  "Chalingal": "ചാലിങ്ങൽ",
+  "Chemmanad": "ചെമ്മനാട്",
+  "Kalanad": "കളനാട്",
+  "kuttikkol": "കുറ്റിക്കോൽ",
+  "Kolathur/Maruthadukkam": "കൊളത്തൂർ / മരുതടുക്കം",
+  "Kaniyamabdi": "കനിയാമ്ബാടി",
+  "Melbara": "മേൽബാര",
+  "Poinachi": "പൊയിനാച്ചി",
+  "pakkam": "പാക്കം",
+  "Periya": "പെരിയ",
+  "Poochakkad": "പൂച്ചക്കാട്",
+  "Thokkanam/karuvakod": "തോക്കാനം / കരുവാക്കോട്",
+  "Thiravakoli": "തിരവക്കോളി",
+  "Udma": "ഉദുമ",
+  "chendalam": "ചെണ്ടളം"
+};
+function fcmsPradeshikamLabel(name) {
+  const raw = String(name || "");
+  return fcmsLang() === "ml" ? (FCMS_PRADESHIKAM_ML[raw] || raw) : raw;
+}
+
 const FCMS_ML_TEXT = {
   // User-provided Pradeshikam names
+  ...FCMS_PRADESHIKAM_ML,
   "All Pradeshikams": "എല്ലാ പ്രദേശങ്ങളും",
   "Selected": "തിരഞ്ഞെടുത്തത്",
   "Choose Image": "ചിത്രം തിരഞ്ഞെടുക്കുക",
@@ -289,9 +349,19 @@ const FCMS_ML_TEXT = {
   "Source": "ഉറവിടം", "Source *": "ഉറവിടം *", "Name": "പേര്", "Donor": "ദാതാവ്", "Donor Name *": "ദാതാവിന്റെ പേര് *",
   "Place": "സ്ഥലം", "Phone Number": "ഫോൺ നമ്പർ", "Country code": "രാജ്യ കോഡ്", "Receipt Number": "രസീത് നമ്പർ", "Receipt Number *": "രസീത് നമ്പർ *",
   "Payment Mode": "പേയ്മെന്റ് രീതി", "Payment Mode *": "പേയ്മെന്റ് രീതി *", "Cash": "കാഷ്", "UPI": "UPI", "Bank": "ബാങ്ക്", "Cheque": "ചെക്ക്",
+  "UPI Transaction ID": "UPI ട്രാൻസാക്ഷൻ ഐഡി", "UPI Transaction ID *": "UPI ട്രാൻസാക്ഷൻ ഐഡി *", "Enter transaction ID": "ട്രാൻസാക്ഷൻ ഐഡി നൽകുക",
+  "Enter the UPI transaction ID before saving.": "സേവ് ചെയ്യുന്നതിന് മുമ്പ് UPI ട്രാൻസാക്ഷൻ ഐഡി നൽകുക.",
+  "Receipt Setup": "രസീത് ക്രമീകരണം", "Receipt Setup *": "രസീത് ക്രമീകരണം *", "One receipt": "ഒരു രസീത്", "Receipt to each member": "ഓരോ അംഗത്തിനും രസീത്",
+  "Households": "കുടുംബങ്ങൾ", "House Number": "വീടിന്റെ നമ്പർ", "House Number:": "വീടിന്റെ നമ്പർ:", "House": "വീട്", "Member List": "അംഗങ്ങളുടെ പട്ടിക", "Add Payment": "പേയ്മെന്റ് ചേർക്കുക", "House Payment": "പേയ്മെന്റ്", "Payment": "പേയ്മെന്റ്", "Paid By": "പണം നൽകിയ അംഗം", "Payment Amount": "പേയ്മെന്റ് തുക", "House Balance": "കുടുംബ ബാക്കി", "Excess Donation": "അധിക സംഭാവന", "Save Payment": "പേയ്മെന്റ് സേവ് ചെയ്യുക", "Complete": "പൂർത്തിയായി", "Balance": "ബാക്കി", "Required": "ആവശ്യമായത്", "Paid": "ലഭിച്ചത്", "View": "കാണുക", "History": "ചരിത്രം", "View History": "ചരിത്രം കാണുക", "House History": "കുടുംബ ചരിത്രം", "Total": "ആകെ", "Total Paid": "ആകെ ലഭിച്ചത്", "Members": "അംഗങ്ങൾ", "Payments": "പേയ്മെന്റുകൾ", "Donations": "സംഭാവനകൾ", "Activity History": "പ്രവർത്തന ചരിത്രം", "Remaining": "ബാക്കി", "Receipt": "രസീത്", "Mode": "രീതി", "Status": "നില", "Date": "തീയതി", "Amount": "തുക", "Member": "അംഗം", "No payments recorded.": "പേയ്മെന്റുകൾ രേഖപ്പെടുത്തിയിട്ടില്ല.", "No donations recorded.": "സംഭാവനകൾ രേഖപ്പെടുത്തിയിട്ടില്ല.", "No activity recorded.": "പ്രവർത്തനങ്ങൾ രേഖപ്പെടുത്തിയിട്ടില്ല.",
+  "Household Details": "കുടുംബ വിവരങ്ങൾ", "Number of Members": "അംഗങ്ങളുടെ എണ്ണം", "Number of Members *": "അംഗങ്ങളുടെ എണ്ണം *", "Payment / Donation": "പേയ്മെന്റ് / സംഭാവന",
+  "Amount Received": "ലഭിച്ച തുക", "Amount Received *": "ലഭിച്ച തുക *", "Received From": "ലഭിച്ചത് ആരിൽ നിന്ന്", "Received From *": "ലഭിച്ചത് ആരിൽ നിന്ന് *",
+  "Member Receipt": "അംഗത്തിന്റെ രസീത്", "Member Receipt *": "അംഗത്തിന്റെ രസീത് *", "Marital Status": "വൈവാഹിക നില", "Marital Status *": "വൈവാഹിക നില *",
+  "Select Pradeshikam": "പ്രദേശികം തിരഞ്ഞെടുക്കുക", "Select": "തിരഞ്ഞെടുക്കുക", "Single": "അവിവാഹിതൻ / അവിവാഹിത", "Married": "വിവാഹിതൻ / വിവാഹിത", "Widower": "വിധവൻ",
+  "Save Member & Hold": "അംഗത്തെ സേവ് ചെയ്ത് ഹോൾഡ് ചെയ്യുക", "Save Members": "അംഗങ്ങളെ സേവ് ചെയ്യുക", "Enter amount received": "ലഭിച്ച തുക നൽകുക",
   "Status": "നില", "Completed": "പൂർത്തിയായി", "Hold": "താൽക്കാലികമായി നിർത്തിയത്", "All statuses": "എല്ലാ നിലകളും",
   "Total Collected": "ആകെ പിരിച്ചത്", "Collected by Pradeshikam": "പ്രദേശികം പിരിച്ചത്", "Donations": "സംഭാവനകൾ", "Total Received": "ആകെ ലഭിച്ചത്",
-  "Submitted": "സമർപ്പിച്ചത്", "Submitted to Office": "ഓഫീസിൽ സമർപ്പിച്ചത്", "Remaining": "ബാക്കി", "Remaining Balance": "ബാക്കി തുക", "Remaining to Submit": "സമർപ്പിക്കാനുള്ള ബാക്കി", "Received from Office": "ഓഫീസിൽ നിന്ന് ലഭിച്ചത്", "Total Spent": "ആകെ ചെലവായത്", "Spent": "ചെലവായത്",
+  "Submitted": "സമർപ്പിച്ചത്", "Submitted to Office": "ഓഫീസിൽ സമർപ്പിച്ചത്", "Remaining": "ബാക്കി", "Remaining Balance": "ബാക്കി തുക",
+  "Remaining to Submit": "സമർപ്പിക്കാൻ ബാക്കി", "Received from Office": "ഓഫീസിൽ നിന്ന് ലഭിച്ചത്", "Total Spent": "ആകെ ചെലവായത്", "Spent": "ചെലവായത്",
   "Remaining After Expense": "ചെലവിന് ശേഷം ബാക്കി", "Total Expenses": "ആകെ ചെലവുകൾ", "Collection Progress": "പിരിവ് പുരോഗതി",
   "Recent Collections": "സമീപകാല പിരിവുകൾ", "View all": "എല്ലാം കാണുക", "Find Member": "അംഗത്തെ കണ്ടെത്തുക", "Quick Actions": "പെട്ടെന്നുള്ള നടപടികൾ",
   "Expense History": "ചെലവ് ചരിത്രം", "Expense Records": "ചെലവ് രേഖകൾ", "Submission History": "സമർപ്പണ ചരിത്രം", "New Submission": "പുതിയ സമർപ്പണം",
@@ -642,7 +712,8 @@ const FCMS_ML_TEXT = {
   "Total Collected": "ആകെ പിരിച്ചത്",
   "Received from Donations": "സംഭാവനകളിൽ നിന്ന് ലഭിച്ചത്",
   "Submitted to Office": "ഓഫീസിൽ സമർപ്പിച്ചത്",
-  "Remaining Balance": "ബാക്കി തുക", "Remaining to Submit": "സമർപ്പിക്കാനുള്ള ബാക്കി",
+  "Remaining Balance": "ബാക്കി തുക",
+  "Remaining to Submit": "സമർപ്പിക്കാൻ ബാക്കി",
   "Received from Office": "ഓഫീസിൽ നിന്ന് ലഭിച്ചത്",
   "Total Spent": "ആകെ ചെലവായത്",
   "Spent": "ചെലവായത്",
@@ -691,6 +762,14 @@ function fcmsTranslateValue(value) {
 
   // Dynamic messages: translate the stable English sentence structure while
   // preserving names, receipt numbers, committee names and amounts.
+  if (fcmsLang() === "ml") {
+    out = out.replace(/\b(\d+)\s+members?\b/gi, (_, n) => `${n} അംഗ${Number(n) === 1 ? "ം" : "ങ്ങൾ"}`);
+    out = out.replace(/\bMember\s+(\d+)\b/gi, (_, n) => `അംഗം ${n}`);
+    out = out.replace(/\bin this house\b/gi, "ഈ വീട്ടിൽ");
+    out = out.replace(/\bNo members found\.?/gi, "അംഗങ്ങളെ കണ്ടെത്തിയില്ല.");
+    out = out.replace(/\bNo payments yet\.?/gi, "ഇതുവരെ പേയ്മെന്റുകളില്ല.");
+  }
+
   const dynamic = [
     [/^Additional payment (.+) deleted$/i, "അധിക പേയ്മെന്റ് $1 ഇല്ലാതാക്കി"],
     [/^Additional payment (.+) edited$/i, "അധിക പേയ്മെന്റ് $1 തിരുത്തി"],
@@ -727,27 +806,47 @@ function fcmsTranslateValue(value) {
     [/^Required amount cannot be below the current paid total of (.+)\.$/i, "ആവശ്യമായ തുക നിലവിലെ ലഭിച്ച ആകെ തുകയായ $1-ൽ താഴെയാകാൻ കഴിയില്ല."],
     [/^This member already has (.+) collected\. They cannot be marked as not collectable\.$/i, "ഈ അംഗത്തിന് ഇതിനകം $1 ലഭിച്ചിട്ടുണ്ട്. അതിനാൽ പിരിവ് വേണ്ടെന്ന് അടയാളപ്പെടുത്താൻ കഴിയില്ല."],
   ];
-  for (const [re, replacement] of dynamic) {
-    if (re.test(out)) return out.replace(re, replacement);
-  }
-  // If no dynamic template matched, apply the normal phrase dictionary.
-  Object.keys(FCMS_ML_TEXT).sort((a,b)=>b.length-a.length).forEach((en)=>{
-    out = out.split(en).join(FCMS_ML_TEXT[en]);
-  });
-  // Field labels are bilingual in English mode (e.g. "Name / പേര് *").
-  // In Malayalam mode, display only the Malayalam half of bilingual labels.
-  // This also handles multi-part labels such as "Voucher / Receipt / വൗച്ചർ / രസീത്".
+  // Malayalam translations must only run while Malayalam is selected.
+  // Previously these replacements also ran in English mode, which caused
+  // English labels/messages to be translated back to Malayalam on every load.
   if (fcmsLang() === "ml") {
-    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
-    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
-    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
-    out = out.replace(/([\u0D00-\u0D7F][^\n]*?)\s*\/\s*([A-Za-z][A-Za-z0-9 .+&()-]*)$/u, "$1");
+    for (const [re, replacement] of dynamic) {
+      if (re.test(out)) return out.replace(re, replacement);
+    }
+    // If no dynamic template matched, apply the normal phrase dictionary.
+    Object.keys(FCMS_ML_TEXT).sort((a,b)=>b.length-a.length).forEach((en)=>{
+      out = out.split(en).join(FCMS_ML_TEXT[en]);
+    });
   }
-  out = out.replace(/([^\n/]+)\s*\/\s*\1(?=\s*(?:\*|$))/g, "$1");
+  // Keep field controls single-language: English mode shows only English,
+  // Malayalam mode shows only Malayalam. This removes the old bilingual
+  // "English / Malayalam" presentation without changing any underlying values.
+  if (fcmsLang() === "ml") {
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()?-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()?-]*\s*\/\s*[A-Za-z][A-Za-z0-9 .+&()?-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/^[A-Za-z][A-Za-z0-9 .+&()?-]*\s*\/\s*(?=[\u0D00-\u0D7F])/u, "");
+    out = out.replace(/([\u0D00-\u0D7F][^\n]*?)\s*\/\s*[A-Za-z][A-Za-z0-9 .+&()?-]*$/u, "$1");
+  } else {
+    // English: remove the Malayalam portion from labels such as
+    // "Pradeshikam / പ്രദേശികം" and "Receipt / Bill / രസീത് / ബിൽ".
+    out = out.replace(/\s*\/\s*[\u0D00-\u0D7F][\u0D00-\u0D7F\s\/]*(\s*\*)?$/u, (m, star) => star ? " *" : "");
+  }
+  out = out.replace(/\s*\/\s*([\u0D00-\u0D7F]+)\s*\/\s*\1(?=\s*(?:\*|$))/gu, " / $1");
+  out = out.replace(/\s*\/\s*$/g, "");
   return out;
 }
 function applyFcmsMalayalamToDom(root=document.body) {
-  if (fcmsLang() !== "ml" || !root || document.body?.classList.contains("login-page")) return;
+  if (!root || document.body?.classList.contains("login-page")) return;
+  // Keep the underlying values of native select options stable while their
+  // visible labels are translated. Many calculations/business rules depend
+  // on canonical values such as Male, Female, Cash, Green, etc.
+  // Without an explicit value attribute, translating the option text also
+  // changes option.value and breaks those rules in Malayalam mode.
+  if (root.querySelectorAll) {
+    root.querySelectorAll("option:not([value])").forEach((option) => {
+      option.setAttribute("value", option.textContent.trim());
+    });
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes=[]; let n;
   while ((n=walker.nextNode())) nodes.push(n);
@@ -761,9 +860,13 @@ function applyFcmsMalayalamToDom(root=document.body) {
       if (el.hasAttribute(a)) el.setAttribute(a,fcmsTranslateValue(el.getAttribute(a)));
     });
   });
+  root.querySelectorAll("input[readonly], input:disabled").forEach((el)=>{
+    const raw = String(el.value || "");
+    if (FCMS_PRADESHIKAM_ML[raw]) el.value = fcmsLang() === "ml" ? FCMS_PRADESHIKAM_ML[raw] : raw;
+  });
 }
 function initFcmsMalayalamObserver() {
-  if (fcmsLang() !== "ml" || window.__fcmsMlObserver || document.body?.classList.contains("login-page")) return;
+  if (window.__fcmsMlObserver || document.body?.classList.contains("login-page")) return;
   window.__fcmsMlObserver = new MutationObserver((mutations)=>{
     mutations.forEach((m)=>m.addedNodes.forEach((node)=>{
       if (node.nodeType===1) applyFcmsMalayalamToDom(node);
@@ -883,3 +986,188 @@ function confirmDialog(message, opts = {}) {
     );
   });
 }
+
+
+/* ---------- Shared payment-mode validation ---------- */
+function fcmsNormalizePaymentMode(v) {
+  return String(v || "").trim().toUpperCase();
+}
+function fcmsGetUpiTransactionId(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select || fcmsNormalizePaymentMode(select.value) !== "UPI") return "";
+  const input = document.getElementById(`${selectId}TransactionId`);
+  return String(input?.value || "").trim();
+}
+function fcmsAttachUpiTransactionFields(root = document) {
+  root.querySelectorAll?.("form select").forEach((select) => {
+    if (!select.id || select.dataset.fcmsUpiReady === "1") return;
+    const hasUpi = Array.from(select.options || []).some((o) => fcmsNormalizePaymentMode(o.value || o.textContent) === "UPI");
+    if (!hasUpi) return;
+    // Ignore reporting/filter controls: transaction IDs are only relevant to data-entry forms.
+    if (select.closest(".collection-filter-row") || select.id === "modeFilter" || select.id === "filterMode") return;
+    select.dataset.fcmsUpiReady = "1";
+    const host = select.closest("[class*='col-']") || select.parentElement;
+    if (!host || !host.parentElement) return;
+    const wrap = document.createElement("div");
+    const widthClass = Array.from(host.classList).filter((c)=>c.startsWith("col-")).join(" ") || "col-md-4";
+    wrap.className = `${widthClass} fcms-upi-transaction-field d-none`;
+    wrap.innerHTML = `<label class="form-label">UPI Transaction ID *</label><input id="${select.id}TransactionId" class="form-control" autocomplete="off" inputmode="text" placeholder="Enter transaction ID" maxlength="80">`;
+    host.insertAdjacentElement("afterend", wrap);
+    const input = wrap.querySelector("input");
+    if (select.dataset.transactionId) input.value = select.dataset.transactionId;
+    if (select.disabled || select.dataset.paymentLocked === "1") {
+      input.readOnly = true;
+      wrap.classList.add("fcms-upi-locked");
+    }
+    const sync = () => {
+      const show = fcmsNormalizePaymentMode(select.value) === "UPI";
+      wrap.classList.toggle("d-none", !show);
+      input.required = show && !input.readOnly;
+      if (!show && !input.readOnly) input.classList.remove("is-invalid");
+    };
+    select.addEventListener("change", sync);
+    sync();
+    const form = select.closest("form");
+    if (form && form.dataset.fcmsUpiValidation !== "1") {
+      form.dataset.fcmsUpiValidation = "1";
+      form.addEventListener("submit", (event) => {
+        let firstInvalid = null;
+        form.querySelectorAll("select[data-fcms-upi-ready='1']").forEach((modeSelect) => {
+          if (fcmsNormalizePaymentMode(modeSelect.value) !== "UPI") return;
+          const txn = document.getElementById(`${modeSelect.id}TransactionId`);
+          if (txn && !txn.readOnly && !String(txn.value || "").trim()) {
+            txn.classList.add("is-invalid");
+            firstInvalid ||= txn;
+          } else txn?.classList.remove("is-invalid");
+        });
+        if (firstInvalid) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          firstInvalid.focus();
+          toast?.("Enter the UPI transaction ID before saving.", "danger");
+        }
+      }, true);
+    }
+  });
+}
+/* ---------- Automatic local drafts for data-entry forms ---------- */
+function fcmsDraftUserKey() {
+  try {
+    const s = typeof currentSession === "function" ? currentSession() : null;
+    return String(s?.id || s?.username || s?.role || "guest");
+  } catch (_) { return "guest"; }
+}
+function fcmsDraftKey(form) {
+  return `fcms_form_draft_v1:${fcmsDraftUserKey()}:${location.pathname}:${form.id || "form"}:${form.dataset.fcmsDraftScope || "default"}`;
+}
+function fcmsSerializeFormDraft(form) {
+  const data = {};
+  form.querySelectorAll("input,select,textarea").forEach((el) => {
+    if (!el.id && !el.name) return;
+    if (["password","file","submit","button","reset","hidden"].includes((el.type || "").toLowerCase())) return;
+    const key = el.id || el.name;
+    if (el.type === "radio") {
+      if (el.checked) data[key] = { type: "radio", value: el.value, name: el.name };
+    } else if (el.type === "checkbox") data[key] = { type: "checkbox", value: !!el.checked };
+    else data[key] = { type: "value", value: el.value };
+  });
+  return data;
+}
+function fcmsApplyFormDraft(form, data) {
+  if (!data || typeof data !== "object") return false;
+  let applied = false;
+  Object.entries(data).forEach(([key, item]) => {
+    let el = document.getElementById(key) || form.elements?.namedItem?.(key);
+    if (item?.type === "radio") {
+      const radio = Array.from(form.querySelectorAll("input[type=\"radio\"]")).find(r => r.name === (item.name || key) && r.value === item.value);
+      if (radio) { radio.checked = true; applied = true; }
+      return;
+    }
+    if (!el || el instanceof RadioNodeList) return;
+    if (item?.type === "checkbox") el.checked = !!item.value;
+    else if (item?.type === "value" && item.value != null) el.value = item.value;
+    else return;
+    applied = true;
+  });
+  return applied;
+}
+function fcmsSaveFormDraft(form) {
+  if (!form || form.dataset.fcmsDraftDisabled === "1") return;
+  try {
+    const data = fcmsSerializeFormDraft(form);
+    localStorage.setItem(fcmsDraftKey(form), JSON.stringify({ at: Date.now(), data }));
+  } catch (_) {}
+}
+function fcmsClearFormDraft(form) {
+  if (!form) return;
+  try { localStorage.removeItem(fcmsDraftKey(form)); } catch (_) {}
+}
+function fcmsClearPageDraft() {
+  document.querySelectorAll("form[data-fcms-draft-ready='1']").forEach(fcmsClearFormDraft);
+}
+function fcmsAttachDraftSaving(root = document) {
+  root.querySelectorAll?.("form").forEach((form) => {
+    if (form.dataset.fcmsDraftReady === "1" || form.closest(".login-page") || form.id === "verificationForm") return;
+    const controls = form.querySelectorAll("input:not([type='hidden']):not([type='password']):not([type='file']),select,textarea");
+    if (!controls.length) return;
+    form.dataset.fcmsDraftReady = "1";
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(fcmsDraftKey(form)) || "null"); } catch (_) {}
+    if (saved?.data) {
+      // First pass restores structural controls such as member count / receipt mode.
+      fcmsApplyFormDraft(form, saved.data);
+      form.querySelectorAll("select").forEach(el => el.dispatchEvent(new Event("change", { bubbles: true })));
+      // Dynamic rows can be rebuilt by change handlers, so restore their values again.
+      setTimeout(() => {
+        if (fcmsApplyFormDraft(form, saved.data)) {
+          form.querySelectorAll("input,select,textarea").forEach(el => el.dispatchEvent(new Event("input", { bubbles: true })));
+          if (typeof toast === "function") toast(fcmsLang() === "ml" ? "സേവ് ചെയ്ത ഡ്രാഫ്റ്റ് പുനഃസ്ഥാപിച്ചു." : "Saved draft restored.", "info", 2200);
+        }
+      }, 80);
+    }
+    let timer;
+    const saveSoon = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fcmsSaveFormDraft(form), 180);
+    };
+    form.addEventListener("input", saveSoon);
+    form.addEventListener("change", saveSoon);
+    form.addEventListener("reset", () => setTimeout(() => fcmsClearFormDraft(form), 0));
+  });
+}
+
+(function initFcmsSharedFormEnhancements(){
+  const run=()=>{ fcmsAttachUpiTransactionFields(document); fcmsAttachDraftSaving(document); };
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",run,{once:true}); else run();
+  const observer=new MutationObserver(()=>run());
+  observer.observe(document.documentElement,{subtree:true,childList:true});
+  try {
+    const lowCpu = Number(navigator.hardwareConcurrency || 8) <= 4;
+    const lowMem = "deviceMemory" in navigator && Number(navigator.deviceMemory || 8) <= 4;
+    if (lowCpu || lowMem) document.documentElement.classList.add("fcms-low-power");
+  } catch (_) {}
+})();
+
+
+/* FCMS document language sync */
+(function(){
+  function syncFcmsDocumentLanguage(){
+    try{
+      var lang = localStorage.getItem('fcms_lang') || 'en';
+      var isMl = lang === 'ml' || lang === 'malayalam';
+      document.documentElement.lang = isMl ? 'ml' : 'en';
+      if(document.body){
+        document.body.classList.toggle('lang-ml', isMl);
+      }
+    }catch(e){}
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', syncFcmsDocumentLanguage);
+  }else{
+    syncFcmsDocumentLanguage();
+  }
+  window.addEventListener('storage', function(e){
+    if(e.key === 'fcms_lang') syncFcmsDocumentLanguage();
+  });
+  window.syncFcmsDocumentLanguage = syncFcmsDocumentLanguage;
+})();

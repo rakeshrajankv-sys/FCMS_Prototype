@@ -165,7 +165,7 @@ function render() {
   );
   document.getElementById("donationTable").innerHTML = !rows.length
     ? `<div class="empty-state"><i class="bi bi-gift"></i>No donations found.</div>`
-    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
+    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${(s.role === "admin" || (s.role === "pradeshikam" && Number(x.d.pradeshikamId) === Number(s.pradeshikamId))) ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
   document
     .querySelectorAll(".delete-donation")
     .forEach((btn) =>
@@ -189,10 +189,10 @@ async function deleteDonation(id) {
     pradeshikamId: d.pradeshikamId,
     summary: `Donation ${d.receiptNumber} deleted`,
     details: `${money(d.amount)} donation from ${d.donorName || "donor"}.`,
-    oldValue: donationSnapshot(d),
+    oldValue: { ...d },
   });
   db.donations = db.donations.filter((x) => x.id !== id);
-  saveDB(db);
+  fcmsClearPageDraft(); saveDB(db);
   toast("Donation deleted.", "success");
   render();
 }
@@ -304,6 +304,7 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     donorPhoneCode:
       type === "Member" ? donor?.countryCode || "+91" : donorPhoneCode,
     paymentMode: mode,
+    transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("donationMode") : "",
     status: "completed",
     date: new Date(date + "T12:00:00").toISOString(),
     remarks,
@@ -320,7 +321,7 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     details: `${type} donation from ${donation.donorName} with receipt ${receipt}.`,
     newValue: donationSnapshot(donation),
   });
-  saveDB(db);
+  fcmsClearPageDraft(); saveDB(db);
   form.reset();
   document.getElementById("donationDate").value = todayValue();
   updateSourceFields();
@@ -344,6 +345,7 @@ document.getElementById("exportDonations").addEventListener("click", () => {
       Receipt: d.receiptNumber || "",
       Amount: d.amount,
       PaymentMode: d.paymentMode || "",
+      TransactionID: d.transactionId || "",
       Remarks: d.remarks || "",
     };
   });

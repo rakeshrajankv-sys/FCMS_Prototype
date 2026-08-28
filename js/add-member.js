@@ -327,6 +327,7 @@ function saveHousehold(hold) {
         masterReceiptNumber: receiptMode === "one" ? masterReceipt : null,
         amount: pay,
         paymentMode: mode,
+        transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("mode") : "",
         status,
         remarks: remarks || "",
         paymentDate: new Date(date + "T12:00:00").toISOString(),
@@ -358,6 +359,7 @@ function saveHousehold(hold) {
         masterReceiptNumber: masterReceipt,
         amount: 0,
         paymentMode: mode,
+        transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("mode") : "",
         status,
         remarks: remarks || "",
         paymentDate: new Date(date + "T12:00:00").toISOString(),
@@ -384,6 +386,7 @@ function saveHousehold(hold) {
           masterReceiptNumber: null,
           amount: 0,
           paymentMode: mode,
+          transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("mode") : "",
           status,
           remarks: remarks || "",
           paymentDate: new Date(date + "T12:00:00").toISOString(),
@@ -421,6 +424,7 @@ function saveHousehold(hold) {
       sourceType: "Member",
       sourceLabel: "Member",
       paymentMode: mode,
+      transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("mode") : "",
       status,
       date: new Date(date + "T12:00:00").toISOString(),
       remarks,
@@ -450,6 +454,6 @@ function saveHousehold(hold) {
       newValue: memberSnapshot(m),
     }),
   );
-  saveDB(db);
+  fcmsClearPageDraft(); saveDB(db);
   location.href = "members.html";
 }

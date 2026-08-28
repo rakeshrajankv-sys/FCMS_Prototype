@@ -9,8 +9,8 @@ if (s.role === "subcommittee") {
 function statCard(icon, label, value, color = "blue") {
   return `<div class="col-6 col-xl-3"><div class="stat-card"><div class="stat-icon stat-icon-${color}"><i class="bi ${icon}"></i></div><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div></div>`;
 }
-function statDualCard(icon, primaryLabel, primaryValue, secondaryLabel, secondaryValue, color = "blue", secondaryIcon = "bi-wallet2", secondaryColor = "amber") {
-  return `<div class="col-12 col-xl-6"><div class="stat-card stat-card-dual"><div class="stat-dual-metrics"><div class="stat-dual-metric"><div class="stat-icon stat-icon-${color}"><i class="bi ${icon}"></i></div><div class="stat-label">${primaryLabel}</div><div class="stat-value">${primaryValue}</div></div><div class="stat-dual-divider"></div><div class="stat-dual-metric"><div class="stat-icon stat-icon-${secondaryColor}"><i class="bi ${secondaryIcon}"></i></div><div class="stat-label">${secondaryLabel}</div><div class="stat-value">${secondaryValue}</div></div></div></div></div>`;
+function statDualCard(icon, primaryLabel, primaryValue, secondaryLabel, secondaryValue, color = "blue") {
+  return `<div class="col-6 col-xl-3"><div class="stat-card stat-card-dual"><div class="stat-icon stat-icon-${color}"><i class="bi ${icon}"></i></div><div class="stat-dual-metric"><div class="stat-label">${primaryLabel}</div><div class="stat-value">${primaryValue}</div></div><div class="stat-dual-divider"></div><div class="stat-dual-metric"><div class="stat-label">${secondaryLabel}</div><div class="stat-value">${secondaryValue}</div></div></div></div>`;
 }
 function radialProgress(pct, label = "") {
   const r = 48,
@@ -157,7 +157,7 @@ ${statCard("bi-cash-stack", "Total Collected", money(total + (s.role === "admin"
 ${statCard("bi-people", "Collected by Pradeshikam", money(memberCollected), "blue")}
 ${statCard("bi-gift", "Received from Donations", money(donations), "purple")}
 ${s.role === "admin" ? statCard("bi-bank2", "Collected by Sub Committee", money(subCommitteeCollected), "blue") : statCard("bi-person-check", "Total Members", members.length, "purple")}
-${statDualCard("bi-wallet2", "Submitted to Office", money(submitted), "Remaining to Submit", money(remainingBalance), "green", "bi-wallet2")}
+${statDualCard("bi-wallet2", "Submitted to Office", money(submitted), "Remaining Balance", money(remainingBalance), "green")}
 ${s.role === "admin" ? statCard("bi-cash-coin", "Given to Sub Committee", money(subCommitteeAllocated), "amber") : ""}
 ${s.role === "admin" ? statCard("bi-person-check", "Total Members", members.length, "purple") : ""}
 </div>

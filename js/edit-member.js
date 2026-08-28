@@ -1,12 +1,15 @@
 const db = getDB(),
   s = currentSession();
 markActive();
-if (s.role !== "admin") {
-  location.href = "members.html";
-}
+const myCommittee = s.role === "subcommittee" ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId)) : null;
 const id = new URLSearchParams(location.search).get("id"),
   member = db.members.find((m) => m.id === id);
-if (!member) {
+const canEditMember = !!member && (
+  s.role === "admin" ||
+  (s.role === "pradeshikam" && Number(member.pradeshikamId) === Number(s.pradeshikamId)) ||
+  (s.role === "subcommittee")
+);
+if (!canEditMember) {
   location.href = "members.html";
 } else {
   member.countryCode ||= "+91";
@@ -21,7 +24,7 @@ if (!member) {
 <div class="col-md-4"><label class="form-label">Marital Status / വൈവാഹിക നില *</label><select id="marital" class="form-select" required>${["Single", "Married", "Widower"].map((x) => `<option ${member.maritalStatus === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
 <div class="col-md-4"><label class="form-label">Phone Number / ഫോൺ നമ്പർ *</label><div class="input-group"><select id="country" class="form-select" style="max-width:92px"><option ${member.countryCode === "+91" ? "selected" : ""}>+91</option><option ${member.countryCode === "+971" ? "selected" : ""}>+971</option></select><input id="phone" class="form-control" inputmode="numeric" type="tel" maxlength="10" required value="${escapeHTML(normalizePhone(member.phone || ""))}"></div></div>
 <div class="col-md-4"><label class="form-label">House Number / വീടിന്റെ നമ്പർ *</label><input id="house" class="form-control" required value="${escapeHTML(member.houseNumber || "")}"></div>
-<div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pradeshikam" class="form-select">${db.pradeshikams.map((p) => `<option value="${p.id}" ${Number(member.pradeshikamId) === Number(p.id) ? "selected" : ""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
+<div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pradeshikam" class="form-select" ${s.role !== "admin" ? "disabled" : ""}>${db.pradeshikams.map((p) => `<option value="${p.id}" ${Number(member.pradeshikamId) === Number(p.id) ? "selected" : ""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
 </div><div class="receipt-box mt-4">Required amount: <b>${money(member.requiredAmount)}</b></div><div id="formError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><a href="member-details.html?id=${encodeURIComponent(member.id)}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div></form></div>`;
   function syncRequiredAmountUI() {
     const age = document.getElementById("age")?.value || "";
@@ -79,7 +82,7 @@ if (!member) {
         countryCode: country,
         phone,
         houseNumber: document.getElementById("house").value.trim(),
-        pradeshikamId: Number(document.getElementById("pradeshikam").value),
+        pradeshikamId: s.role === "admin" ? Number(document.getElementById("pradeshikam").value) : member.pradeshikamId,
       };
     updated.collectable = updated.age >= 21
       ? document.querySelector('input[name="collectable"]:checked')?.value !== "no"
@@ -132,11 +135,11 @@ if (!member) {
       memberId: member.id,
       pradeshikamId: member.pradeshikamId,
       summary: `${member.name} edited`,
-      details: "Member information updated by Main Committee.",
+      details: `Member information updated by ${actorLabel()}. Existing payment receipts and amounts were not changed.`,
       oldValue: old,
       newValue: memberSnapshot(member),
     });
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     location.href = "member-details.html?id=" + encodeURIComponent(member.id);
   });
 }

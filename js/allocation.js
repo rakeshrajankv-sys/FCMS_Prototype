@@ -121,7 +121,7 @@ else {
           newValue: x,
         });
       }
-      saveDB(db);
+      fcmsClearPageDraft(); saveDB(db);
       render();
     };
     document.querySelectorAll(".edit").forEach(
@@ -172,7 +172,7 @@ else {
             summary: `${x.committeeId === "other" ? "Other" : subCommitteeName(x.committeeId || x.subCommitteeId)} allocation deleted`,
             oldValue: x,
           });
-          saveDB(db);
+          fcmsClearPageDraft(); saveDB(db);
           render();
         }),
     );

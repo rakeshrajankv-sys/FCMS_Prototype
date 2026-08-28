@@ -15,8 +15,9 @@ if (!member) {
     payments = db.payments
       .filter((p) => p.memberId === member.id)
       .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
-  const adminActions =
-    s.role === "admin"
+  const myCommittee = s.role === "subcommittee" ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId)) : null;
+  const canEditMember = s.role === "admin" || (s.role === "pradeshikam" && Number(member.pradeshikamId) === Number(s.pradeshikamId)) || (s.role === "subcommittee");
+  const adminActions = canEditMember
       ? `<a href="edit-member.html?id=${encodeURIComponent(member.id)}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit Member</a>`
       : "";
   document.getElementById("page-content").innerHTML = `
@@ -24,8 +25,8 @@ if (!member) {
     <a href="members.html" class="text-decoration-none small"><i class="bi bi-arrow-left me-1"></i>Back to Members</a>
     <div class="action-buttons">
       ${adminActions}
-      <button id="deleteMemberBtn" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete Member</button>
-      <a href="add-payment.html?id=${encodeURIComponent(member.id)}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Payment</a>
+      ${(s.role === "admin" || s.role === "pradeshikam" || myCommittee?.financeAccess) ? `<button id="deleteMemberBtn" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete Member</button>` : ""}
+      ${(s.role === "admin" || s.role === "pradeshikam" || myCommittee?.financeAccess) ? `<a href="add-payment.html?id=${encodeURIComponent(member.id)}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Payment</a>` : ""}
     </div>
   </div>
   <div class="member-hero mb-4"><div class="d-flex justify-content-between flex-wrap gap-3"><div><div class="small muted">${escapeHTML(member.memberCode)}</div><h2 class="fw-bold mb-1">${escapeHTML(member.name)}</h2><div class="muted">${escapeHTML(pr?.name || "")} · ${member.gender} · Age ${member.age}</div></div><div class="text-end"><div class="small muted">Current Status</div><div class="mt-1">${badge(x.status)}</div></div></div></div>
@@ -42,7 +43,7 @@ if (!member) {
   </div></div></div>`;
   document
     .getElementById("deleteMemberBtn")
-    .addEventListener("click", async () => {
+    ?.addEventListener("click", async () => {
       const ok = await confirmDialog(
         `Delete ${member.name}? This removes the member and active receipts, but keeps a record in Activity History.`,
       );
@@ -59,7 +60,7 @@ if (!member) {
           pradeshikamId: member.pradeshikamId,
           summary: `Receipt ${p.receiptNumber} removed with member`,
           details: `Receipt ${p.receiptNumber} for ${money(p.amount)} was removed because member ${member.name} was deleted.`,
-          oldValue: paymentSnapshot(p),
+          oldValue: { ...p },
         }),
       );
       addActivity(db, {
@@ -70,11 +71,11 @@ if (!member) {
         pradeshikamId: member.pradeshikamId,
         summary: `${member.name} deleted`,
         details: `Member ${member.memberCode} and ${memberPayments.length} active receipt(s) deleted.`,
-        oldValue: memberSnapshot(member),
+        oldValue: { ...member },
       });
       db.payments = db.payments.filter((p) => p.memberId !== member.id);
       db.members = db.members.filter((m) => m.id !== member.id);
-      saveDB(db);
+      fcmsClearPageDraft(); saveDB(db);
       toast(`${member.name} deleted.`, "success");
       location.href = "members.html";
     });
@@ -95,10 +96,10 @@ if (!member) {
         pradeshikamId: member.pradeshikamId,
         summary: `Receipt ${p.receiptNumber} deleted`,
         details: `Payment deleted by Main Committee.`,
-        oldValue: paymentSnapshot(p),
+        oldValue: { ...p },
       });
       db.payments = db.payments.filter((x) => x.id !== pid);
-      saveDB(db);
+      fcmsClearPageDraft(); saveDB(db);
       location.reload();
     }),
   );

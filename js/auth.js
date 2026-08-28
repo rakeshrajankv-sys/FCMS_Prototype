@@ -17,6 +17,7 @@ function requireAuth() {
       username: freshUser.username,
       pradeshikamId: freshUser.pradeshikamId,
       subCommitteeId: freshUser.subCommitteeId,
+      verifiedPhone: s.verifiedPhone || freshUser.verifiedPhone || "",
     };
     if (JSON.stringify(patched) !== JSON.stringify(s)) setSession(patched);
     return patched;
@@ -45,15 +46,20 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
     err.classList.remove("d-none");
     return;
   }
-  setSession({
+  const profileUser = {
     id: user.id,
     role: user.role,
     name: user.name,
     username: user.username,
     pradeshikamId: user.pradeshikamId,
     subCommitteeId: user.subCommitteeId,
+    verifiedPhone: user.verifiedPhone || "",
+  };
+  requestDeviceEnrollment(profileUser).then((verified) => {
+    if (!verified) return;
+    setSession(profileUser);
+    document.body.classList.add("fcms-login-exit");
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    window.setTimeout(() => { location.href = "dashboard.html"; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 600 : 740));
   });
-  document.body.classList.add("fcms-login-exit");
-  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-  window.setTimeout(() => { location.href = "dashboard.html"; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 600 : 740));
 });

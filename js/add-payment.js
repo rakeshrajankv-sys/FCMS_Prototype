@@ -3,9 +3,11 @@ const db = getDB(),
 markActive();
 const id = new URLSearchParams(location.search).get("id"),
   member = db.members.find((m) => m.id === id);
+const myCommittee = s.role === "subcommittee" ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId)) : null;
 if (
   !member ||
-  (s.role === "pradeshikam" && member.pradeshikamId !== s.pradeshikamId)
+  (s.role === "pradeshikam" && member.pradeshikamId !== s.pradeshikamId) ||
+  (s.role === "subcommittee" && !myCommittee?.financeAccess)
 ) {
   location.href = "members.html";
 } else {
@@ -41,6 +43,7 @@ ${pageTitle("Add Collection")}
       receiptNumber: receipt,
       amount,
       paymentMode: document.getElementById("mode").value,
+      transactionId: fcmsGetUpiTransactionId("mode"),
       status: "completed",
       remarks: document.getElementById("remarks").value.trim(),
       paymentDate: new Date().toISOString(),
@@ -56,7 +59,7 @@ ${pageTitle("Add Collection")}
       details: `${money(amount)} via ${payment.paymentMode}.`,
       newValue: paymentSnapshot(payment),
     });
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     location.href = "member-details.html?id=" + encodeURIComponent(member.id);
   });
 }

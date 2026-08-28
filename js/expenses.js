@@ -187,7 +187,7 @@ else {
             newValue: x,
           });
         }
-        saveDB(db);
+        fcmsClearPageDraft(); saveDB(db);
         render();
       };
       const file = document.getElementById("bill").files[0];
@@ -235,7 +235,7 @@ else {
             summary: `${subCommitteeName(x.committeeId)}: ${x.title} expense deleted`,
             oldValue: x,
           });
-          saveDB(db);
+          fcmsClearPageDraft(); saveDB(db);
           render();
         }),
     );

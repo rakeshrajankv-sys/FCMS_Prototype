@@ -1,0 +1,27 @@
+FCMS FIRST-DEVICE IDENTITY VERIFICATION
+========================================
+
+This update adds first-device identity enrollment for Admin, Pradeshikam and Sub Committee users.
+
+Flow:
+- First login on a browser/device: name + mobile number + OTP verification.
+- Once verified, the browser remembers that device for that user.
+- Later logins on the same browser/device do not ask for the details again.
+- A different browser/device requires enrollment again.
+- Activity History records the verified mobile number alongside the actor when available.
+
+IMPORTANT:
+The current project is a static/localStorage prototype and does not contain an SMS provider or Supabase credentials. Therefore the OTP step is intentionally NOT faked. To enable real SMS verification, configure Supabase Phone Auth and expose these two hooks before deployment:
+
+window.fcmsVerifyPhoneOtp = async function(phone, otp) {
+  // Call your Supabase phone OTP verification here and return true/false.
+};
+
+For production, use Supabase Auth Phone OTP and keep the authenticated Supabase user ID as the audit identity. Do not replace OTP verification with a client-generated code; that would not prove ownership of the phone number.
+
+
+PROTOTYPE OTP FLOW (CURRENT)
+- India country code is fixed to +91.
+- User enters a 10-digit Indian mobile number.
+- Prototype OTP is fixed to 123456.
+- For production, define window.fcmsVerifyPhoneOtp(phone, code) and connect it to the selected OTP/SMS provider. The UI will use that function automatically instead of the demo OTP check.

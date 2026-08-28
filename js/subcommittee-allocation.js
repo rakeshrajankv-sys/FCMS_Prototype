@@ -215,7 +215,7 @@ if (s.role !== "admin") {
           newValue: allocation,
         });
       }
-      saveDB(db);
+      fcmsClearPageDraft(); saveDB(db);
       form.reset();
       render();
     });
@@ -312,7 +312,7 @@ if (s.role !== "admin") {
     db.subCommitteeAllocations = db.subCommitteeAllocations.filter(
       (x) => x.id !== id,
     );
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     toast("Allocation deleted.", "success");
     render();
   }

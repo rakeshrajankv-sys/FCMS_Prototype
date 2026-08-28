@@ -50,7 +50,7 @@ if (!item || s.role !== "admin") {
       oldValue: old,
       newValue: item,
     });
-    saveDB(db);
+    fcmsClearPageDraft(); saveDB(db);
     location.href =
       "submissions.html?committee=" + item.subCommitteeId;
   });

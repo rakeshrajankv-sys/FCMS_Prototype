@@ -26,7 +26,7 @@ if (session) {
   <nav class="sidebar-nav">
     <div class="nav-section">${t("nav_main")}</div>
     <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>${t("dashboard")}</a>
-    ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>${t("activity_history")}</a>` : ""}
+    ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>${t("activity_history")}</a><a href="verified-users.html"><i class="bi bi-person-check"></i>${t("verified_users")}</a>` : ""}
     <a href="reports.html"><i class="bi bi-bar-chart"></i>${t("reports")}</a>
     ${!isSub ? `<a href="donations.html"><i class="bi bi-gift"></i>${t("donations")}</a>` : ""}
     ${
@@ -62,10 +62,12 @@ if (session) {
         ? `<a href="subcommittee-collections.html"><i class="bi ${myCommittee?.icon || "bi-cash-coin"}"></i>${t("collection")}</a>
     <a href="submissions.html"><i class="bi bi-bank"></i>${t("submission")}</a>
     <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("expense")}</a>
-    ${myCommittee?.financeAccess ? `<a href="members.html"><i class="bi bi-people"></i>${t("members")}</a><a href="add-member.html"><i class="bi bi-person-plus"></i>${t("add_member")}</a>` : ""}`
+    <a href="members.html"><i class="bi bi-people"></i>${t("members")}</a>
+    ${myCommittee?.financeAccess ? `<a href="add-member.html"><i class="bi bi-person-plus"></i>${t("add_member")}</a>` : ""}`
         : ""
     }
     <div class="nav-section">${t("nav_system")}</div>
+    <a href="#" class="fcms-reset-prototype-link" onclick="resetPrototypeDataFromUi();return false"><i class="bi bi-arrow-counterclockwise"></i>${t("reset_prototype_data")}</a>
     <a href="#" onclick="logout();return false"><i class="bi bi-box-arrow-right"></i>${t("logout")}</a>
   </nav>
 
@@ -87,6 +89,21 @@ if (session) {
         .join("");
   }
 }
+
+async function resetPrototypeDataFromUi() {
+  const confirmed = await confirmDialog(
+    t("reset_prototype_message"),
+    {
+      title: t("reset_prototype_title"),
+      confirmLabel: t("reset_prototype_button"),
+      cancelLabel: t("cancel"),
+    },
+  );
+  if (!confirmed) return;
+  clearSession();
+  resetPrototype();
+}
+
 function toggleSidebar() {
   document.getElementById("sidebar")?.classList.toggle("open");
   document.getElementById("sidebarOverlay")?.classList.toggle("open");
@@ -145,3 +162,36 @@ document.addEventListener("click", (event) => {
 function pageTitle(title, sub = "", button = "") {
   return `<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div class="page-title"><h1>${title}</h1></div>${button}</div>`;
 }
+
+// Shared Back to Top control for authenticated pages.
+(function initBackToTop() {
+  function mount() {
+    if (!document.body || document.getElementById("fcmsBackToTop")) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "fcmsBackToTop";
+    button.className = "fcms-back-to-top";
+    const lang = localStorage.getItem("fcms_lang") || "en";
+    const label = lang === "ml" ? "മുകളിലേക്ക് മടങ്ങുക" : "Back to top";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
+    document.body.appendChild(button);
+
+    let ticking = false;
+    const update = () => {
+      button.classList.toggle("is-visible", window.scrollY > 320);
+      ticking = false;
+    };
+    window.addEventListener("scroll", () => {
+      if (!ticking) { window.requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+    button.addEventListener("click", () => {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || document.documentElement.classList.contains("fcms-low-power") || document.body.classList.contains("fcms-low-power");
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    });
+    update();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount, { once: true });
+  else mount();
+})();
