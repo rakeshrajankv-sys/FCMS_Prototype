@@ -6960,3 +6960,20 @@ html.fcms-verification-active .fcms-device-card{
  .fcms-report-date-presets::-webkit-scrollbar{display:none!important}
  .fcms-report-date-chip{width:auto!important;flex:0 0 auto!important;min-width:max-content!important;padding:0 11px!important}
 }
+
+
+/* FCMS mobile sidebar close/state normalization */
+@media(max-width:991px){
+  body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
+  .sidebar-backdrop,
+  body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
+  .mobile-sidebar-backdrop,
+  body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
+  .sidebar-overlay,
+  body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
+  .menu-overlay,
+  body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
+  .fcms-sidebar-backdrop{
+    pointer-events:none;
+  }
+}

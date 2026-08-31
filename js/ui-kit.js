@@ -1752,3 +1752,129 @@ function fcmsAttachDraftSaving(root = document) {
   else apply();
   new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+/* FCMS mobile sidebar close fix */
+(function(){
+  const MOBILE_MAX = 991;
+
+  function sidebar(){
+    return document.querySelector(
+      ".sidebar, #sidebar, .app-sidebar, aside.sidebar, .fcms-sidebar"
+    );
+  }
+
+  function backdrop(){
+    return document.querySelector(
+      ".sidebar-backdrop, .mobile-sidebar-backdrop, .sidebar-overlay, .menu-overlay, .fcms-sidebar-backdrop"
+    );
+  }
+
+  function isMobile(){
+    return window.innerWidth <= MOBILE_MAX;
+  }
+
+  function closeMobileSidebar(){
+    if(!isMobile()) return;
+
+    const sb = sidebar();
+    if(!sb) return;
+
+    [
+      "open","show","active","is-open","sidebar-open","mobile-open","opened"
+    ].forEach(c=>sb.classList.remove(c));
+
+    document.documentElement.classList.remove(
+      "sidebar-open","menu-open","mobile-menu-open","nav-open"
+    );
+    document.body.classList.remove(
+      "sidebar-open","menu-open","mobile-menu-open","nav-open","overflow-hidden"
+    );
+
+    const bd = backdrop();
+    if(bd){
+      bd.classList.remove("show","active","open","is-open");
+      bd.setAttribute("aria-hidden","true");
+      if(bd.style) bd.style.display = "none";
+    }
+
+    document.querySelectorAll(
+      "[aria-controls='sidebar'], .sidebar-toggle, .mobile-menu-toggle, .menu-toggle, [data-sidebar-toggle]"
+    ).forEach(btn=>{
+      btn.setAttribute("aria-expanded","false");
+    });
+  }
+
+  function openStateLikely(){
+    const sb = sidebar();
+    if(!sb) return false;
+    const c = sb.classList;
+    return ["open","show","active","is-open","sidebar-open","mobile-open","opened"].some(x=>c.contains(x))
+      || document.body.classList.contains("sidebar-open")
+      || document.documentElement.classList.contains("sidebar-open");
+  }
+
+  document.addEventListener("click", function(e){
+    if(!isMobile()) return;
+
+    const sb = sidebar();
+    if(!sb) return;
+
+    const closeBtn = e.target.closest(
+      ".sidebar-close, .mobile-sidebar-close, [data-sidebar-close], .btn-close"
+    );
+    if(closeBtn && sb.contains(closeBtn)){
+      e.preventDefault();
+      e.stopPropagation();
+      closeMobileSidebar();
+      return;
+    }
+
+    const bd = e.target.closest(
+      ".sidebar-backdrop, .mobile-sidebar-backdrop, .sidebar-overlay, .menu-overlay, .fcms-sidebar-backdrop"
+    );
+    if(bd){
+      closeMobileSidebar();
+      return;
+    }
+
+    const navLink = e.target.closest(
+      ".sidebar a[href], #sidebar a[href], .app-sidebar a[href], aside.sidebar a[href], .fcms-sidebar a[href]"
+    );
+    if(navLink && sb.contains(navLink)){
+      const href = String(navLink.getAttribute("href") || "").trim();
+      // Do not close when a parent dropdown toggle is clicked.
+      const isToggle =
+        navLink.classList.contains("dropdown-toggle") ||
+        navLink.classList.contains("has-submenu") ||
+        navLink.hasAttribute("data-bs-toggle") ||
+        navLink.hasAttribute("data-toggle") ||
+        navLink.getAttribute("aria-haspopup") === "true";
+
+      if(href && href !== "#" && !isToggle){
+        setTimeout(closeMobileSidebar, 0);
+      }
+      return;
+    }
+
+    // Click outside open sidebar closes it.
+    if(openStateLikely() && !sb.contains(e.target)){
+      const toggle = e.target.closest(
+        ".sidebar-toggle, .mobile-menu-toggle, .menu-toggle, [data-sidebar-toggle], [aria-controls='sidebar']"
+      );
+      if(!toggle) closeMobileSidebar();
+    }
+  }, true);
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") closeMobileSidebar();
+  });
+
+  window.addEventListener("resize", function(){
+    if(!isMobile()){
+      document.body.classList.remove("overflow-hidden");
+    }
+  });
+
+  // Expose for any existing page-specific toggle code.
+  window.fcmsCloseMobileSidebar = closeMobileSidebar;
+})();
