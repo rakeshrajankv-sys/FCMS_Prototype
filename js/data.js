@@ -622,3 +622,256 @@ function resetPrototype() {
   localStorage.removeItem("fcms_verified_devices_v2");
   location.href = "index.html";
 }
+
+
+/* FCMS UPI settlement helpers */
+function fcmsIsUPI(record){ return String(record?.paymentMode || "").toUpperCase() === "UPI"; }
+function fcmsUpiStatus(record){
+  if(!fcmsIsUPI(record)) return "";
+  return record.upiVerificationStatus || "pending";
+}
+function fcmsMarkNewUpiPending(record){
+  if(fcmsIsUPI(record)){
+    let session = null;
+    try { session = typeof currentSession === "function" ? currentSession() : null; } catch (_) {}
+    if(session && session.role === "admin"){
+      record.upiVerificationStatus = "verified";
+      record.upiVerifiedAt = new Date().toISOString();
+      record.upiVerifiedByUserId = session.id || null;
+      try { record.upiVerifiedBy = typeof actorLabel === "function" ? actorLabel() : (session.name || "Main Committee"); }
+      catch (_) { record.upiVerifiedBy = session.name || "Main Committee"; }
+      record.upiRejectionReason = "";
+      record.upiAutoVerified = true;
+    } else {
+      record.upiVerificationStatus = "pending";
+      record.upiVerifiedAt = null;
+      record.upiVerifiedByUserId = null;
+      record.upiVerifiedBy = "";
+      record.upiRejectionReason = "";
+      record.upiAutoVerified = false;
+    }
+  }
+  return record;
+}
+function fcmsAllMoneyRecords(db=getDB()){
+  const out=[];
+  (db.payments||[]).forEach(r=>out.push({kind:"Member Payment",collection:"payment",record:r,pradeshikamId:db.members.find(m=>m.id===r.memberId)?.pradeshikamId||null,subCommitteeId:null,payer:db.members.find(m=>m.id===r.memberId)?.name||"Member",date:r.paymentDate||r.createdAt}));
+  (db.donations||[]).forEach(r=>out.push({kind:"Donation",collection:"donation",record:r,pradeshikamId:r.pradeshikamId||null,subCommitteeId:null,payer:r.donorName||"Donor",date:r.date||r.createdAt}));
+  (db.subCommitteeCollections||[]).forEach(r=>out.push({kind:"Sub Committee Collection",collection:"subCommitteeCollection",record:r,pradeshikamId:null,subCommitteeId:r.subCommitteeId||null,payer:r.donorName||"Payer",date:r.date||r.createdAt}));
+  (db.subCommitteeCollectionPayments||[]).forEach(r=>{const c=(db.subCommitteeCollections||[]).find(x=>x.id===r.collectionId);out.push({kind:"Sub Committee Payment",collection:"subCommitteeCollectionPayment",record:r,pradeshikamId:null,subCommitteeId:r.subCommitteeId||c?.subCommitteeId||null,payer:c?.donorName||"Payer",date:r.date||r.createdAt});});
+  return out;
+}
+function fcmsUpiRecords(db=getDB()){ return fcmsAllMoneyRecords(db).filter(x=>fcmsIsUPI(x.record)); }
+function fcmsVerifiedUpiTotalForPradeshikam(pradeshikamId, kind="all", db=getDB()){
+  return fcmsUpiRecords(db).filter(x=>Number(x.pradeshikamId)===Number(pradeshikamId)&&fcmsUpiStatus(x.record)==="verified"&&(kind==="all"||(kind==="member"&&x.collection==="payment")||(kind==="donation"&&x.collection==="donation"))).reduce((a,x)=>a+Number(x.record.amount||0),0);
+}
+function fcmsVerifiedUpiTotalForSubCommittee(subCommitteeId, db=getDB()){
+  return fcmsUpiRecords(db).filter(x=>Number(x.subCommitteeId)===Number(subCommitteeId)&&fcmsUpiStatus(x.record)==="verified").reduce((a,x)=>a+Number(x.record.amount||0),0);
+}
+function fcmsCashCollectedForPradeshikam(pradeshikamId, kind="all", db=getDB()){
+  return fcmsAllMoneyRecords(db).filter(x=>Number(x.pradeshikamId)===Number(pradeshikamId)&&!fcmsIsUPI(x.record)&&(kind==="all"||(kind==="member"&&x.collection==="payment")||(kind==="donation"&&x.collection==="donation"))&&x.record.status!=="hold").reduce((a,x)=>a+Number(x.record.amount||0),0);
+}
+function fcmsCashCollectedForSubCommittee(subCommitteeId, db=getDB()){
+  return fcmsAllMoneyRecords(db).filter(x=>Number(x.subCommitteeId)===Number(subCommitteeId)&&!fcmsIsUPI(x.record)).reduce((a,x)=>a+Number(x.record.amount||0),0);
+}
+
+
+/* FCMS Receipt Book helpers: 50 receipts per book, Books 1-100 (1-5000). */
+const FCMS_RECEIPTS_PER_BOOK = 50;
+const FCMS_MAX_RECEIPT_BOOKS = 200;
+function fcmsReceiptNumberValue(value){
+  const raw=String(value??"").trim();
+  if(!/^\d+$/.test(raw)) return null;
+  const n=Number(raw);
+  return Number.isInteger(n)&&n>0?n:null;
+}
+function fcmsReceiptBookInfo(value){
+  const receipt=fcmsReceiptNumberValue(value);
+  if(!receipt) return null;
+  const book=Math.ceil(receipt/FCMS_RECEIPTS_PER_BOOK);
+  if(book<1||book>FCMS_MAX_RECEIPT_BOOKS) return {receipt,book,outOfRange:true,start:(book-1)*FCMS_RECEIPTS_PER_BOOK+1,end:book*FCMS_RECEIPTS_PER_BOOK};
+  return {receipt,book,outOfRange:false,start:(book-1)*FCMS_RECEIPTS_PER_BOOK+1,end:book*FCMS_RECEIPTS_PER_BOOK};
+}
+
+
+/* FCMS RECEIPT BOOK LIMIT */
+const FCMS_DEFAULT_RECEIPT_BOOK_LIMIT = 100;
+
+function fcmsReceiptBookLimit(dbArg){
+  const source = dbArg || (typeof getDB === "function" ? getDB() : {});
+  const raw = Number(source?.settings?.receiptBookLimit);
+  if(Number.isInteger(raw) && raw >= 1 && raw <= FCMS_MAX_RECEIPT_BOOKS) return raw;
+  return FCMS_DEFAULT_RECEIPT_BOOK_LIMIT;
+}
+
+function fcmsMaxAllowedReceiptNumber(dbArg){
+  return fcmsReceiptBookLimit(dbArg) * FCMS_RECEIPTS_PER_BOOK;
+}
+
+function fcmsReceiptAllowed(value, dbArg){
+  const n = fcmsReceiptNumberValue(value);
+  if(!n) return true;
+  return n <= fcmsMaxAllowedReceiptNumber(dbArg);
+}
+
+function fcmsSetReceiptBookLimit(limit){
+  const n = Number(limit);
+  if(!Number.isInteger(n) || n < 1 || n > FCMS_MAX_RECEIPT_BOOKS){
+    throw new Error(`Receipt book limit must be between 1 and ${FCMS_MAX_RECEIPT_BOOKS}.`);
+  }
+
+  const db = getDB();
+  db.settings = db.settings || {};
+  const oldLimit = fcmsReceiptBookLimit(db);
+  db.settings.receiptBookLimit = n;
+
+  if(typeof addActivity === "function"){
+    addActivity(db, {
+      action: "RECEIPT_BOOK_LIMIT_CHANGED",
+      entityType: "settings",
+      entityId: "receiptBookLimit",
+      summary: `Receipt book limit changed from Book ${oldLimit} to Book ${n}`,
+      details: `Maximum allowed receipt number changed from ${oldLimit * FCMS_RECEIPTS_PER_BOOK} to ${n * FCMS_RECEIPTS_PER_BOOK}.`,
+      oldValue: {
+        receiptBookLimit: oldLimit,
+        maxReceiptNumber: oldLimit * FCMS_RECEIPTS_PER_BOOK
+      },
+      newValue: {
+        receiptBookLimit: n,
+        maxReceiptNumber: n * FCMS_RECEIPTS_PER_BOOK
+      }
+    });
+  }
+
+  saveDB(db);
+  return { oldLimit, newLimit: n };
+}
+
+
+/* FCMS UPI / BANK VERIFICATION */
+function fcmsIsBank(record){
+  const mode = String(record?.mode || record?.paymentMode || record?.method || "").trim().toLowerCase();
+  return mode === "bank" || mode === "bank transfer" || mode === "banktransfer" || mode === "transfer";
+}
+
+function fcmsNeedsOfficeVerification(record){
+  return fcmsIsUPI(record) || fcmsIsBank(record);
+}
+
+function fcmsVerificationStatus(record){
+  if(fcmsIsUPI(record)) return fcmsUpiStatus(record);
+  if(fcmsIsBank(record)) return String(record?.bankVerificationStatus || record?.verificationStatus || "pending").toLowerCase();
+  return "not_required";
+}
+
+function fcmsMarkNewElectronicPending(record){
+  if(!record || !fcmsNeedsOfficeVerification(record)) return record;
+
+  const s = typeof currentSession === "function" ? currentSession() : null;
+  const isAdmin = s?.role === "admin";
+
+  if(fcmsIsUPI(record)){
+    if(typeof fcmsMarkNewUpiPending === "function") return fcmsMarkNewUpiPending(record);
+  }
+
+  if(fcmsIsBank(record)){
+    if(isAdmin){
+      record.bankVerificationStatus = "verified";
+      record.bankVerifiedAt = new Date().toISOString();
+      record.bankVerifiedByUserId = s?.verifiedUserId || s?.userId || null;
+      record.bankVerifiedBy = s?.name || "Main Committee";
+      record.bankAutoVerified = true;
+    }else{
+      record.bankVerificationStatus = "pending";
+      record.bankAutoVerified = false;
+    }
+  }
+  return record;
+}
+
+function fcmsElectronicRecords(dbArg){
+  const db = dbArg || getDB();
+
+  return fcmsAllMoneyRecords(db)
+    .filter(x => fcmsNeedsOfficeVerification(x.record))
+    .map(x => {
+      const r = x.record || {};
+
+      const pradeshikamId =
+        x.pradeshikamId ??
+        r.pradeshikamId ??
+        r.pradeshikamID ??
+        null;
+
+      const subCommitteeId =
+        x.subCommitteeId ??
+        r.subCommitteeId ??
+        r.subcommitteeId ??
+        r.committeeId ??
+        null;
+
+      const pradeshikamName =
+        x.pradeshikamName ||
+        r.pradeshikamName ||
+        (pradeshikamId
+          ? (db.pradeshikams || []).find(p => String(p.id) === String(pradeshikamId))?.name
+          : "") ||
+        "";
+
+      const subCommitteeName =
+        x.subCommitteeName ||
+        r.subCommitteeName ||
+        r.subcommitteeName ||
+        r.committeeName ||
+        (subCommitteeId
+          ? (db.subCommittees || []).find(c => String(c.id) === String(subCommitteeId))?.name
+          : "") ||
+        "";
+
+      return {
+        ...x,
+        pradeshikamId,
+        subCommitteeId,
+        pradeshikamName,
+        subCommitteeName,
+        committeeType: pradeshikamId ? "pradeshikam" : subCommitteeId ? "subcommittee" : "main",
+        committeeId: pradeshikamId || subCommitteeId || null,
+        committeeName: pradeshikamId
+          ? pradeshikamName
+          : subCommitteeId
+            ? subCommitteeName
+            : "Main Committee",
+        mode: fcmsIsUPI(r) ? "UPI" : "Bank",
+        status: fcmsVerificationStatus(r)
+      };
+    });
+}
+
+
+/* verified electronic payments compatibility */
+function fcmsVerifiedElectronicTotal(records){
+  return (records || []).reduce((sum, r) => {
+    if(!fcmsNeedsOfficeVerification(r)) return sum;
+    return fcmsVerificationStatus(r) === "verified" ? sum + Number(r.amount || 0) : sum;
+  }, 0);
+}
+
+
+/* Published receipt-book helpers */
+function fcmsPublishedBookInfo(value, dbArg){
+  const info = fcmsReceiptBookInfo(value);
+  if(!info) return null;
+
+  const limit = fcmsReceiptBookLimit(dbArg || getDB());
+  return {
+    ...info,
+    published: Number(info.book) <= Number(limit),
+    publishedLimit: Number(limit),
+    maxPublishedReceipt: Number(limit) * FCMS_RECEIPTS_PER_BOOK
+  };
+}
+
+function fcmsReceiptBookPublished(value, dbArg){
+  const info = fcmsPublishedBookInfo(value, dbArg);
+  return !info || info.published;
+}

@@ -236,16 +236,14 @@ function saveHousehold(hold) {
     err.classList.remove("d-none");
     return;
   }
-  const duplicateHouse = db.members.find(
+  // Existing household is allowed: newly added members join the same
+  // Pradeshikam + House Number cluster instead of creating a duplicate house.
+  const existingHouseMembers = db.members.filter(
     (m) =>
-      m.pradeshikamId === pradeshikamId &&
+      Number(m.pradeshikamId) === Number(pradeshikamId) &&
       houseKey(m.houseNumber) === houseKey(house),
   );
-  if (duplicateHouse) {
-    err.textContent = `House ${house} already exists. Use View/Edit Member for an existing household.`;
-    err.classList.remove("d-none");
-    return;
-  }
+  const addingToExistingHouse = existingHouseMembers.length > 0;
   const validAge = draft.every(
     (m) => Number(m.age) >= 1 && Number(m.age) <= 100,
   );
@@ -450,10 +448,166 @@ function saveHousehold(hold) {
       memberId: m.id,
       pradeshikamId,
       summary: `${m.name} added to house ${house}`,
-      details: `Household ${house} created with ${created.length} members.${holdNote}`,
+      details: addingToExistingHouse
+        ? `${m.name} added to existing household ${house}. Household now has ${existingHouseMembers.length + created.length} members.${holdNote}`
+        : `Household ${house} created with ${created.length} members.${holdNote}`,
       newValue: memberSnapshot(m),
     }),
   );
   fcmsClearPageDraft(); saveDB(db);
   location.href = "members.html";
 }
+
+
+/* FCMS PRESERVE MEMBER DETAILS ON COUNT CHANGE */
+(function(){
+  function fieldKey(el){
+    return el.name || el.id || "";
+  }
+
+  function snapshotMemberRows(){
+    const rows = [
+      ...document.querySelectorAll(
+        '[data-member-index], .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
+      )
+    ];
+
+    const unique = [];
+    const seen = new Set();
+
+    rows.forEach(row=>{
+      if(!(row instanceof HTMLElement)) return;
+      if(seen.has(row)) return;
+      const hasInputs = row.querySelector("input,select,textarea");
+      if(!hasInputs) return;
+      seen.add(row);
+      unique.push(row);
+    });
+
+    return unique.map((row,index)=>{
+      const values = {};
+      row.querySelectorAll("input,select,textarea").forEach(el=>{
+        const key = fieldKey(el);
+        if(!key) return;
+
+        if(el.type === "checkbox" || el.type === "radio"){
+          values[key] = {kind:"checked", value:!!el.checked};
+        }else{
+          values[key] = {kind:"value", value:el.value};
+        }
+      });
+
+      return { index, values };
+    });
+  }
+
+  function restoreMemberRows(snapshot, limit){
+    const rows = [
+      ...document.querySelectorAll(
+        '[data-member-index], .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
+      )
+    ].filter(row => row instanceof HTMLElement && row.querySelector("input,select,textarea"));
+
+    const max = Math.min(Number(limit) || rows.length, snapshot.length, rows.length);
+
+    for(let i=0;i<max;i++){
+      const saved = snapshot[i]?.values || {};
+      const row = rows[i];
+
+      row.querySelectorAll("input,select,textarea").forEach(el=>{
+        const key = fieldKey(el);
+        if(!key || !(key in saved)) return;
+
+        const item = saved[key];
+
+        if(item.kind === "checked"){
+          el.checked = !!item.value;
+        }else{
+          el.value = item.value ?? "";
+        }
+
+        // Re-trigger dependent logic such as gender/age required amount,
+        // payment mode fields, receipt-book indicator, etc.
+        el.dispatchEvent(new Event("input",{bubbles:true}));
+        el.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+    }
+
+    if(typeof window.fcmsRefreshDynamicReceiptBooks === "function"){
+      setTimeout(()=>window.fcmsRefreshDynamicReceiptBooks(),30);
+    }
+    if(typeof window.fcmsRefreshPublishedReceiptBooks === "function"){
+      setTimeout(()=>window.fcmsRefreshPublishedReceiptBooks(),40);
+    }
+  }
+
+  function isMemberCountControl(el){
+    if(!el) return false;
+    const key = ((el.id||"")+" "+(el.name||"")+" "+(el.getAttribute?.("aria-label")||"")).toLowerCase();
+    return key.includes("membercount") ||
+           key.includes("member-count") ||
+           key.includes("numberofmembers") ||
+           key.includes("number-of-members") ||
+           key.includes("memberscount") ||
+           key.includes("members-count");
+  }
+
+  let pendingSnapshot = null;
+  let pendingCount = null;
+
+  // Capture values BEFORE the page's original change listener rebuilds rows.
+  document.addEventListener("change", function(e){
+    const el = e.target;
+    if(!isMemberCountControl(el)) return;
+
+    pendingSnapshot = snapshotMemberRows();
+    pendingCount = Number(el.value) || 0;
+
+    // Restore after original synchronous/delayed row rebuild completes.
+    setTimeout(()=>{
+      if(!pendingSnapshot) return;
+      restoreMemberRows(pendingSnapshot, pendingCount);
+      pendingSnapshot = null;
+      pendingCount = null;
+    }, 0);
+
+    setTimeout(()=>{
+      if(!pendingSnapshot) return;
+      restoreMemberRows(pendingSnapshot, pendingCount);
+      pendingSnapshot = null;
+      pendingCount = null;
+    }, 80);
+  }, true);
+
+  window.fcmsSnapshotMemberRows = snapshotMemberRows;
+  window.fcmsRestoreMemberRows = restoreMemberRows;
+})();
+
+
+/* Reinforce member-count preservation for direct select/input controls */
+document.addEventListener("input", function(e){
+  const el=e.target;
+  if(!el) return;
+  const key=((el.id||"")+" "+(el.name||"")).toLowerCase();
+  const isCount =
+    key.includes("membercount") ||
+    key.includes("member-count") ||
+    key.includes("numberofmembers") ||
+    key.includes("number-of-members");
+
+  if(!isCount || typeof window.fcmsSnapshotMemberRows!=="function") return;
+  el.__fcmsMemberSnapshot = window.fcmsSnapshotMemberRows();
+}, true);
+
+document.addEventListener("change", function(e){
+  const el=e.target;
+  if(!el || !el.__fcmsMemberSnapshot || typeof window.fcmsRestoreMemberRows!=="function") return;
+
+  const snapshot=el.__fcmsMemberSnapshot;
+  const count=Number(el.value)||0;
+
+  setTimeout(()=>{
+    window.fcmsRestoreMemberRows(snapshot,count);
+    delete el.__fcmsMemberSnapshot;
+  },100);
+}, true);

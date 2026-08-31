@@ -2,7 +2,7 @@ const db = getDB(),
   s = currentSession();
 markActive();
 const id = new URLSearchParams(location.search).get("id"),
-  donation = db.donations.find((d) => d.id === id);
+  donation = db.donations.find((d) => String(d.id) === String(id));
 const canEditDonation = !!donation && (s.role === "admin" || (s.role === "pradeshikam" && Number(donation.pradeshikamId) === Number(s.pradeshikamId)));
 if (!canEditDonation) {
   location.href = "donations.html";
@@ -43,9 +43,9 @@ if (!canEditDonation) {
         err = document.getElementById("formError"),
         dup = (db.donations || []).find(
           (x) =>
-            x !== donation &&
-            String(x.receiptNumber || "").toLowerCase() ===
-              receipt.toLowerCase(),
+            String(x.id) !== String(donation.id) &&
+            Number(x.pradeshikamId) === Number(donation.pradeshikamId) &&
+            String(x.receiptNumber || "").toLowerCase() === receipt.toLowerCase(),
         );
       if (dup) {
         err.textContent = "That receipt number is already in use.";

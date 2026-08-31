@@ -51,7 +51,8 @@ function renderSubCommitteeDashboard(db, s) {
       .reduce((a, x) => a + Number(x.amount || 0), 0),
   }));
   document.getElementById("page-content").innerHTML = `
-${pageTitle(`${escapeHTML(c.name)} Dashboard`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>` : ""}<a href="subcommittee-collections.html" class="btn ${c.financeAccess ? "btn-outline-primary" : "btn-primary"}"><i class="bi ${committeeIcon} me-2"></i>${t("add_collection")}</a></div>`)}
+${pageTitle(`${escapeHTML(c.name)} Dashboard`, "", `<div class="d-flex gap-2 flex-wrap">${c.financeAccess ? `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>
+` : ""}<a href="subcommittee-collections.html" class="btn ${c.financeAccess ? "btn-outline-primary" : "btn-primary"}"><i class="bi ${committeeIcon} me-2"></i>${t("add_collection")}</a></div>`)}
 <div class="row g-3 mb-4">
 ${statCard("bi-cash-stack", t("total_collected"), money(collected), "green")}
 ${statCard("bi-bank", t("submitted_to_office"), money(submitted), "blue")}
@@ -71,7 +72,8 @@ ${statCard("bi-wallet2", t("remaining_after_expense"), money(remainingAfterExpen
       .join("") ||
     `<div class="col-12 text-muted small py-2">No collections recorded yet.</div>`
   }</div></div></div>
-<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">${t("quick_actions")}</div><div class="d-grid gap-2"><a class="quick-action" href="subcommittee-collections.html"><span class="quick-icon"><i class="bi ${committeeIcon}"></i></span><span><b class="d-block small">${t("add_collection")}</b></span></a><a class="quick-action" href="submissions.html"><span class="quick-icon"><i class="bi bi-bank"></i></span><span><b class="d-block small">Submit to Office</b></span></a><a class="quick-action" href="subcommittee-expense.html"><span class="quick-icon"><i class="bi bi-receipt-cutoff"></i></span><span><b class="d-block small">${t("add_expense")}</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">${t("reports")}</b></span></a>${c.financeAccess ? `<a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-people"></i></span><span><b class="d-block small">${t("members")}</b></span></a><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">${t("add_member")}</b></span></a>` : ""}</div></div></div>
+<div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">${t("quick_actions")}</div><div class="d-grid gap-2"><a class="quick-action" href="subcommittee-collections.html"><span class="quick-icon"><i class="bi ${committeeIcon}"></i></span><span><b class="d-block small">${t("add_collection")}</b></span></a><a class="quick-action" href="submissions.html"><span class="quick-icon"><i class="bi bi-bank"></i></span><span><b class="d-block small">Submit to Office</b></span></a><a class="quick-action" href="subcommittee-expense.html"><span class="quick-icon"><i class="bi bi-receipt-cutoff"></i></span><span><b class="d-block small">${t("add_expense")}</b></span></a><a class="quick-action" href="reports.html"><span class="quick-icon"><i class="bi bi-file-earmark-spreadsheet"></i></span><span><b class="d-block small">${t("reports")}</b></span></a>
+${c.financeAccess ? `<a class="quick-action" href="members.html"><span class="quick-icon"><i class="bi bi-people"></i></span><span><b class="d-block small">${t("members")}</b></span></a><a class="quick-action" href="add-member.html"><span class="quick-icon"><i class="bi bi-person-plus"></i></span><span><b class="d-block small">${t("add_member")}</b></span></a>` : ""}</div></div></div>
 </div>
 <div class="panel"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">${t("recent_collections")}</div><a href="subcommittee-collections.html" class="small text-decoration-none">${t("view_all")}</a></div>${renderSubCommitteeRecent(db, c.id, committeeIcon)}</div>`;
 }
@@ -151,7 +153,16 @@ function renderMainDashboard(db, s) {
   const subCommitteeAllocated =
     s.role === "admin" ? subCommitteeAllocationTotal(null, db) : 0;
   document.getElementById("page-content").innerHTML = `
-${pageTitle("Dashboard", "", `<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>`)}
+${pageTitle("Dashboard", "", `<div class="fcms-main-header-actions">
+${s.role === "admin" ? `<button type="button"
+  id="openReceiptBookLimit"
+  class="fcms-main-book-limit-icon"
+  title="${fcmsLang()==="ml" ? "രസീത് ബുക്ക് പരിധി" : "Receipt Book Limit"}"
+  aria-label="${fcmsLang()==="ml" ? "രസീത് ബുക്ക് പരിധി" : "Receipt Book Limit"}">
+  <i class="bi bi-journal-bookmark"></i>
+</button>` : ""}
+<a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>
+</div>`)}
 <div class="row g-3 mb-4">
 ${statCard("bi-cash-stack", "Total Collected", money(total + (s.role === "admin" ? subCommitteeCollected : 0)), "green")}
 ${statCard("bi-people", "Collected by Pradeshikam", money(memberCollected), "blue")}
@@ -249,3 +260,150 @@ ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
       .join("")}</div></div>`;
   }
 }
+
+
+
+
+
+
+
+/* WORKING BOOK LIMIT */
+window.openReceiptBookLimitModal = function(){
+  const session=currentSession();
+  if(!session || session.role!=="admin") return;
+
+  const current=fcmsReceiptBookLimit(getDB());
+  const ml=fcmsLang()==="ml";
+  document.getElementById("fcmsReceiptBookLimitOverlay")?.remove();
+
+  const overlay=document.createElement("div");
+  overlay.id="fcmsReceiptBookLimitOverlay";
+  overlay.className="fcms-book-limit-overlay";
+
+  const options=Array.from({length:FCMS_MAX_RECEIPT_BOOKS},(_,i)=>{
+    const n=i+1;
+    return `<option value="${n}" ${n===current?"selected":""}>${ml?"ബുക്ക്":"Book"} ${n}</option>`;
+  }).join("");
+
+  overlay.innerHTML=`
+    <div class="fcms-book-limit-modal">
+      <div class="fcms-book-limit-modal-head">
+        <div>
+          <h3>${ml?"രസീത് ബുക്ക് പരിധി":"Receipt Book Limit"}</h3>
+          
+        </div>
+        <button type="button" class="fcms-book-limit-close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="fcms-book-limit-modal-body">
+        <label>${ml?"പരമാവധി ബുക്ക്":"Maximum Book"}</label>
+        <select id="fcmsReceiptBookLimitSelect" class="form-select">${options}</select>
+        <div class="fcms-book-limit-manual-wrap">
+          <label for="fcmsReceiptBookLimitManual">${ml ? "ബുക്ക് നമ്പർ നൽകുക" : "Enter Book Number"}</label>
+          <input type="number" id="fcmsReceiptBookLimitManual" class="form-control"
+                 min="1" max="${FCMS_MAX_RECEIPT_BOOKS}" step="1" inputmode="numeric"
+                 value="${current}" placeholder="1 - ${FCMS_MAX_RECEIPT_BOOKS}">
+        </div>
+        <div class="fcms-book-limit-info">
+          <span>${ml?"പരമാവധി രസീത് നമ്പർ":"Maximum receipt number"}</span>
+          <strong id="fcmsReceiptBookLimitMax">${current*FCMS_RECEIPTS_PER_BOOK}</strong>
+        </div>
+      </div>
+      <div class="fcms-book-limit-modal-actions">
+        <button type="button" class="btn btn-light fcms-book-limit-cancel">${ml?"റദ്ദാക്കുക":"Cancel"}</button>
+        <button type="button" class="btn btn-primary fcms-book-limit-save">${ml?"സേവ് ചെയ്യുക":"Save Limit"}</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const sel=overlay.querySelector("#fcmsReceiptBookLimitSelect");
+  const maxEl=overlay.querySelector("#fcmsReceiptBookLimitMax");
+  sel.addEventListener("change",()=>{maxEl.textContent=Number(sel.value)*FCMS_RECEIPTS_PER_BOOK;});
+
+  const close=()=>overlay.remove();
+
+    /* BOOK LIMIT SELECT AND TYPE SYNC */
+    const fcmsBookLimitSelect = document.getElementById("fcmsReceiptBookLimitSelect");
+    const fcmsBookLimitManual = document.getElementById("fcmsReceiptBookLimitManual");
+    const fcmsBookLimitMaxDisplay = document.getElementById("fcmsReceiptBookLimitMax");
+
+    function fcmsApplyBookLimitValue(raw, source){
+      const n = Number(raw);
+      const valid = Number.isInteger(n) && n >= 1 && n <= FCMS_MAX_RECEIPT_BOOKS;
+
+      if(!valid){
+        if(fcmsBookLimitManual){
+          fcmsBookLimitManual.setCustomValidity(
+            ml
+              ? `ബുക്ക് നമ്പർ 1 മുതൽ ${FCMS_MAX_RECEIPT_BOOKS} വരെ ആയിരിക്കണം.`
+              : `Book number must be between 1 and ${FCMS_MAX_RECEIPT_BOOKS}.`
+          );
+        }
+        return false;
+      }
+
+      if(fcmsBookLimitManual){
+        fcmsBookLimitManual.setCustomValidity("");
+        if(source !== "manual") fcmsBookLimitManual.value = String(n);
+      }
+      if(fcmsBookLimitSelect && source !== "select"){
+        fcmsBookLimitSelect.value = String(n);
+      }
+
+      if(fcmsBookLimitMaxDisplay){
+        fcmsBookLimitMaxDisplay.textContent = String(n * FCMS_RECEIPTS_PER_BOOK);
+      }
+      return true;
+    }
+
+    fcmsBookLimitSelect?.addEventListener("change", function(){
+      fcmsApplyBookLimitValue(this.value, "select");
+    });
+
+    fcmsBookLimitManual?.addEventListener("input", function(){
+      if(fcmsApplyBookLimitValue(Number(this.value), "manual")){
+        fcmsBookLimitSelect.value = String(Number(this.value));
+      }
+    });
+
+    fcmsBookLimitManual?.addEventListener("blur", function(){
+      if(!fcmsApplyBookLimitValue(Number(this.value), "manual")) this.reportValidity();
+    });
+
+    fcmsApplyBookLimitValue(current, "select");
+  overlay.querySelector(".fcms-book-limit-close").addEventListener("click",close);
+  overlay.querySelector(".fcms-book-limit-cancel").addEventListener("click",close);
+  overlay.addEventListener("click",e=>{if(e.target===overlay) close();});
+
+  overlay.querySelector(".fcms-book-limit-save").addEventListener("click",async ()=>{
+    const next = Number(document.getElementById("fcmsReceiptBookLimitManual")?.value || sel.value);
+      if(!Number.isInteger(next) || next < 1 || next > FCMS_MAX_RECEIPT_BOOKS){
+        const manual = document.getElementById("fcmsReceiptBookLimitManual");
+        if(manual){
+          manual.setCustomValidity(ml ? `ബുക്ക് നമ്പർ 1 മുതൽ ${FCMS_MAX_RECEIPT_BOOKS} വരെ ആയിരിക്കണം.` : `Book number must be between 1 and ${FCMS_MAX_RECEIPT_BOOKS}.`);
+          manual.reportValidity();
+          manual.focus();
+        }
+        return;
+      }
+    const old=fcmsReceiptBookLimit(getDB());
+    if(next===old){close();return;}
+    const confirmed = await window.fcmsBookLimitConfirm({
+      oldLimit: old,
+      newLimit: next,
+      ml
+    });
+    if(!confirmed) return;
+
+    fcmsSetReceiptBookLimit(next);
+    close();
+  });
+};
+
+document.addEventListener("click",function(e){
+  const b=e.target.closest?e.target.closest("#openReceiptBookLimit"):null;
+  if(!b) return;
+  e.preventDefault();
+  e.stopPropagation();
+  window.openReceiptBookLimitModal();
+});

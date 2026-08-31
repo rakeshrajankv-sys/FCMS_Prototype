@@ -2,7 +2,7 @@ const db = getDB(),
   s = currentSession();
 markActive();
 const id = new URLSearchParams(location.search).get("id"),
-  item = (db.subCommitteeCollections || []).find((x) => x.id === id);
+  item = (db.subCommitteeCollections || []).find((x) => String(x.id) === String(id));
 const canEdit = !!item && (s.role === "admin" || (s.role === "subcommittee" && Number(item.subCommitteeId) === Number(s.subCommitteeId)));
 if (!canEdit) {
   location.href = "subcommittee-collections.html";
@@ -27,7 +27,8 @@ if (!canEdit) {
       err = document.getElementById("formError");
     const dup = (db.subCommitteeCollections || []).find(
       (x) =>
-        x.id !== item.id &&
+        String(x.id) !== String(item.id) &&
+        Number(x.subCommitteeId) === Number(item.subCommitteeId) &&
         String(x.receiptNumber || "").toLowerCase() === receipt.toLowerCase(),
     );
     if (dup) {

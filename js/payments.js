@@ -1,3 +1,8 @@
+function fcmsRecordBookMatches(record, selectedBook){
+  if(!selectedBook) return true;
+  const info=fcmsReceiptBookInfo(record?.receiptNumber);
+  return !!info && Number(info.book)===Number(selectedBook);
+}
 const db = getDB(),
   s = currentSession();
 markActive();
@@ -13,7 +18,7 @@ let rows = db.payments
   .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
 document.getElementById("page-content").innerHTML = `
 ${pageTitle("Collections", "Every installment is stored as a separate receipt.")}
-<div class="panel"><div class="collection-filter-row mb-3"><div class="filter-search"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div>${s.role === "admin" ? `<div><select id="prFilter" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select></div>` : ""}<div><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><select id="statusFilter" class="form-select"><option value="">All statuses</option><option value="completed">Completed</option><option value="hold">Hold</option></select></div><div class="filter-export"><button id="exportBtn" class="btn btn-outline-primary export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div><div id="paymentTable"></div></div>`;
+<div class="panel"><div class="collection-filter-row mb-3"><div class="filter-search"><input id="search" class="form-control" placeholder="Search receipt, member or phone"></div>${s.role === "admin" ? `<div><select id="receiptBookFilter" class="form-select"><option value="">${fcmsLang()==="ml"?"എല്ലാ ബുക്കുകളും":"All Books"}</option>${Array.from({length:FCMS_MAX_RECEIPT_BOOKS},(_,i)=>`<option value="${i+1}">${fcmsLang()==="ml"?"ബുക്ക്":"Book"} ${i+1}</option>`).join("")}</select><select id="prFilter" class="form-select"><option value="">All Pradeshikams</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select></div>` : ""}<div><select id="mode" class="form-select"><option value="">All payment modes</option><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><select id="statusFilter" class="form-select"><option value="">All statuses</option><option value="completed">Completed</option><option value="hold">Hold</option></select></div><div class="filter-export"><button id="exportBtn" class="btn btn-outline-primary export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div><div id="paymentTable"></div></div>`;
 function render() {
   const q = document.getElementById("search").value.toLowerCase(),
     mode = document.getElementById("mode").value,
@@ -29,7 +34,8 @@ function render() {
           .includes(q)) &&
       (!mode || p.paymentMode === mode) &&
       (!statusFilter || (p.status || "completed") === statusFilter) &&
-      (!prFilter || Number(m?.pradeshikamId) === Number(prFilter))
+      (!prFilter || Number(m?.pradeshikamId) === Number(prFilter)) &&
+      fcmsRecordBookMatches(p, receiptBookFilter)
     );
   });
   document.getElementById("paymentTable").innerHTML = !arr.length
@@ -99,3 +105,5 @@ document.getElementById("exportBtn").addEventListener("click", () =>
   ),
 );
 render();
+
+document.getElementById("receiptBookFilter")?.addEventListener("change", render);

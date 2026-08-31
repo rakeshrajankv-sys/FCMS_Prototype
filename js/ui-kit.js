@@ -1171,3 +1171,584 @@ function fcmsAttachDraftSaving(root = document) {
   });
   window.syncFcmsDocumentLanguage = syncFcmsDocumentLanguage;
 })();
+
+
+/* FCMS automatic Receipt Book indicator */
+/* Legacy indicator disabled to prevent duplicate Book badges. */
+(function(){
+  window.fcmsRefreshReceiptBookIndicators = function(){
+    if(typeof window.fcmsRefreshPublishedReceiptBooks === "function") window.fcmsRefreshPublishedReceiptBooks();
+    if(typeof window.fcmsRefreshSeparateBookIndicators === "function") window.fcmsRefreshSeparateBookIndicators();
+  };
+})();
+
+
+/* FCMS receipt/submission terminology additions for Malayalam mode */
+(function(){
+ const pairs={
+   "UPI Verified":"UPI സ്ഥിരീകരിച്ചു",
+   "Cash Submission":"പണം സമർപ്പിച്ചത്",
+   "Received directly by Main Office":"പ്രധാന ഓഫീസിൽ നേരിട്ട് ലഭിച്ചു",
+   "Receipt / UPI":"രസീത് / UPI",
+   "Recorded / Verified By":"രേഖപ്പെടുത്തിയത് / സ്ഥിരീകരിച്ചത്",
+   "Type":"തരം"
+ };
+ function apply(){
+   let ml=false;try{ml=localStorage.getItem("fcms_lang")==="ml";}catch(_){}
+   if(!ml)return;
+   document.querySelectorAll("th,.badge,.verified-upi-history-row .small").forEach(el=>{
+     const t=el.textContent.trim();
+     if(pairs[t]) el.textContent=pairs[t];
+   });
+ }
+ document.addEventListener("DOMContentLoaded",()=>setTimeout(apply,50));
+ const o=new MutationObserver(()=>setTimeout(apply,0));
+ document.addEventListener("DOMContentLoaded",()=>o.observe(document.body,{childList:true,subtree:true}));
+})();
+
+
+/* FCMS dynamic member receipt reinforcement */
+(function(){
+  function candidate(el){
+    if(!el || el.tagName !== "INPUT") return false;
+    const fcmsPath=(location.pathname||"").toLowerCase();
+    if(fcmsPath.endsWith("donations.html") ||
+       fcmsPath.endsWith("edit-donation.html") ||
+       fcmsPath.endsWith("subcommittee-collections.html") ||
+       fcmsPath.endsWith("edit-subcommittee-collection.html") ||
+       fcmsPath.endsWith("subcommittee-add-payment.html")) return false;
+
+    const type=String(el.type||"").toLowerCase();
+    if(["file","hidden","checkbox","radio","date"].includes(type)) return false;
+    const labelText=(()=>{
+      try{
+        const label=el.id?document.querySelector(`label[for="${CSS.escape(el.id)}"]`):null;
+        return label?.textContent||"";
+      }catch(_){return "";}
+    })();
+    const all=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+labelText).toLowerCase();
+    return all.includes("receipt") || all.includes("രസീത്");
+  }
+  function refreshReceiptFields(scope=document){
+    const inputs=scope.querySelectorAll?scope.querySelectorAll("input"):[];
+    inputs.forEach(el=>{
+      if(!candidate(el)) return;
+      // Trigger the shared indicator without changing the field value.
+      el.dispatchEvent(new Event("input",{bubbles:true}));
+    });
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",()=>refreshReceiptFields());
+  }else{
+    refreshReceiptFields();
+  }
+
+  // Member receipt rows are created/removed dynamically when receipt mode changes.
+  const observer=new MutationObserver(mutations=>{
+    let needsRefresh=false;
+    for(const m of mutations){
+      if(m.type==="childList" && m.addedNodes.length){ needsRefresh=true; break; }
+    }
+    if(needsRefresh) requestAnimationFrame(()=>refreshReceiptFields());
+  });
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    observer.observe(document.body,{childList:true,subtree:true});
+  });
+
+  // Explicitly re-check after receipt setup/select changes.
+  document.addEventListener("change",e=>{
+    const el=e.target;
+    if(!el) return;
+    const key=((el.id||"")+" "+(el.name||"")).toLowerCase();
+    if(key.includes("receipt") || key.includes("setup")){
+      setTimeout(()=>refreshReceiptFields(),0);
+      setTimeout(()=>refreshReceiptFields(),120);
+    }
+  });
+
+  window.fcmsRefreshDynamicReceiptBooks=refreshReceiptFields;
+})();
+
+
+/* FCMS GLOBAL RECEIPT LIMIT VALIDATION */
+(function(){
+  function isReceiptInput(el){
+    if(!el || el.tagName !== "INPUT") return false;
+    const fcmsPath=(location.pathname||"").toLowerCase();
+    if(fcmsPath.endsWith("donations.html") ||
+       fcmsPath.endsWith("edit-donation.html") ||
+       fcmsPath.endsWith("subcommittee-collections.html") ||
+       fcmsPath.endsWith("edit-subcommittee-collection.html") ||
+       fcmsPath.endsWith("subcommittee-add-payment.html")) return false;
+
+    const type = String(el.type || "").toLowerCase();
+    if(["file","hidden","checkbox","radio","date"].includes(type)) return false;
+
+    let label = "";
+    try{
+      const lab = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
+      label = lab?.textContent || "";
+    }catch(_){}
+
+    const key = ((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+label).toLowerCase();
+    return key.includes("receipt") || key.includes("രസീത്");
+  }
+
+  function receiptLimitMessage(){
+    const db = typeof getDB === "function" ? getDB() : {};
+    const limit = typeof fcmsReceiptBookLimit === "function" ? fcmsReceiptBookLimit(db) : 100;
+    const max = limit * (typeof FCMS_RECEIPTS_PER_BOOK !== "undefined" ? FCMS_RECEIPTS_PER_BOOK : 50);
+
+    return fcmsLang() === "ml"
+      ? `നിലവിലെ രസീത് ബുക്ക് പരിധി ബുക്ക് ${limit} ആണ്. ${max} ന് മുകളിലുള്ള രസീത് നമ്പർ നൽകാൻ കഴിയില്ല.`
+      : `The current receipt book limit is Book ${limit}. Receipt numbers above ${max} are not allowed.`;
+  }
+
+  function validateReceiptLimit(el, report){
+    if(!isReceiptInput(el)) return true;
+
+    const value = String(el.value || "").trim();
+    if(!value || !/^\d+$/.test(value)){
+      if(el.dataset.fcmsReceiptLimitInvalid === "1"){
+        el.setCustomValidity("");
+        delete el.dataset.fcmsReceiptLimitInvalid;
+      }
+      return true;
+    }
+
+    const ok = typeof fcmsReceiptAllowed === "function" ? fcmsReceiptAllowed(value) : true;
+    if(!ok){
+      el.dataset.fcmsReceiptLimitInvalid = "1";
+      el.setCustomValidity(receiptLimitMessage());
+      if(report) el.reportValidity();
+      return false;
+    }
+
+    if(el.dataset.fcmsReceiptLimitInvalid === "1"){
+      el.setCustomValidity("");
+      delete el.dataset.fcmsReceiptLimitInvalid;
+    }
+    return true;
+  }
+
+  document.addEventListener("input", e => {
+    if(isReceiptInput(e.target)) validateReceiptLimit(e.target, false);
+  }, true);
+
+  document.addEventListener("change", e => {
+    if(isReceiptInput(e.target)) validateReceiptLimit(e.target, true);
+  }, true);
+
+  document.addEventListener("submit", e => {
+    if(!(e.target instanceof HTMLFormElement)) return;
+    const bad = [...e.target.querySelectorAll("input")].find(el => isReceiptInput(el) && !validateReceiptLimit(el, false));
+    if(!bad) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    bad.focus();
+    bad.reportValidity();
+  }, true);
+
+  window.fcmsValidateReceiptLimit = validateReceiptLimit;
+})();
+
+
+/* FCMS mutation observer debounce */
+(function(){
+  let timer = 0;
+  const original = window.fcmsRefreshDynamicReceiptBooks;
+  if(typeof original === "function"){
+    window.fcmsRefreshDynamicReceiptBooks = function(){
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        try{ original(); }catch(_){}
+      }, 40);
+    };
+  }
+})();
+
+
+/* DEFINITIVE BOOK LIMIT VALIDATION */
+(function(){
+  const excluded=["donations.html","edit-donation.html","subcommittee-collections.html","edit-subcommittee-collection.html","subcommittee-add-payment.html"];
+  function excludedPage(){
+    const p=(location.pathname||"").toLowerCase();
+    return excluded.some(x=>p.endsWith(x));
+  }
+  function isReceipt(el){
+    if(excludedPage()||!el||el.tagName!=="INPUT") return false;
+    let lab="";
+    try{lab=el.id?(document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent||""):"";}catch(_){}
+    const key=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+lab).toLowerCase();
+    return key.includes("receipt")||key.includes("രസീത്");
+  }
+  function validate(el,report){
+    if(!isReceipt(el)) return true;
+    const v=String(el.value||"").trim();
+    if(!v||!/^\d+$/.test(v)) return true;
+    const limit=fcmsReceiptBookLimit(getDB());
+    const max=fcmsMaxAllowedReceiptNumber(getDB());
+    if(Number(v)>max){
+      el.setCustomValidity(fcmsLang()==="ml"
+        ?`രസീത് ബുക്ക് പരിധി ബുക്ക് ${limit} ആണ്. ${max} ന് മുകളിലുള്ള രസീത് അനുവദനീയമല്ല.`
+        :`Receipt book limit is Book ${limit}. Receipt numbers above ${max} are not allowed.`);
+      if(report) el.reportValidity();
+      return false;
+    }
+    el.setCustomValidity("");
+    return true;
+  }
+  document.addEventListener("input",e=>{if(isReceipt(e.target))validate(e.target,false);},true);
+  document.addEventListener("change",e=>{if(isReceipt(e.target))validate(e.target,true);},true);
+  document.addEventListener("submit",e=>{
+    if(!(e.target instanceof HTMLFormElement))return;
+    const bad=[...e.target.querySelectorAll("input")].find(x=>isReceipt(x)&&!validate(x,false));
+    if(!bad)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    bad.focus();
+    bad.reportValidity();
+  },true);
+})();
+
+
+/* PUBLISHED BOOK ENFORCEMENT */
+(function(){
+  const excludedPages = [
+    "donations.html",
+    "edit-donation.html",
+    "subcommittee-collections.html",
+    "edit-subcommittee-collection.html",
+    "subcommittee-add-payment.html"
+  ];
+
+  function isExcludedPage(){
+    const path=(location.pathname||"").toLowerCase();
+    return excludedPages.some(page=>path.endsWith(page));
+  }
+
+  function isReceiptInput(el){
+    if(isExcludedPage() || !el || el.tagName!=="INPUT") return false;
+
+    const type=String(el.type||"").toLowerCase();
+    if(["file","hidden","checkbox","radio","date"].includes(type)) return false;
+
+    let label="";
+    try{
+      if(el.id){
+        label=document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent || "";
+      }
+    }catch(_){}
+
+    const key=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+label).toLowerCase();
+    return key.includes("receipt") || key.includes("രസീത്");
+  }
+
+  function cleanupIndicators(el, keep=null){
+    const parent=el.parentElement;
+    if(!parent) return;
+    const classes=["fcms-receipt-book-note","fcms-receipt-book-indicator","fcms-separate-book-indicator"];
+    [...parent.children].forEach(node=>{
+      if(node===el || node===keep) return;
+      if(classes.some(cls=>node.classList?.contains(cls))){
+        node.remove();
+        return;
+      }
+      const text=(node.textContent||"").trim();
+      if((/^book\s+\d+$/i.test(text) || /^ബുക്ക്\s+\d+$/.test(text) || /outside the current.*book/i.test(text))
+         && !node.querySelector?.("input,select,textarea,button")){
+        node.remove();
+      }
+    });
+  }
+
+  function getIndicator(el){
+    const parent=el.parentElement;
+    let indicator=parent?.querySelector(':scope > [data-fcms-receipt-book-indicator="1"]') || null;
+    if(!indicator){
+      indicator=document.createElement("div");
+      indicator.dataset.fcmsReceiptBookIndicator="1";
+      indicator.className="fcms-receipt-book-indicator";
+      el.insertAdjacentElement("afterend",indicator);
+    }else if(indicator.previousElementSibling!==el){
+      el.insertAdjacentElement("afterend",indicator);
+    }
+    cleanupIndicators(el,indicator);
+    return indicator;
+  }
+
+  function update(el, reportError=false){
+    if(!isReceiptInput(el)) return true;
+
+    const indicator=getIndicator(el);
+    cleanupIndicators(el, indicator);
+
+    const raw=String(el.value||"").trim();
+
+    if(!raw){
+      indicator.textContent="";
+      indicator.className="fcms-receipt-book-indicator";
+      indicator.hidden=true;
+      el.setCustomValidity("");
+      el.classList.remove("fcms-receipt-unpublished");
+      return true;
+    }
+
+    if(!/^\d+$/.test(raw)){
+      return true; // let existing numeric/required validation handle it
+    }
+
+    const info=typeof fcmsPublishedBookInfo==="function"
+      ? fcmsPublishedBookInfo(raw,getDB())
+      : null;
+
+    if(!info){
+      indicator.textContent="";
+      indicator.hidden=true;
+      return true;
+    }
+
+    indicator.hidden=false;
+
+    if(!info.published){
+      const ml=typeof fcmsLang==="function" && fcmsLang()==="ml";
+      const message=ml
+        ? `ബുക്ക് ${info.book} ഇതുവരെ പ്രസിദ്ധീകരിച്ചിട്ടില്ല. നിലവിൽ പ്രസിദ്ധീകരിച്ച പരിധി ബുക്ക് ${info.publishedLimit} ആണ്.`
+        : `Book ${info.book} has not been published yet. Current published limit is Book ${info.publishedLimit}.`;
+
+      indicator.className="fcms-receipt-book-indicator fcms-receipt-book-error";
+      indicator.innerHTML=`<i class="bi bi-exclamation-circle"></i><span>${message}</span>`;
+
+      el.classList.add("fcms-receipt-unpublished");
+      el.setCustomValidity(message);
+
+      if(reportError) el.reportValidity();
+      return false;
+    }
+
+    el.classList.remove("fcms-receipt-unpublished");
+    el.setCustomValidity("");
+    indicator.className="fcms-receipt-book-indicator fcms-receipt-book-ok";
+    indicator.innerHTML=`<i class="bi bi-journal-bookmark"></i><span>${typeof fcmsLang==="function" && fcmsLang()==="ml" ? "ബുക്ക്" : "Book"} ${info.book}</span>`;
+    return true;
+  }
+
+  // Live validation as soon as receipt is typed.
+  document.addEventListener("input",e=>{
+    if(isReceiptInput(e.target)) update(e.target,false);
+  },true);
+
+  document.addEventListener("change",e=>{
+    if(isReceiptInput(e.target)) update(e.target,true);
+  },true);
+
+  document.addEventListener("blur",e=>{
+    if(isReceiptInput(e.target)) update(e.target,true);
+  },true);
+
+  // Hard stop on any form submit.
+  document.addEventListener("submit",e=>{
+    if(!(e.target instanceof HTMLFormElement) || isExcludedPage()) return;
+
+    const receiptInputs=[...e.target.querySelectorAll("input")].filter(isReceiptInput);
+    const invalid=receiptInputs.find(el=>!update(el,false));
+
+    if(invalid){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      invalid.focus();
+      invalid.reportValidity();
+    }
+  },true);
+
+  // Dynamic "Receipt for each member" rows.
+  function refresh(){
+    document.querySelectorAll("input").forEach(el=>{
+      if(isReceiptInput(el) && String(el.value||"").trim()) update(el,false);
+    });
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",()=>setTimeout(refresh,80));
+  }else{
+    setTimeout(refresh,80);
+  }
+
+  let timer;
+  new MutationObserver(()=>{
+    clearTimeout(timer);
+    timer=setTimeout(refresh,40);
+  }).observe(document.body,{childList:true,subtree:true});
+
+  window.fcmsRefreshPublishedReceiptBooks=refresh;
+})();
+
+
+/* SEPARATE RECEIPT BOOK INDICATOR */
+/* Pradeshikam Donations and Sub Committee Collections also issue physical receipts.
+   Show Book N using the same 50-receipts-per-book calculation.
+   These receipt series remain separate from the Main Committee published-book limit. */
+(function(){
+  const separatePages = [
+    "donations.html",
+    "edit-donation.html",
+    "subcommittee-collections.html",
+    "edit-subcommittee-collection.html",
+    "subcommittee-add-payment.html"
+  ];
+
+  function isSeparateReceiptPage(){
+    const path=(location.pathname||"").toLowerCase();
+    return separatePages.some(page=>path.endsWith(page));
+  }
+
+  function isReceiptInput(el){
+    if(!isSeparateReceiptPage() || !el || el.tagName!=="INPUT") return false;
+
+    const type=String(el.type||"").toLowerCase();
+    if(["file","hidden","checkbox","radio","date"].includes(type)) return false;
+
+    let label="";
+    try{
+      if(el.id){
+        label=document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent||"";
+      }
+    }catch(_){}
+
+    const key=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+label).toLowerCase();
+    return key.includes("receipt") || key.includes("രസീത്");
+  }
+
+  function cleanupIndicators(el, keep=null){
+    const parent=el.parentElement;
+    if(!parent) return;
+    const classes=["fcms-receipt-book-note","fcms-receipt-book-indicator","fcms-separate-book-indicator"];
+    [...parent.children].forEach(node=>{
+      if(node===el || node===keep) return;
+      if(classes.some(cls=>node.classList?.contains(cls))){
+        node.remove();
+        return;
+      }
+      const text=(node.textContent||"").trim();
+      if((/^book\s+\d+$/i.test(text) || /^ബുക്ക്\s+\d+$/.test(text))
+         && !node.querySelector?.("input,select,textarea,button")){
+        node.remove();
+      }
+    });
+  }
+
+  function indicatorFor(el){
+    const parent=el.parentElement;
+    let indicator=parent?.querySelector(':scope > [data-fcms-separate-book-indicator="1"]') || null;
+    if(!indicator){
+      indicator=document.createElement("div");
+      indicator.dataset.fcmsSeparateBookIndicator="1";
+      indicator.className="fcms-separate-book-indicator";
+      el.insertAdjacentElement("afterend",indicator);
+    }else if(indicator.previousElementSibling!==el){
+      el.insertAdjacentElement("afterend",indicator);
+    }
+    cleanupIndicators(el,indicator);
+    return indicator;
+  }
+
+  function update(el){
+    if(!isReceiptInput(el)) return;
+
+    const indicator=indicatorFor(el);
+    const raw=String(el.value||"").trim();
+
+    if(!raw || !/^\d+$/.test(raw)){
+      indicator.hidden=true;
+      indicator.textContent="";
+      return;
+    }
+
+    const n=Number(raw);
+    if(!Number.isFinite(n) || n<1){
+      indicator.hidden=true;
+      indicator.textContent="";
+      return;
+    }
+
+    const perBook = typeof FCMS_RECEIPTS_PER_BOOK!=="undefined"
+      ? FCMS_RECEIPTS_PER_BOOK
+      : 50;
+
+    const book=Math.floor((n-1)/perBook)+1;
+
+    indicator.hidden=false;
+    indicator.innerHTML=`<i class="bi bi-journal-bookmark"></i><span>${typeof fcmsLang==="function" && fcmsLang()==="ml" ? "ബുക്ക്" : "Book"} ${book}</span>`;
+  }
+
+  document.addEventListener("input",e=>{
+    if(isReceiptInput(e.target)) update(e.target);
+  },true);
+
+  document.addEventListener("change",e=>{
+    if(isReceiptInput(e.target)) update(e.target);
+  },true);
+
+  function refresh(){
+    if(!isSeparateReceiptPage()) return;
+    document.querySelectorAll("input").forEach(el=>{
+      if(isReceiptInput(el)) update(el);
+    });
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",()=>setTimeout(refresh,60));
+  }else{
+    setTimeout(refresh,60);
+  }
+
+  let timer;
+  new MutationObserver(()=>{
+    clearTimeout(timer);
+    timer=setTimeout(refresh,50);
+  }).observe(document.body,{childList:true,subtree:true});
+
+  window.fcmsRefreshSeparateBookIndicators=refresh;
+})();
+
+
+
+/* FCMS direct Reports navigation for Pradeshikam/Sub Committee */
+(function(){
+  function role(){
+    try{
+      const x = typeof currentSession === "function" ? currentSession() : null;
+      return String(x?.role || "").toLowerCase();
+    }catch(_){ return ""; }
+  }
+  function isDirectRole(){
+    const r=role();
+    return r==="pradeshikam" || r==="subcommittee" || r.includes("pradesh") || r.includes("sub");
+  }
+  function apply(){
+    if(!isDirectRole()) return;
+    document.querySelectorAll(".sidebar a,.sidebar button,aside a,aside button").forEach(el=>{
+      const text=String(el.textContent||"").replace(/\s+/g," ").trim().toLowerCase();
+      if(text!=="reports" && text!=="റിപ്പോർട്ടുകൾ") return;
+      if(el.tagName==="A"){
+        el.href="reports.html";
+        el.removeAttribute("aria-expanded");
+      }else{
+        el.onclick=e=>{e.preventDefault();e.stopPropagation();location.href="reports.html";};
+        el.removeAttribute("aria-expanded");
+      }
+      el.classList.remove("dropdown-toggle","has-submenu");
+      const group=el.closest("li,.nav-item,.nav-group,.sidebar-group,.sidebar-dropdown,.nav-dropdown");
+      if(group){
+        group.querySelectorAll(".submenu,.nav-submenu,.sidebar-submenu,.dropdown-menu").forEach(x=>x.style.display="none");
+        group.querySelectorAll(".dropdown-arrow,.chevron,.submenu-arrow,.menu-arrow").forEach(x=>x.style.display="none");
+      }
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",apply);
+  else apply();
+  new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
+})();

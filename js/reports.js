@@ -1,3 +1,99 @@
+
+/* FCMS report date range */
+const fcmsReportDateRange = { from:"", to:"", preset:"all" };
+
+function fcmsParseReportDate(value){
+  if(!value) return null;
+  const s=String(value).trim();
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3],12);
+  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if(m) return new Date(+m[3],+m[2]-1,+m[1],12);
+  const d=new Date(value);
+  return isNaN(d) ? null : new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);
+}
+function fcmsReportRecordDate(x){
+  if(!x) return null;
+  return fcmsParseReportDate(
+    x.date || x.paymentDate || x.donationDate || x.submissionDate ||
+    x.expenseDate || x.createdAt || x.updatedAt || x.timestamp
+  );
+}
+function fcmsReportInDateRange(x){
+  if(!fcmsReportDateRange.from && !fcmsReportDateRange.to) return true;
+  const d=fcmsReportRecordDate(x);
+  if(!d) return false;
+  const from=fcmsParseReportDate(fcmsReportDateRange.from);
+  const to=fcmsParseReportDate(fcmsReportDateRange.to);
+  if(from && d < from) return false;
+  if(to && d > to) return false;
+  return true;
+}
+function fcmsFilterReportDate(rows){
+  return (rows||[]).filter(fcmsReportInDateRange);
+}
+function fcmsDateYMD(d){
+  const p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function fcmsDatePreset(key){
+  const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12);
+  let from="",to="";
+  if(key==="yesterday"){
+    const d=new Date(today); d.setDate(d.getDate()-1); from=to=fcmsDateYMD(d);
+  }else if(key==="last7"){
+    const d=new Date(today); d.setDate(d.getDate()-6); from=fcmsDateYMD(d); to=fcmsDateYMD(today);
+  }else if(key==="lastmonth"){
+    from=fcmsDateYMD(new Date(today.getFullYear(),today.getMonth()-1,1,12));
+    to=fcmsDateYMD(new Date(today.getFullYear(),today.getMonth(),0,12));
+  }else if(key==="lastyear"){
+    from=fcmsDateYMD(new Date(today.getFullYear()-1,0,1,12));
+    to=fcmsDateYMD(new Date(today.getFullYear()-1,11,31,12));
+  }
+  return {from,to};
+}
+function fcmsReportDateFilterFieldsHTML(){
+  return `
+    <div class="fcms-report-date-presets">
+      <button type="button" class="fcms-report-date-chip active" data-range="all">All</button>
+      <button type="button" class="fcms-report-date-chip" data-range="yesterday">Yesterday</button>
+      <button type="button" class="fcms-report-date-chip" data-range="last7">Last 7 Days</button>
+      <button type="button" class="fcms-report-date-chip" data-range="lastmonth">Last Month</button>
+      <button type="button" class="fcms-report-date-chip" data-range="lastyear">Last Year</button>
+    </div>
+    <label class="fcms-report-date-field"><span>From Date</span><input type="date" class="form-control" data-date-from></label>
+    <label class="fcms-report-date-field"><span>To Date</span><input type="date" class="form-control" data-date-to></label>`;
+}
+function fcmsReportDateFilterHTML(prefix){
+  return `<div class="fcms-report-secondary-row fcms-report-secondary-row-no-view" data-date-filter="${prefix}">
+    ${fcmsReportDateFilterFieldsHTML()}
+  </div>`;
+}
+function fcmsBindReportDateFilter(root,onChange){
+  if(!root) return;
+  const from=root.querySelector("[data-date-from]"), to=root.querySelector("[data-date-to]");
+  const chips=[...root.querySelectorAll(".fcms-report-date-chip")];
+  const sync=()=>{
+    fcmsReportDateRange.from=from?.value||"";
+    fcmsReportDateRange.to=to?.value||"";
+    if(fcmsReportDateRange.from && fcmsReportDateRange.to && fcmsReportDateRange.from>fcmsReportDateRange.to){
+      to.value=fcmsReportDateRange.from;
+      fcmsReportDateRange.to=to.value;
+    }
+    if(typeof onChange==="function") onChange();
+  };
+  chips.forEach(btn=>btn.onclick=()=>{
+    const k=btn.dataset.range, r=fcmsDatePreset(k);
+    fcmsReportDateRange.preset=k;
+    from.value=r.from; to.value=r.to;
+    chips.forEach(x=>x.classList.toggle("active",x===btn));
+    sync();
+  });
+  from.onchange=()=>{fcmsReportDateRange.preset="custom";chips.forEach(x=>x.classList.remove("active"));sync();};
+  to.onchange=()=>{fcmsReportDateRange.preset="custom";chips.forEach(x=>x.classList.remove("active"));sync();};
+}
+
+
 const db = getDB(), s = currentSession();
 markActive();
 if (s.role === "subcommittee") renderSubCommitteeReport();
@@ -6,7 +102,13 @@ else renderMainReport();
 function scName(id) { return db.subCommittees.find((c) => Number(c.id) === Number(id))?.name || "Other"; }
 function prName(id) { return db.pradeshikams.find((p) => Number(p.id) === Number(id))?.name || "-"; }
 function scFilterRows(id) {
-  return Number(id) ? { collections:(db.subCommitteeCollections||[]).filter(x=>Number(x.subCommitteeId)===Number(id)), payments:(db.subCommitteeCollectionPayments||[]).filter(x=>Number(x.subCommitteeId)===Number(id)), allocations:(db.subCommitteeAllocations||[]).filter(x=>Number(x.subCommitteeId??x.committeeId)===Number(id)), expenses:(db.subCommitteeExpenses||[]).filter(x=>Number(x.subCommitteeId)===Number(id)), submissions:(db.subCommitteeSubmissions||[]).filter(x=>Number(x.subCommitteeId)===Number(id)) } : {collections:[],payments:[],allocations:[],expenses:[],submissions:[]};
+  return Number(id) ? {
+    collections:fcmsFilterReportDate((db.subCommitteeCollections||[]).filter(x=>Number(x.subCommitteeId)===Number(id))),
+    payments:fcmsFilterReportDate((db.subCommitteeCollectionPayments||[]).filter(x=>Number(x.subCommitteeId)===Number(id))),
+    allocations:fcmsFilterReportDate((db.subCommitteeAllocations||[]).filter(x=>Number(x.subCommitteeId??x.committeeId)===Number(id))),
+    expenses:fcmsFilterReportDate((db.subCommitteeExpenses||[]).filter(x=>Number(x.subCommitteeId)===Number(id))),
+    submissions:fcmsFilterReportDate((db.subCommitteeSubmissions||[]).filter(x=>Number(x.subCommitteeId)===Number(id)))
+  } : {collections:[],payments:[],allocations:[],expenses:[],submissions:[]};
 }
 function documentRows(id) {
   const r=scFilterRows(id), out=[];
@@ -32,7 +134,7 @@ ${rows("Submissions",["Date","Amount","Receipt/Voucher","Remarks"],r.submissions
 
 function renderSubCommitteeReport() {
   const c=db.subCommittees.find(x=>Number(x.id)===Number(s.subCommitteeId));
-  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
+  document.getElementById("page-content").innerHTML=`${pageTitle(`${escapeHTML(c?.name||"Sub Committee")} Reports`,"Complete collection, allocation, expense and submission report.",`<button id="scFull" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>Full Report</button>`)}<div class="panel mb-4 fcms-reports-filter-panel"><div class="fcms-reports-primary-row fcms-subcommittee-primary-row"><div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="scType" class="form-select"><option value="collections">Collections</option><option value="expenses">Expenses</option><option value="allocations">Allocations</option><option value="submissions">Submissions</option><option value="documents">Documents</option></select></div><div class="col-md-2"><button id="scDownload" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div></div>${fcmsReportDateFilterHTML("subcommittee")}</div><div class="panel mb-4"><div class="panel-title mb-3">Summary</div><div id="scSummary"></div></div><div class="panel"><div id="scRows"></div></div>`;
   const id=c?.id;
   const render=()=>{ const r=scFilterRows(id), docs=documentRows(id); document.getElementById("scSummary").innerHTML=`<div class="row g-3"><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value">${money(subCommitteeCollectionTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(subCommitteeSubmittedTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Received from Office</div><div class="stat-value">${money(subCommitteeAllocationTotal(id,db))}</div></div></div><div class="col-6 col-lg-3"><div class="stat-card"><div class="stat-label">Spent</div><div class="stat-value">${money(subCommitteeExpenseTotal(id,db))}</div></div></div></div>`;
     const type=document.getElementById("scType").value; let html="";
@@ -43,6 +145,7 @@ function renderSubCommitteeReport() {
     if(type==="documents") html=`<div class="panel-title mb-3">Attached Documents</div><div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Record</th><th>Amount</th><th>File</th><th>Open</th></tr></thead><tbody>${docs.map(x=>`<tr><td>${x.Date||""}</td><td>${x.Type}</td><td>${x.Record}</td><td>${money(x.Amount)}</td><td>${escapeHTML(x.File)}</td><td><a href="${escDocUrl(x.Url)}" target="_blank" class="btn btn-sm btn-light">View</a></td></tr>`).join("")||`<tr><td colspan=6>No attached documents.</td></tr>`}</tbody></table></div>`;
     document.getElementById("scRows").innerHTML=html;
   };
+  fcmsBindReportDateFilter(document.querySelector('[data-date-filter="subcommittee"]'), render);
   document.getElementById("scType").addEventListener("change",render); document.getElementById("scDownload").addEventListener("click",()=>{ const type=document.getElementById("scType").value,r=scFilterRows(id),docs=documentRows(id); let data=[]; if(type==="collections") data=r.collections.map(x=>({Date:x.date||x.createdAt,SubCommittee:c.name,Receipt:x.receiptNumber||"",Name:x.donorName||x.name||"",Amount:x.amount,Mode:x.paymentMode||"",Remarks:x.remarks||""})); else if(type==="expenses") data=r.expenses.map(x=>({Date:x.date||x.createdAt,SubCommittee:c.name,Purpose:x.expensePurpose||x.description||"",Amount:x.amount,ReceiptBill:x.billName||"Not attached",Remarks:x.remarks||""})); else if(type==="allocations") data=r.allocations.map(x=>({Date:x.date||x.createdAt,SubCommittee:c.name,Amount:x.amount,Purpose:x.allocationPurpose||x.purpose||"",CollectedBy:x.collectedByName||x.collectedBy||"",Voucher:x.voucherName||"Not attached"})); else if(type==="submissions") data=r.submissions.map(x=>({Date:x.date||x.createdAt,SubCommittee:c.name,Amount:x.amount,ReceiptVoucher:x.receiptName||"Attached",Remarks:x.remarks||""})); else data=docs.map(x=>({Date:x.Date,SubCommittee:c.name,Type:x.Type,Record:x.Record,Amount:x.Amount,File:x.File,DocumentAttached:"Yes"})); exportCSV(data,`fcms-${c.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-${type}.csv`);});
   document.getElementById("scFull").addEventListener("click",()=>exportFullSubcommitteeHTML(id)); render();
 }
@@ -52,16 +155,17 @@ function renderMainReport(){
   const fixedPradeshikam = s.role === "pradeshikam" ? s.pradeshikamId : "";
 
   document.getElementById("page-content").innerHTML = `${pageTitle("Reports","View financial and operational reports.")}
-  <div class="panel mb-4">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
+  <div class="panel mb-4 fcms-reports-filter-panel">
+    <div id="reportControls"></div>
+    <div class="fcms-report-secondary-row" data-date-filter="main">
+      <div class="fcms-report-view-field">
         <label class="form-label">View Reports / റിപ്പോർട്ടുകൾ കാണുക *</label>
         <select id="reportScope" class="form-select">
           <option value="pradeshikam">${t("pradeshikam_reports")}</option>
           ${isAdmin ? `<option value="subcommittee">${t("subcommittee_reports")}</option>` : ''}
         </select>
       </div>
-      <div class="col-md-9" id="reportControls"></div>
+      ${fcmsReportDateFilterFieldsHTML()}
     </div>
   </div>
   <div class="panel"><div class="panel-title mb-3">Summary</div><div id="summary"></div></div>`;
@@ -72,7 +176,7 @@ function renderMainReport(){
   function renderControls(){
     const scope = scopeEl.value;
     if(scope === "subcommittee" && isAdmin){
-      controlsEl.innerHTML = `<div class="row g-2 align-items-end">
+      controlsEl.innerHTML = `<div class="fcms-reports-primary-row">
         <div class="col-md-5"><label class="form-label">Sub Committee / ഉപസമിതി</label><select id="sc" class="form-select"><option value="">All Sub Committees</option>${db.subCommittees.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("")}<option value="other">Other</option></select></div>
         <div class="col-md-5"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select">
           <option value="subcommitteeOverview">Sub Committee Overview</option><option value="subcommittee">Collections</option><option value="subcommitteePayments">Additional Payments</option><option value="subcommitteeAllocations">Allocations</option><option value="subcommitteeExpenses">Expenses</option><option value="subcommitteeSubmissions">Submissions</option><option value="subcommitteeDocuments">Documents</option><option value="subcommitteeFull">Full Report</option>
@@ -80,7 +184,7 @@ function renderMainReport(){
         <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div>
       </div>`;
     } else {
-      controlsEl.innerHTML = `<div class="row g-2 align-items-end">
+      controlsEl.innerHTML = `<div class="fcms-reports-primary-row">
         <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pr" class="form-select" ${!isAdmin?'disabled':''}>${isAdmin?'<option value="">All Pradeshikams</option>':''}${db.pradeshikams.filter(p=>isAdmin||Number(p.id)===Number(fixedPradeshikam)).map(p=>`<option value="${p.id}" ${!isAdmin?'selected':''}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
         <div class="col-md-2"><label class="form-label">Status / നില</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div>
         <div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option></select></div>
@@ -88,6 +192,7 @@ function renderMainReport(){
       </div>`;
     }
     bindControls();
+    fcmsBindReportDateFilter(document.querySelector('[data-date-filter="main"]'), renderSummary);
     renderSummary();
   }
 
@@ -96,16 +201,22 @@ function renderMainReport(){
   function filteredMembers(){
     const pid = selectedPid();
     const st = document.getElementById("st")?.value || "";
-    return db.members.filter(m => (isAdmin || Number(m.pradeshikamId)===Number(fixedPradeshikam)) && (!pid || Number(m.pradeshikamId)===Number(pid)) && (!st || memberStats(m,db).status===st));
+    return db.members.filter(m => (isAdmin || Number(m.pradeshikamId)===Number(fixedPradeshikam)) && (!pid || Number(m.pradeshikamId)===Number(pid)) && (!st || memberStats(m,db).status===st) && fcmsReportInDateRange(m));
   }
   function visibleDonations(){
     const pid=selectedPid();
-    return (db.donations||[]).filter(d=>d.status!=="hold" && (isAdmin || Number(d.pradeshikamId)===Number(fixedPradeshikam)) && (!pid || Number(d.pradeshikamId)===Number(pid)));
+    return (db.donations||[]).filter(d=>d.status!=="hold" && (isAdmin || Number(d.pradeshikamId)===Number(fixedPradeshikam)) && (!pid || Number(d.pradeshikamId)===Number(pid)) && fcmsReportInDateRange(d));
   }
   function scRows(){
     const id=selectedSc();
     if(id) return scFilterRows(id);
-    return {collections:db.subCommitteeCollections||[],payments:db.subCommitteeCollectionPayments||[],allocations:db.subCommitteeAllocations||[],expenses:db.subCommitteeExpenses||[],submissions:db.subCommitteeSubmissions||[]};
+    return {
+      collections:fcmsFilterReportDate(db.subCommitteeCollections||[]),
+      payments:fcmsFilterReportDate(db.subCommitteeCollectionPayments||[]),
+      allocations:fcmsFilterReportDate(db.subCommitteeAllocations||[]),
+      expenses:fcmsFilterReportDate(db.subCommitteeExpenses||[]),
+      submissions:fcmsFilterReportDate(db.subCommitteeSubmissions||[])
+    };
   }
   function renderSummary(){
     const scope=scopeEl.value, type=document.getElementById("type")?.value;
@@ -143,7 +254,7 @@ function renderMainReport(){
         exportCSV(data,`fcms-${type}.csv`); return;
       }
       if(type==="members") data=filteredMembers().map(m=>{const x=memberStats(m,db),p=db.pradeshikams.find(p=>p.id===m.pradeshikamId);return{MemberID:m.memberCode,Name:m.name,Gender:m.gender,Age:m.age,Phone:formatPhone(m.phone||"",m.countryCode||"+91"),Pradeshikam:p?.name||"",Required:m.requiredAmount,Paid:x.paid,Balance:x.balance,Status:x.status};});
-      else if(type==="payments"){const ids=new Set(filteredMembers().map(m=>m.id));data=db.payments.filter(p=>ids.has(p.memberId)).map(p=>{const m=db.members.find(x=>x.id===p.memberId),pr=db.pradeshikams.find(x=>x.id===m?.pradeshikamId);return{Receipt:p.receiptNumber,MemberID:m?.memberCode||"",Name:m?.name||"",Pradeshikam:pr?.name||"",Amount:p.amount,PaymentMode:p.paymentMode,Status:p.status==="hold"?"Hold":"Completed",Date:new Date(p.paymentDate).toLocaleString("en-IN"),Remarks:p.remarks||""};});}
+      else if(type==="payments"){const ids=new Set(filteredMembers().map(m=>m.id));data=fcmsFilterReportDate(db.payments.filter(p=>ids.has(p.memberId))).map(p=>{const m=db.members.find(x=>x.id===p.memberId),pr=db.pradeshikams.find(x=>x.id===m?.pradeshikamId);return{Receipt:p.receiptNumber,MemberID:m?.memberCode||"",Name:m?.name||"",Pradeshikam:pr?.name||"",Amount:p.amount,PaymentMode:p.paymentMode,Status:p.status==="hold"?"Hold":"Completed",Date:new Date(p.paymentDate).toLocaleString("en-IN"),Remarks:p.remarks||""};});}
       else if(type==="donations") data=visibleDonations().map(d=>({Date:new Date(d.date||d.createdAt).toLocaleString("en-IN"),Receipt:d.receiptNumber||"",Donor:d.donorName||"",Pradeshikam:prName(d.pradeshikamId),Amount:d.amount,PaymentMode:d.paymentMode||"",Status:d.status==="hold"?"Hold":"Completed",Remarks:d.remarks||""}));
       exportCSV(data,`fcms-${type}.csv`);
     });

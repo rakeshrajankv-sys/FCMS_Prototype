@@ -17,6 +17,7 @@ if (session) {
     "subcommittee-collections.html",
     "subcommittee-submissions.html",
   ];
+  const reportPages = ["reports.html", "book-report.html"];
   const currentPage = location.pathname.split("/").pop();
   document.getElementById("app").innerHTML = `
 <div class="app-shell">
@@ -27,12 +28,18 @@ if (session) {
     <div class="nav-section">${t("nav_main")}</div>
     <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>${t("dashboard")}</a>
     ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>${t("activity_history")}</a><a href="verified-users.html"><i class="bi bi-person-check"></i>${t("verified_users")}</a>` : ""}
-    <a href="reports.html"><i class="bi bi-bar-chart"></i>${t("reports")}</a>
+    <div class="nav-dropdown ${reportPages.includes(currentPage) ? "open" : ""}" id="reportsNav">
+      <button type="button" class="nav-dropdown-toggle"><span><i class="bi bi-bar-chart"></i>${t("reports")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
+      <div class="nav-dropdown-menu">
+        <a href="reports.html"><i class="bi bi-file-earmark-bar-graph"></i>${fcmsLang() === "ml" ? "റിപ്പോർട്ടുകൾ" : "Reports"}</a>
+        ${(currentSession()?.role === "admin") ? `<a href="book-report.html"><i class="bi bi-journal-bookmark"></i>${fcmsLang() === "ml" ? "ബുക്ക് റിപ്പോർട്ട്" : "Book Report"}</a>` : ""}
+      </div>
+    </div>
     ${!isSub ? `<a href="donations.html"><i class="bi bi-gift"></i>${t("donations")}</a>` : ""}
     ${
       !isSub
         ? `<div class="nav-dropdown ${pradeshikamNavPages.includes(currentPage) ? "open" : ""}">
-      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-diagram-3"></i>${t("pradeshikam")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
+      <button type="button" class="nav-dropdown-toggle" ><span><i class="bi bi-diagram-3"></i>${t("pradeshikam")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
       <div class="nav-dropdown-menu">
         <a href="members.html"><i class="bi bi-people"></i>${t("members")}</a>
         <a href="payments.html"><i class="bi bi-receipt"></i>${t("collections")}</a>
@@ -49,11 +56,12 @@ if (session) {
     ${
       isAdminRole
         ? `<div class="nav-dropdown ${subCommitteePages.includes(currentPage) ? "open" : ""}" id="subCommitteeNav">
-      <button type="button" class="nav-dropdown-toggle" onclick="this.parentElement.classList.toggle('open')"><span><i class="bi bi-people"></i>${t("sub_committees")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
+      <button type="button" class="nav-dropdown-toggle" ><span><i class="bi bi-people"></i>${t("sub_committees")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
       <div class="nav-dropdown-menu"></div>
     </div>
     <a href="subcommittee-expense.html"><i class="bi bi-receipt-cutoff"></i>${t("sub_committee_expenses")}</a>
     <a href="subcommittee-allocation.html"><i class="bi bi-cash-stack"></i>${t("sub_committee_allocation")}</a>
+    <a href="upi-verification.html"><i class="bi bi-patch-check"></i>${fcmsLang() === "ml" ? "UPI / ബാങ്ക് സ്ഥിരീകരണം" : "UPI / Bank Verification"}</a>
     <a href="submissions.html"><i class="bi bi-bank"></i>${t("submissions")}</a>`
         : ""
     }
@@ -74,6 +82,23 @@ if (session) {
 </aside>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <main class="main"><header class="topbar"><button class="btn btn-light mobile-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><div class="d-none d-md-block small text-muted">${t("app_full_name")}</div><div class="topbar-tools"><button type="button" class="topbar-tool lang-tool" onclick="toggleFcmsLang()" title="${t("language")}" aria-label="${t("language")}"><i class="bi bi-translate"></i><span>${fcmsLang() === "ml" ? "ML" : "EN"}</span></button><button type="button" class="topbar-tool theme-tool" id="themeToggleBtn" title="${t("dark_mode")}" aria-label="${t("dark_mode")}"><i class="bi ${fcmsTheme() === "dark" ? "bi-sun" : "bi-moon-stars"}"></i></button></div><div class="user-pill"><div class="text-end d-none d-sm-block"><div class="fw-semibold small">${escapeHTML(session.name)}</div><div class="text-muted" style="font-size:11px">${isAdminRole ? t("main_committee") : isSub ? t("sub_committee") : t("pradeshikam")}</div></div><div class="avatar">${escapeHTML(session.name.charAt(0))}</div></div></header><div class="page-content" id="page-content"></div></main></div>`;
+  // Reliable sidebar dropdown behaviour for desktop and mobile.
+  document.querySelectorAll(".nav-dropdown-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropdown = toggle.closest(".nav-dropdown");
+      if (!dropdown) return;
+      const willOpen = !dropdown.classList.contains("open");
+      // Keep the sidebar tidy: close sibling dropdowns before opening this one.
+      dropdown.parentElement?.querySelectorAll(":scope > .nav-dropdown.open").forEach((item) => {
+        if (item !== dropdown) item.classList.remove("open");
+      });
+      dropdown.classList.toggle("open", willOpen);
+      toggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+  });
+
   document.getElementById("themeToggleBtn").addEventListener("click", () => {
     toggleFcmsTheme();
     document.querySelector("#themeToggleBtn i").className =

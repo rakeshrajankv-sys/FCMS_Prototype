@@ -1,3 +1,8 @@
+function fcmsRecordBookMatches(record, selectedBook){
+  if(!selectedBook) return true;
+  const info=fcmsReceiptBookInfo(record?.receiptNumber);
+  return !!info && Number(info.book)===Number(selectedBook);
+}
 const db = getDB(),
   s = currentSession();
 markActive();
@@ -105,7 +110,7 @@ function renderMemberResults() {
     );
 }
 function selectMember(id) {
-  const m = visibleMembers.find((x) => x.id === id);
+  const m = visibleMembers.find((x) => String(x.id) === String(id));
   if (!m) return;
   document.getElementById("donorMember").value = m.id;
   document.getElementById("memberSearch").value = "";
@@ -165,7 +170,7 @@ function render() {
   );
   document.getElementById("donationTable").innerHTML = !rows.length
     ? `<div class="empty-state"><i class="bi bi-gift"></i>No donations found.</div>`
-    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1">${(s.role === "admin" || (s.role === "pradeshikam" && Number(x.d.pradeshikamId) === Number(s.pradeshikamId))) ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
+    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1 fcms-inline-actions">${(s.role === "admin" || (s.role === "pradeshikam" && Number(x.d.pradeshikamId) === Number(s.pradeshikamId))) ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
   document
     .querySelectorAll(".delete-donation")
     .forEach((btn) =>
@@ -173,7 +178,7 @@ function render() {
     );
 }
 async function deleteDonation(id) {
-  const d = db.donations.find((x) => x.id === id);
+  const d = db.donations.find((x) => String(x.id) === String(id));
   if (!d) return;
   if (s.role !== "admin" && Number(d.pradeshikamId) !== Number(s.pradeshikamId))
     return;
@@ -191,7 +196,7 @@ async function deleteDonation(id) {
     details: `${money(d.amount)} donation from ${d.donorName || "donor"}.`,
     oldValue: { ...d },
   });
-  db.donations = db.donations.filter((x) => x.id !== id);
+  db.donations = db.donations.filter((x) => String(x.id) !== String(id));
   fcmsClearPageDraft(); saveDB(db);
   toast("Donation deleted.", "success");
   render();
@@ -226,17 +231,19 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
   const form = e.currentTarget,
     err = document.getElementById("donationError");
   err.classList.add("d-none");
-  let ok = true;
-  form.querySelectorAll("[required]").forEach((el) => {
-    const empty = !String(el.value || "").trim();
-    el.classList.toggle("is-invalid", empty);
-    if (empty) ok = false;
-  });
-  if (!ok) {
-    err.textContent = "Please fill in all required fields.";
+  const failDonationSave = (message, focusEl = null) => {
+    err.textContent = message;
     err.classList.remove("d-none");
-    return;
-  }
+    if (focusEl) {
+      focusEl.classList.add("is-invalid");
+      focusEl.focus?.();
+    }
+    if (typeof toast === "function") toast(message, "danger");
+    return false;
+  };
+
+  form.querySelectorAll(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
+
   const type = document.getElementById("sourceType").value,
     memberId = document.getElementById("donorMember").value,
     name = document.getElementById("donorName").value.trim(),
@@ -249,15 +256,45 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     mode = document.getElementById("donationMode").value,
     date = document.getElementById("donationDate").value,
     remarks = document.getElementById("donationRemarks").value.trim(),
-    donor = memberId ? db.members.find((m) => m.id === memberId) : null,
+    donor = memberId ? db.members.find((m) => String(m.id) === String(memberId)) : null,
     pradeshikamId = donor
       ? donor.pradeshikamId
       : s.role === "admin"
         ? Number(document.getElementById("donationPradeshikam").value || 0)
         : Number(s.pradeshikamId);
+
+  // Validate only fields that apply to the selected donation source.
+  // For Member donations, the selected member supplies the donor name/phone,
+  // so the hidden non-member donor-name field must never block saving.
+  const amountEl = document.getElementById("donationAmount");
+  const receiptEl = document.getElementById("donationReceipt");
+  const modeEl = document.getElementById("donationMode");
+  const dateEl = document.getElementById("donationDate");
+  const memberSearchEl = document.getElementById("memberSearch");
+  const donorNameEl = document.getElementById("donorName");
+
   if (type === "Member" && !donor) {
-    err.textContent = "Select a member from the search results.";
-    err.classList.remove("d-none");
+    failDonationSave("Select a member from the search results.", memberSearchEl);
+    return;
+  }
+  if (type !== "Member" && !name) {
+    failDonationSave("Enter the donor / organization name.", donorNameEl);
+    return;
+  }
+  if (!amount || amount <= 0) {
+    failDonationSave("Enter a valid donation amount.", amountEl);
+    return;
+  }
+  if (!receipt) {
+    failDonationSave("Enter the receipt number.", receiptEl);
+    return;
+  }
+  if (!mode) {
+    failDonationSave("Select a payment mode.", modeEl);
+    return;
+  }
+  if (!date) {
+    failDonationSave("Select the donation date.", dateEl);
     return;
   }
   if (
@@ -266,28 +303,23 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
       (donorPhoneCode === "+971" &&
         (donorPhone.length < 9 || donorPhone.length > 10)))
   ) {
-    err.textContent =
-      "+91 numbers require 10 digits. +971 numbers require 9 or 10 digits.";
-    err.classList.remove("d-none");
-    return;
-  }
-  if (amount <= 0) {
-    err.textContent = "Enter a valid donation amount.";
-    err.classList.remove("d-none");
+    failDonationSave(
+      "+91 numbers require 10 digits. +971 numbers require 9 or 10 digits.",
+      document.getElementById("donorPhone")
+    );
     return;
   }
   if (!pradeshikamId) {
-    err.textContent = "Select a Pradeshikam.";
-    err.classList.remove("d-none");
+    failDonationSave("Select a Pradeshikam.", document.getElementById("donationPradeshikam"));
     return;
   }
   const receiptUsed = (db.donations || []).some(
     (x) =>
+      Number(x.pradeshikamId) === Number(pradeshikamId) &&
       String(x.receiptNumber || "").toLowerCase() === receipt.toLowerCase(),
   );
   if (receiptUsed) {
-    err.textContent = "This receipt number is already in use.";
-    err.classList.remove("d-none");
+    failDonationSave("This receipt number is already in use.", receiptEl);
     return;
   }
   const donation = {
@@ -310,22 +342,42 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     remarks,
     createdAt: new Date().toISOString(),
   };
-  db.donations.push(donation);
-  addActivity(db, {
-    action: "Donation Added",
-    entityType: "donation",
-    entityId: donation.id,
-    memberId: donor?.id || null,
-    pradeshikamId,
-    summary: `${money(amount)} donation recorded`,
-    details: `${type} donation from ${donation.donorName} with receipt ${receipt}.`,
-    newValue: donationSnapshot(donation),
-  });
-  fcmsClearPageDraft(); saveDB(db);
-  form.reset();
-  document.getElementById("donationDate").value = todayValue();
-  updateSourceFields();
-  render();
+  try {
+    fcmsMarkNewElectronicPending(donation);
+    db.donations.push(donation);
+
+    addActivity(db, {
+      action: "Donation Added",
+      entityType: "donation",
+      entityId: donation.id,
+      memberId: donor?.id || null,
+      pradeshikamId,
+      summary: `${money(amount)} donation recorded`,
+      details: `${type} donation from ${donation.donorName} with receipt ${receipt}.`,
+      newValue: donationSnapshot(donation),
+    });
+
+    saveDB(db);
+    fcmsClearPageDraft();
+
+    form.reset();
+    document.getElementById("donationDate").value = todayValue();
+    updateSourceFields();
+    render();
+
+    if (typeof toast === "function") {
+      toast(
+        `Donation saved successfully — ${donation.donorName} · ${money(amount)} · Receipt ${receipt}.`,
+        "success"
+      );
+    }
+  } catch (saveError) {
+    // Roll back the in-memory record if persistence fails.
+    db.donations = (db.donations || []).filter((x) => String(x.id) !== String(donation.id));
+    failDonationSave("Donation was not saved. Please try again.");
+    console.error("Donation save failed:", saveError);
+    return;
+  }
 });
 updateSourceFields();
 document.getElementById("exportDonations").addEventListener("click", () => {

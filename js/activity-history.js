@@ -1,3 +1,8 @@
+function fcmsRecordBookMatches(record, selectedBook){
+  if(!selectedBook) return true;
+  const info=fcmsReceiptBookInfo(record?.receiptNumber);
+  return !!info && Number(info.book)===Number(selectedBook);
+}
 const db = getDB(), s = currentSession();
 markActive();
 if (!s || s.role !== "admin") location.href = "dashboard.html";
@@ -106,3 +111,78 @@ document.getElementById("exportActivity").addEventListener("click",()=>{
   exportCSV(data,"fcms-activity-history.csv");
 });
 render();
+
+(function(){
+  const panel=document.querySelector(".filter-bar,.filters,.activity-filters,.panel");
+  if(!panel || document.getElementById("receiptBookFilter")) return;
+  const wrap=document.createElement("div");
+  wrap.className="fcms-inline-filter";
+  wrap.innerHTML=`<label class="form-label">${fcmsLang()==="ml"?"രസീത് ബുക്ക്":"Receipt Book"}</label><select id="receiptBookFilter" class="form-select"><option value="">${fcmsLang()==="ml"?"എല്ലാ ബുക്കുകളും":"All Books"}</option>${Array.from({length:FCMS_MAX_RECEIPT_BOOKS},(_,i)=>`<option value="${i+1}">${fcmsLang()==="ml"?"ബുക്ക്":"Book"} ${i+1}</option>`).join("")}</select>`;
+  panel.appendChild(wrap);
+  const select=wrap.querySelector("select");
+  select.addEventListener("change",()=>{
+    const book=select.value;
+    document.querySelectorAll("tbody tr").forEach(tr=>{
+      if(!book){tr.style.display="";return;}
+      const txt=tr.textContent||"";
+      const match=txt.match(/Receipt\s*([0-9]+)/i)||txt.match(/രസീത്\s*([0-9]+)/i)||txt.match(/\b([0-9]{1,5})\b/);
+      const receipt=match?match[1]:null;
+      const info=fcmsReceiptBookInfo(receipt);
+      tr.style.display=info&&Number(info.book)===Number(book)?"":"none";
+    });
+  });
+})();
+
+
+/* FCMS FRIENDLY ACTIVITY ACTION LABELS */
+(function(){
+  const labels = {
+    RECEIPT_BOOK_LIMIT_CHANGED: {
+      en: "Receipt Book Limit Changed",
+      ml: "രസീത് ബുക്ക് പരിധി മാറ്റി"
+    },
+    UPI_VERIFIED: {
+      en: "UPI Verified",
+      ml: "UPI സ്ഥിരീകരിച്ചു"
+    },
+    UPI_REJECTED: {
+      en: "UPI Rejected",
+      ml: "UPI നിരസിച്ചു"
+    }
+  };
+
+  function applyFriendlyLabels(){
+    document.querySelectorAll("tbody td").forEach(td => {
+      const key = (td.textContent || "").trim();
+      if(labels[key]){
+        td.textContent = fcmsLang()==="ml" ? labels[key].ml : labels[key].en;
+      }
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", () => setTimeout(applyFriendlyLabels, 80));
+  }else{
+    setTimeout(applyFriendlyLabels, 80);
+  }
+
+  new MutationObserver(applyFriendlyLabels).observe(document.body, {childList:true, subtree:true});
+})();
+
+
+/* UPI / Bank verification activity labels */
+(function(){
+  const labels = {
+    PAYMENT_VERIFIED:{en:"Payment Verified",ml:"പേയ്മെന്റ് സ്ഥിരീകരിച്ചു"},
+    PAYMENT_REJECTED:{en:"Payment Rejected",ml:"പേയ്മെന്റ് നിരസിച്ചു"}
+  };
+  function apply(){
+    document.querySelectorAll("tbody td").forEach(td=>{
+      const k=(td.textContent||"").trim();
+      if(labels[k]) td.textContent=fcmsLang()==="ml"?labels[k].ml:labels[k].en;
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",()=>setTimeout(apply,80));
+  else setTimeout(apply,80);
+  new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});
+})();

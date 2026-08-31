@@ -16,6 +16,7 @@ if (!member) {
       .filter((p) => p.memberId === member.id)
       .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
   const myCommittee = s.role === "subcommittee" ? db.subCommittees.find((c) => Number(c.id) === Number(s.subCommitteeId)) : null;
+  const canDeletePayment = s.role === "admin" || s.role === "pradeshikam" || s.role === "subcommittee";
   const canEditMember = s.role === "admin" || (s.role === "pradeshikam" && Number(member.pradeshikamId) === Number(s.pradeshikamId)) || (s.role === "subcommittee");
   const adminActions = canEditMember
       ? `<a href="edit-member.html?id=${encodeURIComponent(member.id)}" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit Member</a>`
@@ -39,30 +40,23 @@ if (!member) {
     .join("")}</div></div></div></div>
   <div class="row g-3"><div class="col-lg-4"><div class="panel h-100"><div class="panel-title mb-3">Member Information</div>${info("Phone", formatPhone(member.phone || "", member.countryCode || "+91") || "-")}${info("Marital Status", member.maritalStatus || "-")}${info("Receipt Number", member.receiptNumber || "-")}${info("House Number", member.houseNumber || "-")}${info("Pradeshikam", pr?.name || "-")}${info("Required Amount", money(member.requiredAmount))}</div></div>
   <div class="col-lg-8"><div class="panel"><div class="d-flex justify-content-between mb-3"><div class="panel-title">Payment History</div><span class="small text-muted">${payments.length} receipt(s)</span></div>
-  ${payments.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Amount</th><th>Mode</th><th>Status</th><th>Date</th><th>Remarks</th>${s.role === "admin" ? `<th>Actions</th>` : ""}</tr></thead><tbody>${payments.map((p) => `<tr><td data-label="Receipt"><b>${escapeHTML(p.receiptNumber)}</b></td><td data-label="Amount" class="fw-semibold">${money(p.amount)}</td><td data-label="Mode">${escapeHTML(p.paymentMode)}</td><td data-label="Status">${p.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Date">${new Date(p.paymentDate).toLocaleDateString("en-IN")}</td><td data-label="Remarks">${escapeHTML(p.remarks || "-")}</td>${s.role === "admin" ? `<td data-label="Actions"><div class="d-flex gap-1"><a class="btn btn-sm btn-light" href="edit-payment.html?id=${encodeURIComponent(p.id)}" title="Edit"><i class="bi bi-pencil"></i></a><button class="btn btn-sm btn-outline-danger delete-payment" data-id="${escapeHTML(p.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td>` : ""}</tr>`).join("")}</tbody></table></div>` : `<div class="empty-state"><i class="bi bi-receipt"></i>No payments yet.</div>`}
+  ${payments.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Amount</th><th>Mode</th><th>Status</th><th>Date</th><th>Remarks</th>${canDeletePayment ? `<th>Actions</th>` : ""}</tr></thead><tbody>${payments.map((p) => `<tr><td data-label="Receipt"><b>${escapeHTML(p.receiptNumber)}</b></td><td data-label="Amount" class="fw-semibold">${money(p.amount)}</td><td data-label="Mode">${escapeHTML(p.paymentMode)}${p.transactionId ? `<div class="small text-muted">${escapeHTML(p.transactionId)}</div>` : ""}</td><td data-label="Status">${p.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}${fcmsIsUPI(p) ? `<div class="small mt-1">${fcmsUpiStatus(p)==="verified" ? "UPI Verified" : fcmsUpiStatus(p)==="rejected" ? "UPI Rejected" : "UPI Pending"}</div>` : ""}</td><td data-label="Date">${new Date(p.paymentDate).toLocaleDateString("en-IN")}</td><td data-label="Remarks">${escapeHTML(p.remarks || "-")}</td>${canDeletePayment ? `<td data-label="Actions"><div class="payment-row-actions">${s.role === "admin" ? `<a class="btn btn-sm btn-light" href="edit-payment.html?id=${encodeURIComponent(p.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-payment" data-id="${escapeHTML(p.id)}" title="${fcmsLang()==="ml"?"പേയ്മെന്റ് ഇല്ലാതാക്കുക":"Delete Payment"}"><i class="bi bi-trash"></i></button></div></td>` : ""}</tr>`).join("")}</tbody></table></div>` : `<div class="empty-state"><i class="bi bi-receipt"></i>No payments yet.</div>`}
   </div></div></div>`;
   document
     .getElementById("deleteMemberBtn")
     ?.addEventListener("click", async () => {
+      const memberPayments = db.payments.filter((p) => p.memberId === member.id);
+      if (memberPayments.length) {
+        await confirmDialog(
+          `${member.name} has ${memberPayments.length} payment record(s). Delete the required payment records individually from Payment History before deleting this member.`,
+          { title: "Payments Exist", confirmLabel: "OK", hideCancel: true },
+        );
+        return;
+      }
       const ok = await confirmDialog(
-        `Delete ${member.name}? This removes the member and active receipts, but keeps a record in Activity History.`,
+        `Delete ${member.name}? The member record will be removed, while financial history already deleted separately remains available in Activity History.`,
       );
       if (!ok) return;
-      const memberPayments = db.payments.filter(
-        (p) => p.memberId === member.id,
-      );
-      memberPayments.forEach((p) =>
-        addActivity(db, {
-          action: "Payment Deleted",
-          entityType: "payment",
-          entityId: p.id,
-          memberId: member.id,
-          pradeshikamId: member.pradeshikamId,
-          summary: `Receipt ${p.receiptNumber} removed with member`,
-          details: `Receipt ${p.receiptNumber} for ${money(p.amount)} was removed because member ${member.name} was deleted.`,
-          oldValue: { ...p },
-        }),
-      );
       addActivity(db, {
         action: "Member Deleted",
         entityType: "member",
@@ -70,10 +64,9 @@ if (!member) {
         memberId: member.id,
         pradeshikamId: member.pradeshikamId,
         summary: `${member.name} deleted`,
-        details: `Member ${member.memberCode} and ${memberPayments.length} active receipt(s) deleted.`,
+        details: `Member ${member.memberCode || member.id} deleted after payment records were cleared separately.`,
         oldValue: { ...member },
       });
-      db.payments = db.payments.filter((p) => p.memberId !== member.id);
       db.members = db.members.filter((m) => m.id !== member.id);
       fcmsClearPageDraft(); saveDB(db);
       toast(`${member.name} deleted.`, "success");
@@ -83,9 +76,13 @@ if (!member) {
     btn.addEventListener("click", async () => {
       const pid = btn.dataset.id,
         p = db.payments.find((x) => x.id === pid);
-      if (!p || s.role !== "admin") return;
+      if (!p || !canDeletePayment) return;
+      const upiNote = fcmsIsUPI(p) && fcmsUpiStatus(p) === "verified"
+        ? ` This UPI payment is already verified by the Main Committee; deleting it will remove ${money(p.amount)} from the verified UPI/received totals.`
+        : "";
       const ok = await confirmDialog(
-        `Delete receipt ${p.receiptNumber} for ${money(p.amount)}?`,
+        `Delete receipt ${p.receiptNumber} for ${money(p.amount)}?${upiNote} The record can be restored later by Main Committee from Activity History.`,
+        { title: "Confirm Payment Deletion", confirmLabel: "Delete Payment" },
       );
       if (!ok) return;
       addActivity(db, {
@@ -95,7 +92,7 @@ if (!member) {
         memberId: member.id,
         pradeshikamId: member.pradeshikamId,
         summary: `Receipt ${p.receiptNumber} deleted`,
-        details: `Payment deleted by Main Committee.`,
+        details: `Payment of ${money(p.amount)} deleted by ${actorLabel()}.`,
         oldValue: { ...p },
       });
       db.payments = db.payments.filter((x) => x.id !== pid);

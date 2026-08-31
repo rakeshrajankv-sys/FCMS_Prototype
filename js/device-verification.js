@@ -66,3 +66,26 @@ function requestDeviceEnrollment(user) {
     function complete(){ saveDeviceVerification(user.id,{name:overlay.dataset.name,phone:overlay.dataset.phone}); user.name=overlay.dataset.name; user.verifiedPhone=overlay.dataset.phone; closeOverlay(true); }
   });
 }
+
+/* Verification over Login background: hide Login card only */
+(function(){
+  function syncVerificationLoginState(){
+    const verification = document.querySelector(".fcms-device-overlay");
+    const visible = !!verification && getComputedStyle(verification).display !== "none";
+    document.documentElement.classList.toggle("fcms-verification-active", visible);
+  }
+
+  const observer = new MutationObserver(syncVerificationLoginState);
+  observer.observe(document.documentElement, {
+    childList:true,
+    subtree:true,
+    attributes:true,
+    attributeFilter:["class","style","hidden"]
+  });
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", syncVerificationLoginState, {once:true});
+  }else{
+    syncVerificationLoginState();
+  }
+})();

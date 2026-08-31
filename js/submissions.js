@@ -17,11 +17,12 @@ function submittedPr(id, type) {
   return (db.submissions || []).filter(x => Number(x.pradeshikamId) === Number(id)).reduce((sum,x)=>sum + Number(type === "member" ? x.memberAmount : type === "donation" ? x.donationAmount : x.amount || 0),0);
 }
 function prRemaining(id,type) {
-  return Math.max(0,(type === "member" ? memberCollected(id) : donations(id)) - submittedPr(id,type));
+  const cash = fcmsCashCollectedForPradeshikam(id,type,db);
+  return Math.max(0,cash - submittedPr(id,type));
 }
 function committeeCollected(id) { return subCommitteeCollectionTotal(id, db); }
 function committeeSubmitted(id) { return subCommitteeSubmittedTotal(id, db); }
-function committeeRemaining(id) { return Math.max(0, committeeCollected(id) - committeeSubmitted(id)); }
+function committeeRemaining(id) { return Math.max(0, fcmsCashCollectedForSubCommittee(id,db) - committeeSubmitted(id)); }
 
 function currentTarget() {
   if (s.role === "pradeshikam") return {type:"pradeshikam", id:Number(s.pradeshikamId)};
@@ -40,6 +41,26 @@ function targetRows() {
   return [...(db.submissions || [])].filter(x => Number(x.pradeshikamId) === Number(target.id)).sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));
 }
 
+function verifiedUpiHistoryRows(){
+  return fcmsUpiRecords(db)
+    .filter(x=>fcmsUpiStatus(x.record)==="verified")
+    .filter(x=>target.type==="subcommittee"
+      ? Number(x.subCommitteeId)===Number(target.id)
+      : Number(x.pradeshikamId)===Number(target.id))
+    .map(x=>({
+      id:"upi_"+x.record.id,
+      isVerifiedUpi:true,
+      amount:Number(x.record.amount||0),
+      date:x.record.upiVerifiedAt||x.date||x.record.createdAt,
+      payer:x.payer,
+      receiptNumber:x.record.receiptNumber||"-",
+      transactionId:x.record.transactionId||"-",
+      kind:x.kind,
+      verifiedBy:x.record.upiVerifiedBy||"Main Committee",
+      originalRecord:x.record
+    }));
+}
+
 function receiptBlock(existing = "") {
   return `<div class="col-12"><label class="form-label">Receipt / Voucher / രസീത് / വൗച്ചർ <span class="text-danger">*</span></label><div class="d-flex flex-wrap gap-2"><input id="receiptFile" type="file" accept="image/*" capture="environment" class="form-control" style="max-width:420px"><button type="button" id="receiptCameraBtn" class="btn btn-outline-primary"><i class="bi bi-camera me-1"></i>Take Photo</button></div><div id="receiptPreview" class="receipt-box mt-3 ${existing ? "" : "d-none"}">${existing ? `<img src="${existing}" alt="Receipt" style="max-width:240px;max-height:180px;border-radius:12px;object-fit:contain">` : ""}</div><div class="small text-muted mt-2">A receipt/voucher image is required to save the submission.</div></div>`;
 }
@@ -52,12 +73,27 @@ function renderSelector() {
 }
 
 function renderPrStats() {
-  const mc=memberCollected(target.id), dc=donations(target.id), ms=submittedPr(target.id,"member"), ds=submittedPr(target.id,"donation"), mr=Math.max(0,mc-ms), dr=Math.max(0,dc-ds);
-  return `<div class="row g-3 mb-4"><div class="col-md-3"><div class="stat-card"><div class="stat-label">Collected by Pradeshikam</div><div class="stat-value">${money(mc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Donations</div><div class="stat-value">${money(dc)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-value">${money(ms+ds)}</div></div></div><div class="col-md-3"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(mr+dr)}</div></div></div></div><div class="panel mb-4"><div class="panel-title mb-3">Amount Available</div><div class="row g-3"><div class="col-md-6"><div class="d-flex justify-content-between"><span>Collected by Pradeshikam remaining</span><b>${money(mr)}</b></div></div><div class="col-md-6"><div class="d-flex justify-content-between"><span>Donation remaining</span><b>${money(dr)}</b></div></div></div></div>`;
+  const total=memberCollected(target.id)+donations(target.id);
+  const verified=fcmsVerifiedUpiTotalForPradeshikam(target.id,"all",db);
+  const pending=fcmsUpiRecords(db).filter(x=>Number(x.pradeshikamId)===Number(target.id)&&fcmsUpiStatus(x.record)==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
+  const cashSubmitted=submittedPr(target.id,"all"), cashDue=prRemaining(target.id,"member")+prRemaining(target.id,"donation");
+  return `<div class="settlement-grid mb-4">
+    <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(total)}</div></div>
+    <div class="stat-card"><div class="stat-label">UPI Verified by Office</div><div class="stat-value">${money(verified)}</div></div>
+    <div class="stat-card"><div class="stat-label">Cash Submitted</div><div class="stat-value">${money(cashSubmitted)}</div></div>
+    <div class="stat-card"><div class="stat-label">Cash to Submit</div><div class="stat-value">${money(cashDue)}</div></div>
+  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
 }
 function renderScStats() {
-  const collected=committeeCollected(target.id), submitted=committeeSubmitted(target.id), remaining=committeeRemaining(target.id);
-  return `<div class="row g-3 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(collected)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Submitted to Main Office</div><div class="stat-value">${money(submitted)}</div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value">${money(remaining)}</div></div></div></div>`;
+  const total=committeeCollected(target.id), verified=fcmsVerifiedUpiTotalForSubCommittee(target.id,db);
+  const pending=fcmsUpiRecords(db).filter(x=>Number(x.subCommitteeId)===Number(target.id)&&fcmsUpiStatus(x.record)==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
+  const cashSubmitted=committeeSubmitted(target.id), cashDue=committeeRemaining(target.id);
+  return `<div class="settlement-grid mb-4">
+    <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(total)}</div></div>
+    <div class="stat-card"><div class="stat-label">UPI Verified by Office</div><div class="stat-value">${money(verified)}</div></div>
+    <div class="stat-card"><div class="stat-label">Cash Submitted</div><div class="stat-value">${money(cashSubmitted)}</div></div>
+    <div class="stat-card"><div class="stat-label">Cash to Submit</div><div class="stat-value">${money(cashDue)}</div></div>
+  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
 }
 
 function renderForm() {
@@ -71,20 +107,34 @@ function renderForm() {
 }
 
 function renderHistory(rows) {
-  if (!rows.length) return `<div class="empty-state"><i class="bi bi-bank"></i>No submissions recorded yet.</div>`;
-  return `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Amount</th><th>Recorded By</th><th>Receipt</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>{
+  const combined=[
+    ...rows.map(x=>({...x,isVerifiedUpi:false})),
+    ...verifiedUpiHistoryRows()
+  ].sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));
+  if (!combined.length) return `<div class="empty-state"><i class="bi bi-bank"></i>No submission history recorded yet.</div>`;
+  return `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Receipt / UPI</th><th>Recorded / Verified By</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${combined.map(x=>{
+    if(x.isVerifiedUpi){
+      return `<tr class="verified-upi-history-row">
+        <td data-label="Date">${new Date(x.date||Date.now()).toLocaleDateString("en-IN")}</td>
+        <td data-label="Type"><span class="badge rounded-pill text-bg-success"><i class="bi bi-patch-check me-1"></i>UPI Verified</span><div class="small text-muted mt-1">${escapeHTML(x.kind)}</div></td>
+        <td data-label="Amount" class="fw-semibold">${money(x.amount)}</td>
+        <td data-label="Receipt / UPI"><b>${escapeHTML(x.receiptNumber)}</b><div class="small text-muted">${escapeHTML(x.transactionId)}</div></td>
+        <td data-label="Recorded / Verified By">${escapeHTML(x.verifiedBy)}</td>
+        <td data-label="Remarks"><span class="small">${escapeHTML(x.payer)} · Received directly by Main Office</span></td>
+        <td data-label="Actions"><span class="text-muted">—</span></td>
+      </tr>`;
+    }
     const amount=Number(x.amount||0), receipt=x.receiptDataUrl||x.receiptUrl||x.receiptImage||"";
-    return `<tr><td data-label="Date">${new Date(x.date||x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Amount" class="fw-semibold">${money(amount)}</td><td data-label="Recorded By">${escapeHTML(x.recordedBy||"-")}</td><td data-label="Receipt">${receipt?`<a href="${receipt}" target="_blank" class="btn btn-sm btn-light"><i class="bi bi-image me-1"></i>View</a>`:"-"}</td><td data-label="Remarks">${escapeHTML(x.remarks||"-")}</td><td data-label="Actions">${s.role==="admin"?`<button class="btn btn-sm btn-outline-danger delete-submission" data-id="${escapeHTML(x.id)}"><i class="bi bi-trash"></i></button>`:"<span class=\"text-muted small\">View only</span>"}</td></tr>`;
+    return `<tr>
+      <td data-label="Date">${new Date(x.date||x.createdAt).toLocaleDateString("en-IN")}</td>
+      <td data-label="Type"><span class="badge rounded-pill text-bg-light">Cash Submission</span></td>
+      <td data-label="Amount" class="fw-semibold">${money(amount)}</td>
+      <td data-label="Receipt / UPI">${receipt?`<a href="${receipt}" target="_blank" class="btn btn-sm btn-light"><i class="bi bi-image me-1"></i>View</a>`:"-"}</td>
+      <td data-label="Recorded / Verified By">${escapeHTML(x.recordedBy||"-")}</td>
+      <td data-label="Remarks">${escapeHTML(x.remarks||"-")}</td>
+      <td data-label="Actions">${s.role==="admin"?`<div class="d-flex gap-1"><a class="btn btn-sm btn-light" href="edit-submission.html?id=${encodeURIComponent(x.id)}&type=${target.type}" title="Edit"><i class="bi bi-pencil"></i></a><button class="btn btn-sm btn-outline-danger delete-submission" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div>`:"—"}</td>
+    </tr>`;
   }).join("")}</tbody></table></div>`;
-}
-
-function bindReceipt() {
-  let receiptData="";
-  const file=document.getElementById("receiptFile"), preview=document.getElementById("receiptPreview"), camera=document.getElementById("receiptCameraBtn");
-  const show=(result)=>{ if(!result)return; if(result.error){toast(result.error,"danger");return;} receiptData=result.dataUrl||""; preview.innerHTML=`<img src="${receiptData}" alt="Receipt preview" style="max-width:240px;max-height:180px;border-radius:12px;object-fit:contain">`; preview.classList.remove("d-none"); };
-  file?.addEventListener("change",async()=>show(await FCMSReceiptCamera.processFile(file.files?.[0])));
-  camera?.addEventListener("click",()=>FCMSReceiptCamera.open(show));
-  return ()=>receiptData;
 }
 
 function bindForm() {

@@ -80,14 +80,19 @@ function renderMemberList() {
 function renderHouses() {
   const groups = new Map();
   members.forEach((m) => {
-    const key = houseKey(m.houseNumber) || `__${m.id}`;
+    const normalizedHouse = houseKey(m.houseNumber);
+    const key = normalizedHouse
+      ? `${Number(m.pradeshikamId)}::${normalizedHouse}`
+      : `__${m.id}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(m);
   });
   let arr = [...groups.values()];
   if (requestedHouse)
     arr = arr.filter(
-      (g) => houseKey(g[0].houseNumber) === houseKey(requestedHouse),
+      (g) =>
+        houseKey(g[0].houseNumber) === houseKey(requestedHouse) &&
+        (!requestedPradeshikam || Number(g[0].pradeshikamId) === Number(requestedPradeshikam)),
     );
   viewRoot.innerHTML = `<div class="panel"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div class="panel-title">Households</div><span class="small text-muted">${arr.length} house${arr.length === 1 ? "" : "s"}</span></div><div class="row g-3" id="houseList"></div></div>`;
   document.getElementById("houseList").innerHTML = !arr.length
@@ -211,12 +216,12 @@ function saveHousePayment(e, group, pradeshikamId) {
     const applied=Math.min(remaining,bal);
     if(applied<=0) return;
     const payment={id:uid("pay"),memberId:m.id,receiptNumber:receipt,amount:applied,paymentMode:mode,transactionId,status:"completed",remarks,paymentDate,housePaymentId:groupId,paidByMemberId:payer.id};
-    db.payments.push(payment); created.push({m,payment}); remaining-=applied;
+    fcmsMarkNewElectronicPending(payment); db.payments.push(payment); created.push({m,payment}); remaining-=applied;
   });
   created.forEach(({m,payment})=>addActivity(db,{action:"Payment Added",entityType:"payment",entityId:payment.id,memberId:m.id,pradeshikamId:m.pradeshikamId,summary:`Receipt ${receipt} added`,details:`${money(payment.amount)} applied to ${m.name}; paid by ${payer.name}.`,newValue:paymentSnapshot(payment)}));
   if(remaining>0){
     const donation={id:uid("don"),donorMemberId:payer.id,donorName:payer.name,pradeshikamId:Number(pradeshikamId),houseNumber:payer.houseNumber||"",amount:remaining,receiptNumber:receipt,sourceType:"Member",sourceLabel:"Member",donorPhone:payer.phone||"",donorPhoneCode:payer.countryCode||"+91",paymentMode:mode,transactionId,status:"completed",date:paymentDate,remarks:remarks ? `${remarks} · Excess from household payment` : "Excess from household payment",createdAt:new Date().toISOString(),housePaymentId:groupId};
-    db.donations.push(donation);
+    fcmsMarkNewElectronicPending(donation); db.donations.push(donation);
     addActivity(db,{action:"Donation Added",entityType:"donation",entityId:donation.id,memberId:payer.id,pradeshikamId:Number(pradeshikamId),summary:`${money(remaining)} donation recorded`,details:`Excess from household payment by ${payer.name} with receipt ${receipt}.`,newValue:donationSnapshot(donation)});
   }
   fcmsClearFormDraft(form); saveDB(db); closeHousePayment(); toast("House payment saved successfully.","success"); renderHouses();
