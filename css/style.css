@@ -6964,6 +6964,30 @@ html.fcms-verification-active .fcms-device-card{
 
 /* FCMS mobile sidebar close/state normalization */
 @media(max-width:991px){
+  .sidebar{
+    transform:translateX(-100%) !important;
+    transition:transform .2s ease !important;
+  }
+  .sidebar.open,
+  body.sidebar-open .sidebar{
+    transform:translateX(0) !important;
+  }
+  .main{
+    margin-left:0 !important;
+    width:100% !important;
+  }
+  .mobile-menu{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+  }
+  body.sidebar-open{
+    overflow:hidden;
+  }
+  body.sidebar-open .sidebar-overlay{
+    opacity:1;
+    pointer-events:auto;
+  }
   body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
   .sidebar-backdrop,
   body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
@@ -6975,5 +6999,15 @@ html.fcms-verification-active .fcms-device-card{
   body:not(.sidebar-open):not(.menu-open):not(.mobile-menu-open):not(.nav-open)
   .fcms-sidebar-backdrop{
     pointer-events:none;
+  }
+}
+
+@media(min-width:992px){
+  .sidebar{
+    transform:none !important;
+  }
+  .mobile-menu,
+  .sidebar-overlay{
+    display:none !important;
   }
 }
