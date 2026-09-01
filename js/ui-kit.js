@@ -1302,6 +1302,10 @@ function fcmsSaveFormDraft(form) {
 }
 function fcmsClearFormDraft(form) {
   if (!form) return;
+  if (form.__fcmsDraftTimer) {
+    clearTimeout(form.__fcmsDraftTimer);
+    form.__fcmsDraftTimer = null;
+  }
   try { localStorage.removeItem(fcmsDraftKey(form)); } catch (_) {}
 }
 function fcmsClearPageDraft() {
@@ -1327,23 +1331,66 @@ function fcmsAttachDraftSaving(root = document) {
     form.dataset.fcmsDraftReady = "1";
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(fcmsDraftKey(form)) || "null"); } catch (_) {}
+    // Ignore a stale draft recreated by an old debounce timer immediately
+    // after this same page successfully saved and navigated away.
     if (saved?.data) {
-      // First pass restores structural controls such as member count / receipt mode.
-      fcmsApplyFormDraft(form, saved.data);
-      form.querySelectorAll("select").forEach(el => el.dispatchEvent(new Event("change", { bubbles: true })));
-      // Dynamic rows can be rebuilt by change handlers, so restore their values again.
-      setTimeout(() => {
-        if (fcmsApplyFormDraft(form, saved.data)) {
-          form.querySelectorAll("input,select,textarea").forEach(el => el.dispatchEvent(new Event("input", { bubbles: true })));
-          if (typeof toast === "function") toast(fcmsLang() === "ml" ? "സേവ് ചെയ്ത ഡ്രാഫ്റ്റ് പുനഃസ്ഥാപിച്ചു." : "Saved draft restored.", "info", 2200);
+      try {
+        const lastSave = JSON.parse(sessionStorage.getItem("fcms_last_saved_page") || "null");
+        const samePage = lastSave?.path === location.pathname + location.search;
+        if (samePage && Number(saved.at || 0) <= Number(lastSave.at || 0) + 3000) {
+          fcmsClearFormDraft(form);
+          saved = null;
         }
-      }, 80);
+      } catch (_) {}
+    }
+    if (saved?.data) {
+      // Let the user decide whether to continue unfinished work or start with
+      // the page's clean defaults. Drafts must never be restored silently.
+      window.setTimeout(async () => {
+        const isMl = fcmsLang() === "ml";
+        const restore = await confirmDialog(
+          isMl
+            ? "ഈ പേജിൽ പൂർത്തിയാക്കാത്ത വിവരങ്ങൾ കണ്ടെത്തി. മുമ്പത്തെ ഡ്രാഫ്റ്റ് തുടരണമോ?"
+            : "Unfinished details were found for this page. Would you like to continue the saved draft?",
+          {
+            title: isMl ? "സേവ് ചെയ്ത ഡ്രാഫ്റ്റ്" : "Saved Draft Found",
+            confirmLabel: isMl ? "ഡ്രാഫ്റ്റ് പുനഃസ്ഥാപിക്കുക" : "Restore Draft",
+            cancelLabel: isMl ? "പുതിയത് ആരംഭിക്കുക" : "Start New",
+            tone: "primary",
+            dismissible: false,
+          },
+        );
+        if (!restore) {
+          fcmsClearFormDraft(form);
+          window.__fcmsUnsavedFormChanges = false;
+          if (typeof toast === "function") toast(isMl ? "പുതിയ ഫോം ആരംഭിച്ചു." : "Started a new form.", "info", 2000);
+          return;
+        }
+        // First restore structural controls such as member count / receipt mode.
+        fcmsApplyFormDraft(form, saved.data);
+        form.querySelectorAll("select").forEach(el => el.dispatchEvent(new Event("change", { bubbles: true })));
+        // Dynamic rows can be rebuilt by change handlers, so restore again.
+        window.setTimeout(() => {
+          if (fcmsApplyFormDraft(form, saved.data)) {
+            form.querySelectorAll("input,select,textarea").forEach(el => el.dispatchEvent(new Event("input", { bubbles: true })));
+            window.__fcmsUnsavedFormChanges = true;
+            if (typeof toast === "function") toast(isMl ? "സേവ് ചെയ്ത ഡ്രാഫ്റ്റ് പുനഃസ്ഥാപിച്ചു." : "Saved draft restored.", "info", 2200);
+          }
+        }, 80);
+      }, 0);
     }
     let timer;
-    const saveSoon = () => {
+    const saveSoon = (event) => {
+      // Initialization scripts dispatch synthetic input/change events while
+      // building dynamic forms. Only genuine user interaction creates a draft.
+      if (event && event.isTrusted === false) return;
       if (fcmsFormNeedsLeaveGuard(form)) window.__fcmsUnsavedFormChanges = true;
       clearTimeout(timer);
-      timer = setTimeout(() => fcmsSaveFormDraft(form), 180);
+      timer = setTimeout(() => {
+        form.__fcmsDraftTimer = null;
+        fcmsSaveFormDraft(form);
+      }, 180);
+      form.__fcmsDraftTimer = timer;
     };
     form.addEventListener("input", saveSoon);
     form.addEventListener("change", saveSoon);

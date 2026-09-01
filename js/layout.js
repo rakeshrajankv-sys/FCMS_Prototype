@@ -199,9 +199,38 @@ document.addEventListener("click", (event) => {
   try { url = new URL(href, location.href); } catch (_) { return; }
   if (url.origin !== location.origin || url.pathname === location.pathname && url.search === location.search) return;
   event.preventDefault();
-  document.body.classList.add("fcms-page-exit");
-  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-  window.setTimeout(() => { location.href = url.href; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 400 : 500));
+  event.stopImmediatePropagation();
+  const navigate = () => {
+    document.body.classList.add("fcms-page-exit");
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    window.setTimeout(() => { location.href = url.href; }, reducedMotion ? 0 : (window.innerWidth <= 900 ? 400 : 500));
+  };
+  if (typeof fcmsHasUnsavedChanges === "function" && fcmsHasUnsavedChanges()) {
+    // Flush the latest keystroke immediately so choosing Leave can never lose
+    // data that was still waiting for the normal draft debounce timer.
+    if (typeof fcmsSaveFormDraft === "function") {
+      document.querySelectorAll("form[data-fcms-draft-ready='1']").forEach(fcmsSaveFormDraft);
+    }
+    const isMl = typeof fcmsLang === "function" && fcmsLang() === "ml";
+    confirmDialog(
+      isMl
+        ? "സേവ് ചെയ്യാത്ത വിവരങ്ങൾ ഡ്രാഫ്റ്റായി സൂക്ഷിച്ചിട്ടുണ്ട്. ഈ പേജ് വിടണമെന്ന് ഉറപ്പാണോ?"
+        : "Your unfinished details have been saved as a draft. Are you sure you want to leave this page?",
+      {
+        title: isMl ? "ഈ പേജ് വിടണോ?" : "Leave this page?",
+        confirmLabel: isMl ? "വിടുക" : "Leave",
+        cancelLabel: isMl ? "ഇവിടെ തുടരുക" : "Stay Here",
+        tone: "warning",
+        dismissible: false,
+      },
+    ).then((leave) => {
+      if (!leave) return;
+      if (typeof fcmsDiscardUnsavedWarning === "function") fcmsDiscardUnsavedWarning();
+      navigate();
+    });
+    return;
+  }
+  navigate();
 }, true);
 function pageTitle(title, sub = "", button = "") {
   return `<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div class="page-title"><h1>${title}</h1></div>${button}</div>`;

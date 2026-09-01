@@ -297,12 +297,19 @@ async function saveHousehold(hold) {
   }
   const receipts =
     receiptMode === "one" ? [masterReceipt] : draft.map((m) => m.receiptNumber);
+  const isTemporaryHoldReceipt = (receipt) => hold && String(receipt || "").trim() === "0";
+  if (!hold && receipts.some((receipt) => String(receipt || "").trim() === "0")) {
+    err.textContent = "Receipt 0 is temporary and can only be used when saving as Hold.";
+    err.classList.remove("d-none");
+    return;
+  }
   const allExisting = [
     ...db.payments.map((p) => p.receiptNumber),
     ...db.payments.map((p) => p.masterReceiptNumber).filter(Boolean),
   ];
   if (
     receipts.some((r) =>
+      !isTemporaryHoldReceipt(r) &&
       allExisting.some(
         (x) => String(x).toLowerCase() === String(r).toLowerCase(),
       ),
@@ -312,7 +319,8 @@ async function saveHousehold(hold) {
     err.classList.remove("d-none");
     return;
   }
-  if (new Set(receipts.map((r) => r.toLowerCase())).size !== receipts.length) {
+  const permanentReceipts = receipts.filter((r) => !isTemporaryHoldReceipt(r));
+  if (new Set(permanentReceipts.map((r) => r.toLowerCase())).size !== permanentReceipts.length) {
     err.textContent = "Receipt numbers must be unique.";
     err.classList.remove("d-none");
     return;

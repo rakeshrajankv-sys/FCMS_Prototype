@@ -28,12 +28,19 @@ ${pageTitle("Edit Collection")}
       amount = Number(document.getElementById("amount").value),
       status = document.getElementById("status").value,
       err = document.getElementById("formError");
+    const temporaryHoldReceipt = status === "hold" && receipt === "0";
     const dup = db.payments.find(
-      (p) => p.id !== payment.id && p.receiptNumber === receipt,
+      (p) => !temporaryHoldReceipt && p.id !== payment.id && p.receiptNumber === receipt,
     );
     if (dup) {
       err.textContent = "That receipt number is already in use.";
       err.classList.remove("d-none");
+      return;
+    }
+    if (status !== "hold" && receipt === "0") {
+      err.textContent = "Replace temporary receipt 0 with the actual receipt number before confirming payment.";
+      err.classList.remove("d-none");
+      document.getElementById("receipt").focus();
       return;
     }
     if (amount < 0) {
