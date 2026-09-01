@@ -41,22 +41,23 @@ function targetRows() {
   return [...(db.submissions || [])].filter(x => Number(x.pradeshikamId) === Number(target.id)).sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));
 }
 
-function verifiedUpiHistoryRows(){
-  return fcmsUpiRecords(db)
-    .filter(x=>fcmsUpiStatus(x.record)==="verified")
+function verifiedElectronicHistoryRows(){
+  return fcmsElectronicRecords(db)
+    .filter(x=>x.status==="verified")
     .filter(x=>target.type==="subcommittee"
       ? Number(x.subCommitteeId)===Number(target.id)
       : Number(x.pradeshikamId)===Number(target.id))
     .map(x=>({
-      id:"upi_"+x.record.id,
-      isVerifiedUpi:true,
+      id:"electronic_"+x.record.id,
+      isVerifiedElectronic:true,
+      mode:x.mode,
       amount:Number(x.record.amount||0),
-      date:x.record.upiVerifiedAt||x.date||x.record.createdAt,
+      date:x.record.upiVerifiedAt||x.record.bankVerifiedAt||x.date||x.record.createdAt,
       payer:x.payer,
       receiptNumber:x.record.receiptNumber||"-",
       transactionId:x.record.transactionId||"-",
       kind:x.kind,
-      verifiedBy:x.record.upiVerifiedBy||"Main Committee",
+      verifiedBy:x.record.upiVerifiedBy||x.record.bankVerifiedBy||"Main Committee",
       originalRecord:x.record
     }));
 }
@@ -74,26 +75,26 @@ function renderSelector() {
 
 function renderPrStats() {
   const total=memberCollected(target.id)+donations(target.id);
-  const verified=fcmsVerifiedUpiTotalForPradeshikam(target.id,"all",db);
-  const pending=fcmsUpiRecords(db).filter(x=>Number(x.pradeshikamId)===Number(target.id)&&fcmsUpiStatus(x.record)==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
+  const verified=fcmsVerifiedElectronicTotalForPradeshikam(target.id,"all",db);
+  const pending=fcmsElectronicRecords(db).filter(x=>Number(x.pradeshikamId)===Number(target.id)&&x.status==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
   const cashSubmitted=submittedPr(target.id,"all"), cashDue=prRemaining(target.id,"member")+prRemaining(target.id,"donation");
   return `<div class="settlement-grid mb-4">
     <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(total)}</div></div>
-    <div class="stat-card"><div class="stat-label">UPI Verified by Office</div><div class="stat-value">${money(verified)}</div></div>
+    <div class="stat-card"><div class="stat-label">UPI / Bank Submitted to Office</div><div class="stat-value">${money(verified)}</div></div>
     <div class="stat-card"><div class="stat-label">Cash Submitted</div><div class="stat-value">${money(cashSubmitted)}</div></div>
     <div class="stat-card"><div class="stat-label">Cash to Submit</div><div class="stat-value">${money(cashDue)}</div></div>
-  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
+  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI / Bank awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
 }
 function renderScStats() {
-  const total=committeeCollected(target.id), verified=fcmsVerifiedUpiTotalForSubCommittee(target.id,db);
-  const pending=fcmsUpiRecords(db).filter(x=>Number(x.subCommitteeId)===Number(target.id)&&fcmsUpiStatus(x.record)==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
+  const total=committeeCollected(target.id), verified=fcmsVerifiedElectronicTotalForSubCommittee(target.id,db);
+  const pending=fcmsElectronicRecords(db).filter(x=>Number(x.subCommitteeId)===Number(target.id)&&x.status==="pending").reduce((a,x)=>a+Number(x.record.amount||0),0);
   const cashSubmitted=committeeSubmitted(target.id), cashDue=committeeRemaining(target.id);
   return `<div class="settlement-grid mb-4">
     <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value">${money(total)}</div></div>
-    <div class="stat-card"><div class="stat-label">UPI Verified by Office</div><div class="stat-value">${money(verified)}</div></div>
+    <div class="stat-card"><div class="stat-label">UPI / Bank Submitted to Office</div><div class="stat-value">${money(verified)}</div></div>
     <div class="stat-card"><div class="stat-label">Cash Submitted</div><div class="stat-value">${money(cashSubmitted)}</div></div>
     <div class="stat-card"><div class="stat-label">Cash to Submit</div><div class="stat-value">${money(cashDue)}</div></div>
-  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
+  </div>${pending>0?`<div class="upi-pending-strip mb-4"><i class="bi bi-hourglass-split"></i><span>UPI / Bank awaiting Main Committee verification</span><b>${money(pending)}</b></div>`:""}`;
 }
 
 function renderForm() {
@@ -108,15 +109,15 @@ function renderForm() {
 
 function renderHistory(rows) {
   const combined=[
-    ...rows.map(x=>({...x,isVerifiedUpi:false})),
-    ...verifiedUpiHistoryRows()
+    ...rows.map(x=>({...x,isVerifiedElectronic:false})),
+    ...verifiedElectronicHistoryRows()
   ].sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));
   if (!combined.length) return `<div class="empty-state"><i class="bi bi-bank"></i>No submission history recorded yet.</div>`;
   return `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Receipt / UPI</th><th>Recorded / Verified By</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${combined.map(x=>{
-    if(x.isVerifiedUpi){
+    if(x.isVerifiedElectronic){
       return `<tr class="verified-upi-history-row">
         <td data-label="Date">${new Date(x.date||Date.now()).toLocaleDateString("en-IN")}</td>
-        <td data-label="Type"><span class="badge rounded-pill text-bg-success"><i class="bi bi-patch-check me-1"></i>UPI Verified</span><div class="small text-muted mt-1">${escapeHTML(x.kind)}</div></td>
+        <td data-label="Type"><span class="badge rounded-pill text-bg-success"><i class="bi bi-patch-check me-1"></i>${escapeHTML(x.mode)} Submitted</span><div class="small text-muted mt-1">${escapeHTML(x.kind)}</div></td>
         <td data-label="Amount" class="fw-semibold">${money(x.amount)}</td>
         <td data-label="Receipt / UPI"><b>${escapeHTML(x.receiptNumber)}</b><div class="small text-muted">${escapeHTML(x.transactionId)}</div></td>
         <td data-label="Recorded / Verified By">${escapeHTML(x.verifiedBy)}</td>

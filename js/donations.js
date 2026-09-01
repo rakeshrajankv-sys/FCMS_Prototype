@@ -113,6 +113,10 @@ function selectMember(id) {
   const m = visibleMembers.find((x) => String(x.id) === String(id));
   if (!m) return;
   document.getElementById("donorMember").value = m.id;
+  // Keep the canonical donor name synchronized even though the manual-name
+  // field is hidden for Member donations. This prevents stale/native required
+  // validation from ever treating a selected member as nameless.
+  document.getElementById("donorName").value = m.name || "";
   document.getElementById("memberSearch").value = "";
   document.getElementById("memberResults").classList.add("d-none");
   const sel = document.getElementById("selectedMember");
@@ -122,6 +126,7 @@ function selectMember(id) {
     document.getElementById("donationPradeshikam").value = m.pradeshikamId;
   document.getElementById("clearMember").addEventListener("click", () => {
     document.getElementById("donorMember").value = "";
+    document.getElementById("donorName").value = "";
     sel.classList.add("d-none");
     document.getElementById("memberSearch").focus();
   });
@@ -238,7 +243,7 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
       focusEl.classList.add("is-invalid");
       focusEl.focus?.();
     }
-    if (typeof toast === "function") toast(message, "danger");
+    if (typeof toast === "function") toast(message, "error");
     return false;
   };
 

@@ -26,6 +26,7 @@ if (!canEditMember) {
 <div class="col-md-4"><label class="form-label">House Number / വീടിന്റെ നമ്പർ *</label><input id="house" class="form-control" required value="${escapeHTML(member.houseNumber || "")}"></div>
 <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pradeshikam" class="form-select" ${s.role !== "admin" ? "disabled" : ""}>${db.pradeshikams.map((p) => `<option value="${p.id}" ${Number(member.pradeshikamId) === Number(p.id) ? "selected" : ""}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
 </div><div class="receipt-box mt-4">Required amount: <b>${money(member.requiredAmount)}</b></div><div id="formError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><a href="member-details.html?id=${encodeURIComponent(member.id)}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div></form></div>`;
+  document.getElementById("age").setAttribute("max", "99");
   function syncRequiredAmountUI() {
     const age = document.getElementById("age")?.value || "";
     const gender = document.getElementById("gender")?.value || "";
@@ -98,8 +99,8 @@ if (!canEditMember) {
       err.classList.remove("d-none");
       return;
     }
-    if (updated.age < 1 || updated.age > 100) {
-      err.textContent = "Age must be between 1 and 100.";
+    if (updated.age < 1 || updated.age > 99) {
+      err.textContent = "Age must be between 1 and 99.";
       err.classList.remove("d-none");
       return;
     }

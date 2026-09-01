@@ -58,7 +58,7 @@ ${pageTitle("Add Collection")}
   ["input","change","blur"].forEach(evt => receiptInput?.addEventListener(evt, refreshNewPaymentBook));
   refreshNewPaymentBook();
 
-  document.getElementById("paymentForm").addEventListener("submit", (e) => {
+  document.getElementById("paymentForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     refreshNewPaymentBook();
     const receipt = document.getElementById("receipt").value.trim(),
@@ -75,7 +75,14 @@ ${pageTitle("Add Collection")}
       receiptInput?.focus();
       return;
     }
-    if (db.payments.some((p) => String(p.receiptNumber).toLowerCase() === String(receipt).toLowerCase())) {
+    const heldZeroPayments = db.payments.filter(
+      (p) => p.memberId === member.id && p.status === "hold" && Number(p.amount || 0) === 0,
+    );
+    const exactHeldPayment = heldZeroPayments.find(
+      (p) => String(p.receiptNumber || "").trim().toLowerCase() === receipt.toLowerCase(),
+    );
+    const heldPaymentToReplace = exactHeldPayment || (heldZeroPayments.length === 1 ? heldZeroPayments[0] : null);
+    if (db.payments.some((p) => p !== heldPaymentToReplace && String(p.receiptNumber).toLowerCase() === String(receipt).toLowerCase())) {
       err.textContent = "This receipt number has already been used.";
       err.classList.remove("d-none");
       return;
@@ -91,9 +98,26 @@ ${pageTitle("Add Collection")}
       err.classList.remove("d-none");
       return;
     }
-    const payment = {
+    if (heldPaymentToReplace) {
+      const heldReceipt = heldPaymentToReplace.receiptNumber || "-";
+      const receiptChange = String(heldReceipt) === receipt ? "" : ` The reserved receipt ${heldReceipt} will change to ${receipt}.`;
+      const confirmed = await confirmDialog(
+        `${member.name} already has a ₹0 payment on Hold.${receiptChange} Confirming will overwrite that Hold record with this ${money(amount)} payment instead of creating a second record.`,
+        {
+          title: "Replace Held Payment?",
+          confirmLabel: "Confirm & Overwrite",
+          cancelLabel: "Cancel",
+          tone: "primary",
+        },
+      );
+      if (!confirmed) return;
+    }
+    const payment = heldPaymentToReplace || {
       id: uid("pay"),
       memberId: member.id,
+    };
+    const oldPayment = heldPaymentToReplace ? paymentSnapshot(heldPaymentToReplace) : null;
+    Object.assign(payment, {
       receiptNumber: receipt,
       amount,
       paymentMode: document.getElementById("mode").value,
@@ -101,20 +125,33 @@ ${pageTitle("Add Collection")}
       status: "completed",
       remarks: document.getElementById("remarks").value.trim(),
       paymentDate: new Date().toISOString(),
-    };
-    fcmsMarkNewUpiPending(payment); db.payments.push(payment);
+      holdReplacedAt: heldPaymentToReplace ? new Date().toISOString() : undefined,
+      holdReplacedByUserId: heldPaymentToReplace ? s.id : undefined,
+    });
+    fcmsMarkNewElectronicPending(payment);
+    if (!heldPaymentToReplace) db.payments.push(payment);
     addActivity(db, {
-      action: "Payment Added",
+      action: heldPaymentToReplace ? "Held Payment Overwritten" : "Payment Added",
       entityType: "payment",
       entityId: payment.id,
       memberId: member.id,
       pradeshikamId: member.pradeshikamId,
-      summary: `Receipt ${receipt} added`,
-      details: `${money(amount)} via ${payment.paymentMode}.`,
+      summary: heldPaymentToReplace ? `₹0 Hold replaced by ${money(amount)}` : `Receipt ${receipt} added`,
+      details: heldPaymentToReplace
+        ? `Held receipt ${oldPayment.receiptNumber || "-"} was overwritten with receipt ${receipt} for ${money(amount)} via ${payment.paymentMode}, after confirmation.`
+        : `${money(amount)} via ${payment.paymentMode}.`,
+      oldValue: oldPayment,
       newValue: paymentSnapshot(payment),
     });
     fcmsClearPageDraft(); saveDB(db);
-    location.href = "member-details.html?id=" + encodeURIComponent(member.id);
+    if (heldPaymentToReplace) {
+      toast(`The ₹0 Hold payment was replaced with ${money(amount)} successfully.`, "success");
+      setTimeout(() => {
+        location.href = "member-details.html?id=" + encodeURIComponent(member.id);
+      }, 700);
+    } else {
+      location.href = "member-details.html?id=" + encodeURIComponent(member.id);
+    }
   });
 }
 function badge(s) {

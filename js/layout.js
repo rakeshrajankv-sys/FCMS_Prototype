@@ -28,13 +28,13 @@ if (session) {
     <div class="nav-section">${t("nav_main")}</div>
     <a href="dashboard.html"><i class="bi bi-grid-1x2"></i>${t("dashboard")}</a>
     ${isAdminRole ? `<a href="activity-history.html"><i class="bi bi-clock-history"></i>${t("activity_history")}</a><a href="verified-users.html"><i class="bi bi-person-check"></i>${t("verified_users")}</a>` : ""}
-    <div class="nav-dropdown ${reportPages.includes(currentPage) ? "open" : ""}" id="reportsNav">
+    ${isAdminRole ? `<div class="nav-dropdown ${reportPages.includes(currentPage) ? "open" : ""}" id="reportsNav">
       <button type="button" class="nav-dropdown-toggle"><span><i class="bi bi-bar-chart"></i>${t("reports")}</span><i class="bi bi-chevron-down nav-chevron"></i></button>
       <div class="nav-dropdown-menu">
         <a href="reports.html"><i class="bi bi-file-earmark-bar-graph"></i>${fcmsLang() === "ml" ? "റിപ്പോർട്ടുകൾ" : "Reports"}</a>
-        ${(currentSession()?.role === "admin") ? `<a href="book-report.html"><i class="bi bi-journal-bookmark"></i>${fcmsLang() === "ml" ? "ബുക്ക് റിപ്പോർട്ട്" : "Book Report"}</a>` : ""}
+        <a href="book-report.html"><i class="bi bi-journal-bookmark"></i>${fcmsLang() === "ml" ? "ബുക്ക് റിപ്പോർട്ട്" : "Book Report"}</a>
       </div>
-    </div>
+    </div>` : `<a href="reports.html"><i class="bi bi-bar-chart"></i>${t("reports")}</a>`}
     ${!isSub ? `<a href="donations.html"><i class="bi bi-gift"></i>${t("donations")}</a>` : ""}
     ${
       !isSub
@@ -167,8 +167,13 @@ function markActive() {
   }
 }
 async function logout() {
+  const hasUnsavedChanges = typeof fcmsHasUnsavedChanges === "function" && fcmsHasUnsavedChanges();
   const confirmed = await confirmDialog(
-    t("logout_confirm_message"),
+    hasUnsavedChanges
+      ? (fcmsLang() === "ml"
+        ? "സേവ് ചെയ്യാത്ത വിവരങ്ങൾ നഷ്ടപ്പെടും. ലോഗ്ഔട്ട് ചെയ്യണമെന്ന് ഉറപ്പാണോ?"
+        : "Your unsaved details will be lost. Are you sure you want to log out?")
+      : t("logout_confirm_message"),
     {
       title: t("logout_confirm_title"),
       confirmLabel: t("logout_confirm_button"),
@@ -176,6 +181,7 @@ async function logout() {
     },
   );
   if (!confirmed) return;
+  if (typeof fcmsDiscardUnsavedWarning === "function") fcmsDiscardUnsavedWarning();
   clearSession();
   document.body.classList.add("fcms-page-exit");
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -205,6 +211,21 @@ function pageTitle(title, sub = "", button = "") {
 (function initBackToTop() {
   function mount() {
     if (!document.body || document.getElementById("fcmsBackToTop")) return;
+    const currentPage = location.pathname.split("/").pop() || "dashboard.html";
+    if (currentPage !== "dashboard.html") {
+      const home = document.createElement("a");
+      home.id = "fcmsGoHome";
+      home.className = "fcms-go-home topbar-tool";
+      home.href = "dashboard.html";
+      const homeLang = localStorage.getItem("fcms_lang") || "en";
+      const homeLabel = homeLang === "ml" ? "ഡാഷ്ബോർഡിലേക്ക് പോകുക" : "Go to dashboard";
+      home.setAttribute("aria-label", homeLabel);
+      home.title = homeLabel;
+      home.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>';
+      const tools = document.querySelector(".topbar-tools");
+      if (tools) tools.prepend(home);
+    }
+
     const button = document.createElement("button");
     button.type = "button";
     button.id = "fcmsBackToTop";

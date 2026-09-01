@@ -7,6 +7,11 @@ const canEditDonation = !!donation && (s.role === "admin" || (s.role === "prades
 if (!canEditDonation) {
   location.href = "donations.html";
 } else {
+  const showEditDonationError = (element, message) => {
+    element.textContent = message;
+    element.classList.remove("d-none");
+    if (typeof toast === "function") toast(message, "error");
+  };
   const financialLocked = s.role !== "admin";
   const donor = donation.donorMemberId
     ? db.members.find((m) => m.id === donation.donorMemberId)
@@ -48,13 +53,11 @@ if (!canEditDonation) {
             String(x.receiptNumber || "").toLowerCase() === receipt.toLowerCase(),
         );
       if (dup) {
-        err.textContent = "That receipt number is already in use.";
-        err.classList.remove("d-none");
+        showEditDonationError(err, "That receipt number is already in use.");
         return;
       }
       if (amount <= 0) {
-        err.textContent = "Enter a valid amount.";
-        err.classList.remove("d-none");
+        showEditDonationError(err, "Enter a valid amount.");
         return;
       }
       if (document.getElementById("source").value !== "Member") {
@@ -64,9 +67,7 @@ if (!canEditDonation) {
           (pc === "+91" && ph.length !== 10) ||
           (pc === "+971" && (ph.length < 9 || ph.length > 10))
         ) {
-          err.textContent =
-            "+91 numbers require 10 digits. +971 numbers require 9 or 10 digits.";
-          err.classList.remove("d-none");
+          showEditDonationError(err, "+91 numbers require 10 digits. +971 numbers require 9 or 10 digits.");
           return;
         }
       }
@@ -116,6 +117,12 @@ if (!canEditDonation) {
         newValue: donationSnapshot(donation),
       });
       fcmsClearPageDraft(); saveDB(db);
+      if (typeof fcmsQueueToast === "function") {
+        fcmsQueueToast(
+          wasHold && newStatus !== "hold" ? "Donation confirmed successfully." : "Donation updated successfully.",
+          "success"
+        );
+      }
       location.href = "donations.html";
     });
 }

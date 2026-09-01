@@ -196,6 +196,12 @@ function getDB() {
 }
 function saveDB(db) {
   localStorage.setItem(FCMS_KEY, JSON.stringify(db));
+  // Provide a shared success notification for CRUD pages that do not have a
+  // page-specific toast. The UI layer suppresses this fallback when a clearer
+  // notification is displayed by the page itself.
+  if (typeof fcmsScheduleSavedActivityToast === "function") {
+    fcmsScheduleSavedActivityToast(db.activities?.[0]);
+  }
   // Remember that the current page has just successfully persisted data.
   // On a browser Back navigation, the submitted form page is skipped so
   // stale values are never restored. Normal reloads clear this marker.
@@ -358,6 +364,25 @@ function subCommitteeSubmittedTotal(subCommitteeId = null, db = getDB()) {
     )
     .reduce((a, x) => a + Number(x.amount || 0), 0);
 }
+
+// Money already received by the Main Office consists of manually submitted cash
+// plus electronic payments that the office has verified in its own account.
+function pradeshikamOfficeSubmittedTotal(pradeshikamId = null, db = getDB()) {
+  const cash = (db.submissions || [])
+    .filter((x) => pradeshikamId == null || Number(x.pradeshikamId) === Number(pradeshikamId))
+    .reduce(
+      (sum, x) => sum + Number(x.amount || Number(x.memberAmount || 0) + Number(x.donationAmount || 0)),
+      0,
+    );
+  return cash + fcmsVerifiedElectronicTotalForPradeshikam(pradeshikamId, "all", db);
+}
+
+function subCommitteeOfficeSubmittedTotal(subCommitteeId = null, db = getDB()) {
+  return (
+    subCommitteeSubmittedTotal(subCommitteeId, db) +
+    fcmsVerifiedElectronicTotalForSubCommittee(subCommitteeId, db)
+  );
+}
 function subCommitteeAllocationTotal(subCommitteeId = null, db = getDB()) {
   return (db.subCommitteeAllocations || [])
     .filter((x) => {
@@ -422,7 +447,10 @@ function mainOfficeReceivedTotal(db = getDB(), excludeSubmissionId = null, exclu
     (a, x) => a + ((excludeSubmissionType === "subcommittee" && x.id === excludeSubmissionId) ? 0 : Number(x.amount || 0)),
     0,
   );
-  return pradeshikamSubmissions + subCommitteeSubmissions;
+  const verifiedElectronic = fcmsVerifiedElectronicTotal(
+    fcmsElectronicRecords(db).map((x) => x.record),
+  );
+  return pradeshikamSubmissions + subCommitteeSubmissions + verifiedElectronic;
 }
 function mainOfficeExpenseTotal(db = getDB()) {
   return (db.mainExpenses || []).reduce((a, x) => a + Number(x.amount || 0), 0);
@@ -667,6 +695,16 @@ function fcmsVerifiedUpiTotalForPradeshikam(pradeshikamId, kind="all", db=getDB(
 }
 function fcmsVerifiedUpiTotalForSubCommittee(subCommitteeId, db=getDB()){
   return fcmsUpiRecords(db).filter(x=>Number(x.subCommitteeId)===Number(subCommitteeId)&&fcmsUpiStatus(x.record)==="verified").reduce((a,x)=>a+Number(x.record.amount||0),0);
+}
+function fcmsVerifiedElectronicTotalForPradeshikam(pradeshikamId=null, kind="all", db=getDB()){
+  return fcmsElectronicRecords(db)
+    .filter(x=>x.pradeshikamId!=null&&(pradeshikamId==null||Number(x.pradeshikamId)===Number(pradeshikamId))&&x.status==="verified"&&(kind==="all"||(kind==="member"&&x.collection==="payment")||(kind==="donation"&&x.collection==="donation")))
+    .reduce((sum,x)=>sum+Number(x.record.amount||0),0);
+}
+function fcmsVerifiedElectronicTotalForSubCommittee(subCommitteeId=null, db=getDB()){
+  return fcmsElectronicRecords(db)
+    .filter(x=>x.subCommitteeId!=null&&(subCommitteeId==null||Number(x.subCommitteeId)===Number(subCommitteeId))&&x.status==="verified")
+    .reduce((sum,x)=>sum+Number(x.record.amount||0),0);
 }
 function fcmsCashCollectedForPradeshikam(pradeshikamId, kind="all", db=getDB()){
   return fcmsAllMoneyRecords(db).filter(x=>Number(x.pradeshikamId)===Number(pradeshikamId)&&!fcmsIsUPI(x.record)&&(kind==="all"||(kind==="member"&&x.collection==="payment")||(kind==="donation"&&x.collection==="donation"))&&x.record.status!=="hold").reduce((a,x)=>a+Number(x.record.amount||0),0);

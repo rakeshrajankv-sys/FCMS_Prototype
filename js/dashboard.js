@@ -34,7 +34,7 @@ function renderSubCommitteeDashboard(db, s) {
     (x) => Number(x.subCommitteeId) === Number(c.id),
   );
   const collected = subCommitteeCollectionTotal(c.id, db),
-    submitted = subCommitteeSubmittedTotal(c.id, db),
+    submitted = subCommitteeOfficeSubmittedTotal(c.id, db),
     received = subCommitteeAllocationTotal(c.id, db),
     spent = subCommitteeExpenseTotal(c.id, db),
     remainingAfterExpense = Math.max(0, received - spent),
@@ -135,17 +135,9 @@ function renderMainDashboard(db, s) {
     },
     { expected: 0, paid: 0, green: 0, yellow: 0, red: 0 },
   );
-  const submitted = (db.submissions || [])
-    .filter((x) => pid == null || Number(x.pradeshikamId) === pid)
-    .reduce(
-      (a, x) =>
-        a +
-        Number(
-          x.amount ||
-            Number(x.memberAmount || 0) + Number(x.donationAmount || 0),
-        ),
-      0,
-    );
+  const submitted = pid == null
+    ? mainOfficeReceivedTotal(db)
+    : pradeshikamOfficeSubmittedTotal(pid, db);
   const remainingBalance = Math.max(0, total - submitted);
   const remaining = Math.max(0, stats.expected - stats.paid);
   const subCommitteeCollected =
@@ -229,9 +221,7 @@ ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
         const memberTotal = memberCollectionTotal(p.id, db),
           donTotal = donationTotal(p.id, db),
           all = memberTotal + donTotal,
-          submitted = (db.submissions || [])
-            .filter((x) => Number(x.pradeshikamId) === Number(p.id))
-            .reduce((a, x) => a + Number(x.amount || 0), 0),
+          submitted = pradeshikamOfficeSubmittedTotal(p.id, db),
           balance = Math.max(0, all - submitted),
           ms = db.members.filter(
             (m) => Number(m.pradeshikamId) === Number(p.id),
@@ -251,7 +241,7 @@ ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
     return `<div class="panel mb-4"><div class="d-flex justify-content-between align-items-center mb-3"><div class="panel-title">Sub Committee Collection</div><span class="small text-muted">${db.subCommittees.map((c) => escapeHTML(c.name.replace(" Committee", ""))).join(" · ")}</span></div><div class="row g-3">${db.subCommittees
       .map((c) => {
         const collected = subCommitteeCollectionTotal(c.id, db),
-          submitted = subCommitteeSubmittedTotal(c.id, db),
+          submitted = subCommitteeOfficeSubmittedTotal(c.id, db),
           balance = Math.max(0, collected - submitted),
           allocated = subCommitteeAllocationTotal(c.id, db),
           spent = subCommitteeExpenseTotal(c.id, db);
@@ -268,6 +258,44 @@ ${s.role === "admin" ? renderSubCommitteeOverview(db) : ""}
 
 
 /* WORKING BOOK LIMIT */
+window.fcmsBookLimitConfirm = function({ oldLimit, newLimit, ml }){
+  return new Promise((resolve)=>{
+    document.querySelector(".fcms-book-limit-confirm-overlay")?.remove();
+    const confirmOverlay=document.createElement("div");
+    confirmOverlay.className="fcms-book-limit-confirm-overlay";
+    confirmOverlay.innerHTML=`
+      <div class="fcms-book-limit-confirm-card" role="dialog" aria-modal="true" aria-labelledby="fcmsBookLimitConfirmTitle">
+        <div class="fcms-book-limit-confirm-icon"><i class="bi bi-journal-check"></i></div>
+        <h3 id="fcmsBookLimitConfirmTitle">${ml ? "രസീത് ബുക്ക് പരിധി സ്ഥിരീകരിക്കുക" : "Confirm Receipt Book Limit"}</h3>
+        <p>${ml ? "പുതിയ പരിധി സേവ് ചെയ്യണമെന്ന് സ്ഥിരീകരിക്കുക." : "Confirm that you want to save the new published book limit."}</p>
+        <div class="fcms-book-limit-confirm-summary">
+          <div><span>${ml ? "നിലവിലുള്ളത്" : "Current"}</span><strong>${ml ? "ബുക്ക്" : "Book"} ${oldLimit}</strong></div>
+          <i class="bi bi-arrow-right"></i>
+          <div><span>${ml ? "പുതിയത്" : "New"}</span><strong>${ml ? "ബുക്ക്" : "Book"} ${newLimit}</strong></div>
+        </div>
+        <div class="fcms-book-limit-confirm-actions">
+          <button type="button" class="btn btn-light fcms-book-limit-confirm-cancel">${ml ? "റദ്ദാക്കുക" : "Cancel"}</button>
+          <button type="button" class="btn btn-primary fcms-book-limit-confirm-save">${ml ? "പരിധി സേവ് ചെയ്യുക" : "Save Limit"}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(confirmOverlay);
+    let settled=false;
+    const finish=(result)=>{
+      if(settled) return;
+      settled=true;
+      document.removeEventListener("keydown",onKeydown);
+      confirmOverlay.remove();
+      resolve(result);
+    };
+    const onKeydown=(event)=>{ if(event.key==="Escape") finish(false); };
+    confirmOverlay.querySelector(".fcms-book-limit-confirm-save").addEventListener("click",()=>finish(true));
+    confirmOverlay.querySelector(".fcms-book-limit-confirm-cancel").addEventListener("click",()=>finish(false));
+    confirmOverlay.addEventListener("click",(event)=>{ if(event.target===confirmOverlay) finish(false); });
+    document.addEventListener("keydown",onKeydown);
+    confirmOverlay.querySelector(".fcms-book-limit-confirm-save").focus();
+  });
+};
+
 window.openReceiptBookLimitModal = function(){
   const session=currentSession();
   if(!session || session.role!=="admin") return;
@@ -388,15 +416,32 @@ window.openReceiptBookLimitModal = function(){
       }
     const old=fcmsReceiptBookLimit(getDB());
     if(next===old){close();return;}
-    const confirmed = await window.fcmsBookLimitConfirm({
-      oldLimit: old,
-      newLimit: next,
-      ml
-    });
+    const confirmMessage = ml
+      ? `രസീത് ബുക്ക് പരിധി ബുക്ക് ${old} ൽ നിന്ന് ബുക്ക് ${next} ആയി മാറ്റണോ? പരമാവധി രസീത് നമ്പർ ${next * FCMS_RECEIPTS_PER_BOOK} ആയിരിക്കും.`
+      : `Change the receipt book limit from Book ${old} to Book ${next}? The maximum receipt number will be ${next * FCMS_RECEIPTS_PER_BOOK}.`;
+    const confirmed = typeof window.fcmsBookLimitConfirm === "function"
+      ? await window.fcmsBookLimitConfirm({ oldLimit: old, newLimit: next, ml })
+      : await confirmDialog(confirmMessage, {
+          title: ml ? "രസീത് ബുക്ക് പരിധി സ്ഥിരീകരിക്കുക" : "Confirm Receipt Book Limit",
+          confirmLabel: ml ? "പരിധി സേവ് ചെയ്യുക" : "Save Limit",
+          cancelLabel: ml ? "റദ്ദാക്കുക" : "Cancel",
+          tone: "primary"
+        });
     if(!confirmed) return;
 
-    fcmsSetReceiptBookLimit(next);
-    close();
+    const saveButton = overlay.querySelector(".fcms-book-limit-save");
+    if(saveButton) saveButton.disabled = true;
+    try {
+      fcmsSetReceiptBookLimit(next);
+      close();
+      toast(
+        ml ? `രസീത് ബുക്ക് പരിധി ബുക്ക് ${next} ആയി സേവ് ചെയ്തു.` : `Receipt book limit saved as Book ${next}.`,
+        "success"
+      );
+    } catch (error) {
+      if(saveButton) saveButton.disabled = false;
+      toast(error?.message || (ml ? "പരിധി സേവ് ചെയ്യാനായില്ല." : "Unable to save the receipt book limit."), "danger");
+    }
   });
 };
 

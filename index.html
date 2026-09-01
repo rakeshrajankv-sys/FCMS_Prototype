@@ -4,8 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="assets/icons/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="assets/icons/favicon-32.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="assets/icons/apple-touch-icon.png"
+    />
     <link rel="manifest" href="manifest.webmanifest" />
     <meta name="theme-color" content="#991b1b" />
     <title>FCMS Prototype</title>
@@ -21,19 +30,39 @@
   </head>
   <body class="login-page">
     <div class="login-slideshow" aria-hidden="true">
-      <div class="login-slide is-active"><img src="assets/login/slide-01.webp" alt="" loading="eager" /></div>
-      <div class="login-slide"><img src="assets/login/slide-02.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-03.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-04.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-05.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-06.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-07.webp" alt="" loading="lazy" /></div>
-      <div class="login-slide"><img src="assets/login/slide-08.webp" alt="" loading="lazy" /></div>
+      <div class="login-slide is-active">
+        <img src="assets/login/slide-01.webp" alt="" loading="eager" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-02.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-03.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-04.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-05.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-06.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-07.webp" alt="" loading="lazy" />
+      </div>
+      <div class="login-slide">
+        <img src="assets/login/slide-08.webp" alt="" loading="lazy" />
+      </div>
     </div>
     <div class="login-bg-overlay" aria-hidden="true"></div>
     <div class="login-shell">
       <div class="login-brand">
-        <img class="brand-logo" src="logo.png?v=20260821logo2" alt="Fund Collection logo" />
+        <img
+          class="brand-logo"
+          src="logo.png?v=20260821logo2"
+          alt="Fund Collection logo"
+        />
         <p>Fund Collection Management System</p>
       </div>
       <div class="login-card">
@@ -43,7 +72,13 @@
             <p class="text-muted mb-0">Sign in to continue</p>
           </div>
           <div class="login-theme-controls" aria-label="Appearance controls">
-            <button type="button" class="login-theme-btn" id="loginThemeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <button
+              type="button"
+              class="login-theme-btn"
+              id="loginThemeToggle"
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
               <i class="bi bi-moon-stars"></i><span>Dark</span>
             </button>
           </div>
@@ -80,16 +115,23 @@
     <script src="js/device-verification.js?v=20260829design2"></script>
     <script src="js/auth.js?v=20260829design2"></script>
     <script>
-      (function(){
-        const btn=document.getElementById("loginThemeToggle");
-        function sync(){
-          const dark=fcmsTheme()==="dark";
-          btn.querySelector("i").className="bi "+(dark?"bi-sun":"bi-moon-stars");
-          btn.querySelector("span").textContent=dark?"Bright":"Dark";
-          btn.setAttribute("aria-label",dark?"Switch to bright mode":"Switch to dark mode");
-          btn.setAttribute("title",dark?"Bright mode":"Dark mode");
+      (function () {
+        const btn = document.getElementById("loginThemeToggle");
+        function sync() {
+          const dark = fcmsTheme() === "dark";
+          btn.querySelector("i").className =
+            "bi " + (dark ? "bi-sun" : "bi-moon-stars");
+          btn.querySelector("span").textContent = dark ? "Bright" : "Dark";
+          btn.setAttribute(
+            "aria-label",
+            dark ? "Switch to bright mode" : "Switch to dark mode",
+          );
+          btn.setAttribute("title", dark ? "Bright mode" : "Dark mode");
         }
-        btn?.addEventListener("click",()=>{ toggleFcmsTheme(); sync(); });
+        btn?.addEventListener("click", () => {
+          toggleFcmsTheme();
+          sync();
+        });
         sync();
       })();
     </script>
@@ -98,10 +140,16 @@
         const slideshow = document.querySelector(".login-slideshow");
         if (!slideshow) return;
         if (document.documentElement.classList.contains("fcms-low-power")) {
-          slideshow.querySelectorAll(".login-slide").forEach((slide, i) => slide.classList.toggle("is-active", i === 0));
+          slideshow
+            .querySelectorAll(".login-slide")
+            .forEach((slide, i) =>
+              slide.classList.toggle("is-active", i === 0),
+            );
           return;
         }
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
         const slides = Array.from(slideshow.querySelectorAll(".login-slide"));
         if (slides.length < 2) return;
         let order = slides.map((_, i) => i);
@@ -113,9 +161,18 @@
           return arr;
         };
         try {
-          const previous = JSON.parse(localStorage.getItem("fcms_login_slide_order") || "null");
+          const previous = JSON.parse(
+            localStorage.getItem("fcms_login_slide_order") || "null",
+          );
           let attempts = 0;
-          do { order = shuffle(order.slice()); attempts++; } while (previous && JSON.stringify(order) === JSON.stringify(previous) && attempts < 8);
+          do {
+            order = shuffle(order.slice());
+            attempts++;
+          } while (
+            previous &&
+            JSON.stringify(order) === JSON.stringify(previous) &&
+            attempts < 8
+          );
           localStorage.setItem("fcms_login_slide_order", JSON.stringify(order));
         } catch (_) {
           order = shuffle(order.slice());
@@ -132,7 +189,9 @@
         if (reduceMotion) return;
         let current = 0;
         window.setInterval(function () {
-          const orderedSlides = Array.from(slideshow.querySelectorAll(".login-slide")).sort((a,b) => Number(a.style.order) - Number(b.style.order));
+          const orderedSlides = Array.from(
+            slideshow.querySelectorAll(".login-slide"),
+          ).sort((a, b) => Number(a.style.order) - Number(b.style.order));
           orderedSlides[current]?.classList.remove("is-active");
           current = (current + 1) % orderedSlides.length;
           orderedSlides[current]?.classList.add("is-active");
@@ -144,3 +203,4 @@
     </script>
   </body>
 </html>
+w

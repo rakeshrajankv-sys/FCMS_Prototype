@@ -757,12 +757,68 @@ const FCMS_ML_TEXT = {
   "Other Allocation": "മറ്റുള്ള വിഹിതം",
   "Other Expense": "മറ്റുള്ള ചെലവ്"
 };
+
+// Exact translations for short controls and complete headings. Keeping these
+// separate prevents a short word such as "All" from changing longer words.
+const FCMS_ML_EXACT_TEXT = {
+  "Report view and date range": "റിപ്പോർട്ട് കാഴ്ചയും തീയതി പരിധിയും",
+  "Dates are optional": "തീയതികൾ നിർബന്ധമല്ല",
+  "View Reports *": "റിപ്പോർട്ടുകൾ കാണുക *",
+  "View Reports": "റിപ്പോർട്ടുകൾ കാണുക",
+  "All": "എല്ലാം",
+  "Today": "ഇന്ന്",
+  "Yesterday": "ഇന്നലെ",
+  "Last 7 Days": "കഴിഞ്ഞ 7 ദിവസം",
+  "Last Month": "കഴിഞ്ഞ മാസം",
+  "Last Year": "കഴിഞ്ഞ വർഷം",
+  "From Date": "ആരംഭ തീയതി",
+  "To Date": "അവസാന തീയതി",
+  "View financial and operational reports.": "സാമ്പത്തികവും പ്രവർത്തനപരവുമായ റിപ്പോർട്ടുകൾ കാണുക.",
+  "All payment modes": "എല്ലാ പേയ്മെന്റ് രീതികളും",
+  "All Books": "എല്ലാ ബുക്കുകളും",
+  "All Pradeshikams": "എല്ലാ പ്രദേശികങ്ങളും",
+  "All statuses": "എല്ലാ നിലകളും",
+  "Collection History": "പിരിവ് ചരിത്രം",
+  "Every saved receipt and installment": "സേവ് ചെയ്ത എല്ലാ രസീതുകളും തവണകളും",
+  "No collections found.": "പിരിവുകളൊന്നും കണ്ടെത്തിയില്ല.",
+  "Every installment is stored as a separate receipt.": "ഓരോ തവണയും പ്രത്യേകം രസീതായി സൂക്ഷിക്കുന്നു.",
+  "All sources": "എല്ലാ ഉറവിടങ്ങളും",
+  "Records": "രേഖകൾ",
+  "Total": "ആകെ"
+};
+Object.assign(FCMS_ML_EXACT_TEXT, {
+  "Donation Source / സംഭാവനയുടെ ഉറവിടം *": "സംഭാവനയുടെ ഉറവിടം *",
+  "Donation Source": "സംഭാവനയുടെ ഉറവിടം",
+  "Save Donation": "സംഭാവന സേവ് ചെയ്യുക",
+  "No donations found.": "സംഭാവനകളൊന്നും കണ്ടെത്തിയില്ല.",
+  "Submission For / സമർപ്പണം": "സമർപ്പിക്കേണ്ടത്",
+  "Submission For": "സമർപ്പിക്കേണ്ടത്",
+  "Cash to Submit": "സമർപ്പിക്കാനുള്ള പണം",
+  "Amount Type / തുകയുടെ തരം *": "തുകയുടെ തരം *",
+  "Amount Type": "തുകയുടെ തരം",
+  "Donation Amount / സംഭാവന തുക *": "സംഭാവന തുക *",
+  "Donation Amount": "സംഭാവന തുക",
+  "Receipt / Voucher / രസീത് / വൗച്ചർ *": "രസീത് / വൗച്ചർ *",
+  "Receipt / Voucher / രസീത് / വൗച്ചർ": "രസീത് / വൗച്ചർ",
+  "Receipt / Voucher": "രസീത് / വൗച്ചർ",
+  "New Submission": "പുതിയ സമർപ്പണം",
+  "Save Submission": "സമർപ്പണം സേവ് ചെയ്യുക",
+  "No submission history recorded yet.": "ഇതുവരെ സമർപ്പണ ചരിത്രമൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല.",
+  "A receipt/voucher image is required to save the submission.": "സമർപ്പണം സേവ് ചെയ്യാൻ രസീത് / വൗച്ചർ ചിത്രം ആവശ്യമാണ്.",
+  "Take Photo": "ഫോട്ടോ എടുക്കുക"
+});
 function fcmsTranslateValue(value) {
   let out = String(value ?? "");
 
   // Dynamic messages: translate the stable English sentence structure while
   // preserving names, receipt numbers, committee names and amounts.
   if (fcmsLang() === "ml") {
+    const exactText = out.trim();
+    if (Object.prototype.hasOwnProperty.call(FCMS_ML_EXACT_TEXT, exactText)) {
+      const leadingSpace = out.match(/^\s*/)?.[0] || "";
+      const trailingSpace = out.match(/\s*$/)?.[0] || "";
+      return `${leadingSpace}${FCMS_ML_EXACT_TEXT[exactText]}${trailingSpace}`;
+    }
     out = out.replace(/\b(\d+)\s+members?\b/gi, (_, n) => `${n} അംഗ${Number(n) === 1 ? "ം" : "ങ്ങൾ"}`);
     out = out.replace(/\bMember\s+(\d+)\b/gi, (_, n) => `അംഗം ${n}`);
     out = out.replace(/\bin this house\b/gi, "ഈ വീട്ടിൽ");
@@ -879,6 +935,68 @@ function initFcmsMalayalamObserver() {
   applyFcmsMalayalamToDom(document.body);
 }
 
+/* ---------- Digits-only phone fields ---------- */
+(function initFcmsDigitsOnlyPhoneFields() {
+  const selector = [
+    'input[type="tel"]',
+    'input[id*="phone" i]',
+    'input[name*="phone" i]',
+    'input[id*="mobile" i]',
+    'input[name*="mobile" i]'
+  ].join(",");
+  const isPhoneField = (element) => element instanceof HTMLInputElement && element.matches(selector);
+  const cleanPhoneValue = (field) => {
+    const original = String(field.value || "");
+    const clean = original.replace(/[^0-9]/g, "");
+    if (clean === original) return;
+    const oldPosition = field.selectionStart;
+    const removedBeforeCaret = oldPosition == null ? 0 : original.slice(0, oldPosition).replace(/[0-9]/g, "").length;
+    field.value = clean;
+    if (oldPosition != null && document.activeElement === field) {
+      const nextPosition = Math.max(0, oldPosition - removedBeforeCaret);
+      field.setSelectionRange(nextPosition, nextPosition);
+    }
+  };
+  const enhancePhoneFields = (root = document) => {
+    const fields = root.matches?.(selector) ? [root] : Array.from(root.querySelectorAll?.(selector) || []);
+    fields.forEach((field) => {
+      field.inputMode = "numeric";
+      field.setAttribute("pattern", "[0-9]*");
+      field.setAttribute("autocomplete", "tel-national");
+      cleanPhoneValue(field);
+    });
+  };
+
+  document.addEventListener("beforeinput", (event) => {
+    if (!isPhoneField(event.target) || event.isComposing || !event.data) return;
+    if (/[^0-9]/.test(event.data)) event.preventDefault();
+  }, true);
+  document.addEventListener("input", (event) => {
+    if (isPhoneField(event.target)) cleanPhoneValue(event.target);
+  }, true);
+  document.addEventListener("paste", (event) => {
+    if (!isPhoneField(event.target)) return;
+    const digits = (event.clipboardData?.getData("text") || "").replace(/[^0-9]/g, "");
+    event.preventDefault();
+    const field = event.target;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+    field.setRangeText(digits, start, end, "end");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  }, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => enhancePhoneFields(), { once: true });
+  } else {
+    enhancePhoneFields();
+  }
+  new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) enhancePhoneFields(node);
+    }));
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+
 /* ---------- Dark mode ---------- */
 function fcmsTheme() {
   return localStorage.getItem("fcms_theme") || "light";
@@ -924,6 +1042,11 @@ function fcmsToastHost() {
 }
 function toast(message, type = "success", duration = 3200) {
   const host = fcmsToastHost();
+  type = type === "danger" ? "error" : type;
+  try { sessionStorage.removeItem("fcms_pending_activity_toast"); } catch (_) {}
+  const signature = `${type}:${String(message)}`;
+  const duplicate = Array.from(host.children).find((item) => item.dataset.toastSignature === signature);
+  if (duplicate) return duplicate;
   const icons = {
     success: "bi-check-circle-fill",
     error: "bi-x-circle-fill",
@@ -932,6 +1055,7 @@ function toast(message, type = "success", duration = 3200) {
   };
   const el = document.createElement("div");
   el.className = `fcms-toast fcms-toast-${type}`;
+  el.dataset.toastSignature = signature;
   el.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i><span>${String(
     message,
   ).replace(/</g, "&lt;")}</span>`;
@@ -941,11 +1065,89 @@ function toast(message, type = "success", duration = 3200) {
     el.classList.remove("show");
     setTimeout(() => el.remove(), 250);
   }, duration);
+  return el;
 }
+
+function fcmsQueueToast(message, type = "success") {
+  try {
+    sessionStorage.setItem("fcms_queued_toast", JSON.stringify({ message, type, at: Date.now() }));
+  } catch (_) {}
+}
+
+function fcmsScheduleSavedActivityToast(activity) {
+  const action = String(activity?.action || "").trim();
+  if (!activity?.id || !/(added|saved|edited|updated|deleted|confirmed|restored)/i.test(action)) return;
+  const item = {
+    id: String(activity.id),
+    message: `${action} successfully.`,
+    type: "success",
+    at: Date.now(),
+  };
+  try { sessionStorage.setItem("fcms_pending_activity_toast", JSON.stringify(item)); } catch (_) {}
+  window.setTimeout(() => {
+    let pending = null;
+    try { pending = JSON.parse(sessionStorage.getItem("fcms_pending_activity_toast") || "null"); } catch (_) {}
+    if (pending?.id !== item.id) return;
+    try { sessionStorage.removeItem("fcms_pending_activity_toast"); } catch (_) {}
+    toast(item.message, item.type);
+  }, 120);
+}
+
+(function initFcmsGlobalFormNotifications() {
+  const showQueuedToast = () => {
+    let queued = null;
+    try {
+      queued = JSON.parse(sessionStorage.getItem("fcms_queued_toast") || "null");
+      sessionStorage.removeItem("fcms_queued_toast");
+    } catch (_) {}
+    if (queued?.message && Date.now() - Number(queued.at || 0) < 15000) {
+      toast(queued.message, queued.type || "success");
+      return;
+    }
+    let pending = null;
+    try {
+      pending = JSON.parse(sessionStorage.getItem("fcms_pending_activity_toast") || "null");
+      sessionStorage.removeItem("fcms_pending_activity_toast");
+    } catch (_) {}
+    if (pending?.message && Date.now() - Number(pending.at || 0) < 15000) {
+      toast(pending.message, pending.type || "success");
+    }
+  };
+  const notifyVisibleError = (element) => {
+    const alert = element?.matches?.(".alert-danger") ? element : element?.closest?.(".alert-danger");
+    if (!alert || alert.classList.contains("d-none") || alert.hidden) return;
+    const message = String(alert.textContent || "").replace(/\s+/g, " ").trim();
+    if (message) toast(message, "error");
+  };
+  const start = () => {
+    showQueuedToast();
+    document.querySelectorAll(".alert-danger:not(.d-none)").forEach(notifyVisibleError);
+    new MutationObserver((mutations) => mutations.forEach((mutation) => {
+      notifyVisibleError(mutation.target.nodeType === Node.ELEMENT_NODE ? mutation.target : mutation.target.parentElement);
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        notifyVisibleError(node);
+        node.querySelectorAll?.(".alert-danger:not(.d-none)").forEach(notifyVisibleError);
+      });
+    })).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+  };
+  document.addEventListener("invalid", (event) => {
+    const field = event.target;
+    const label = field.id ? document.querySelector(`label[for="${CSS.escape(field.id)}"]`)?.textContent : "";
+    const fieldName = String(label || field.getAttribute("aria-label") || field.placeholder || "required field")
+      .replace(/\s*\*\s*$/, "").trim();
+    toast(`Please check ${fieldName}.`, "error");
+  }, true);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
+  else start();
+})();
 
 /* ---------- Confirm dialog (Promise-based, glass-styled) ---------- */
 function confirmDialog(message, opts = {}) {
   return new Promise((resolve) => {
+    const confirmTone = ["primary", "success", "warning", "danger"].includes(opts.tone)
+      ? opts.tone
+      : "danger";
     const overlay = document.createElement("div");
     overlay.className = "fcms-modal-overlay";
     overlay.innerHTML = `
@@ -954,8 +1156,8 @@ function confirmDialog(message, opts = {}) {
         <div class="fcms-modal-title">${opts.title ? String(opts.title).replace(/</g, "&lt;") : t("are_you_sure")}</div>
         <div class="fcms-modal-body">${String(message).replace(/</g, "&lt;")}</div>
         <div class="fcms-modal-actions">
-          <button type="button" class="btn btn-light" id="fcmsModalCancel">${t("cancel")}</button>
-          <button type="button" class="btn btn-danger" id="fcmsModalConfirm">${opts.confirmLabel || t("delete")}</button>
+          <button type="button" class="btn btn-light" id="fcmsModalCancel">${opts.cancelLabel || t("cancel")}</button>
+          <button type="button" class="btn btn-${confirmTone}" id="fcmsModalConfirm">${opts.confirmLabel || t("delete")}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -972,7 +1174,7 @@ function confirmDialog(message, opts = {}) {
       .querySelector("#fcmsModalCancel")
       .addEventListener("click", () => close(false));
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) close(false);
+      if (e.target === overlay && opts.dismissible !== false) close(false);
     });
     document.addEventListener(
       "keydown",
@@ -1104,6 +1306,18 @@ function fcmsClearFormDraft(form) {
 }
 function fcmsClearPageDraft() {
   document.querySelectorAll("form[data-fcms-draft-ready='1']").forEach(fcmsClearFormDraft);
+  window.__fcmsUnsavedFormChanges = false;
+}
+function fcmsHasUnsavedChanges() {
+  return window.__fcmsUnsavedFormChanges === true;
+}
+function fcmsDiscardUnsavedWarning() {
+  window.__fcmsUnsavedFormChanges = false;
+}
+function fcmsFormNeedsLeaveGuard(form) {
+  if (!form || form.dataset.fcmsLeaveGuard === "off") return false;
+  if (form.closest(".login-page") || form.id === "verificationForm") return false;
+  return !!form.querySelector('button[type="submit"],input[type="submit"],button:not([type])');
 }
 function fcmsAttachDraftSaving(root = document) {
   root.querySelectorAll?.("form").forEach((form) => {
@@ -1127,14 +1341,26 @@ function fcmsAttachDraftSaving(root = document) {
     }
     let timer;
     const saveSoon = () => {
+      if (fcmsFormNeedsLeaveGuard(form)) window.__fcmsUnsavedFormChanges = true;
       clearTimeout(timer);
       timer = setTimeout(() => fcmsSaveFormDraft(form), 180);
     };
     form.addEventListener("input", saveSoon);
     form.addEventListener("change", saveSoon);
-    form.addEventListener("reset", () => setTimeout(() => fcmsClearFormDraft(form), 0));
+    form.addEventListener("reset", () => setTimeout(() => {
+      fcmsClearFormDraft(form);
+      window.__fcmsUnsavedFormChanges = false;
+    }, 0));
   });
 }
+
+// Browsers intentionally show their own standard confirmation text here.
+// This protects refresh, tab close, address changes and the browser Back button.
+window.addEventListener("beforeunload", (event) => {
+  if (!fcmsHasUnsavedChanges()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
 
 (function initFcmsSharedFormEnhancements(){
   const run=()=>{ fcmsAttachUpiTransactionFields(document); fcmsAttachDraftSaving(document); };
@@ -1276,6 +1502,8 @@ function fcmsAttachDraftSaving(root = document) {
 (function(){
   function isReceiptInput(el){
     if(!el || el.tagName !== "INPUT") return false;
+    if(el.closest?.(".fcms-book-limit-overlay, .fcms-book-limit-confirm-overlay") ||
+       String(el.id || "").toLowerCase().includes("receiptbooklimit")) return false;
     const fcmsPath=(location.pathname||"").toLowerCase();
     if(fcmsPath.endsWith("donations.html") ||
        fcmsPath.endsWith("edit-donation.html") ||
@@ -1380,6 +1608,8 @@ function fcmsAttachDraftSaving(root = document) {
   }
   function isReceipt(el){
     if(excludedPage()||!el||el.tagName!=="INPUT") return false;
+    if(el.closest?.(".fcms-book-limit-overlay, .fcms-book-limit-confirm-overlay") ||
+       String(el.id || "").toLowerCase().includes("receiptbooklimit")) return false;
     let lab="";
     try{lab=el.id?(document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent||""):"";}catch(_){}
     const key=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")+" "+lab).toLowerCase();
@@ -1432,6 +1662,8 @@ function fcmsAttachDraftSaving(root = document) {
 
   function isReceiptInput(el){
     if(isExcludedPage() || !el || el.tagName!=="INPUT") return false;
+    if(el.closest?.(".fcms-book-limit-overlay, .fcms-book-limit-confirm-overlay") ||
+       String(el.id || "").toLowerCase().includes("receiptbooklimit")) return false;
 
     const type=String(el.type||"").toLowerCase();
     if(["file","hidden","checkbox","radio","date"].includes(type)) return false;

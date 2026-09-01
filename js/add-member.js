@@ -56,12 +56,40 @@ document.getElementById("transactionDate").value = todayValue();
 function memberRow(i) {
   return `<div class="panel mb-3 household-member-row"><div class="d-flex justify-content-between align-items-center mb-3"><div class="fw-bold">Member ${i + 1}</div><span class="small text-muted" id="req-${i}">Required: ₹0</span></div><div class="row g-3"><div class="col-md-4"><label class="form-label">Name / പേര് *</label><input id="name-${i}" class="form-control member-name" data-i="${i}" required></div><div class="col-md-2"><label class="form-label">Gender / ലിംഗം *</label><select id="gender-${i}" class="form-select member-gender" data-i="${i}" required><option value="">Select</option><option>Male</option><option>Female</option></select></div><div class="col-md-2"><label class="form-label">Age / പ്രായം *</label><input id="age-${i}" type="number" min="1" max="100" class="form-control member-age" data-i="${i}" required></div><div class="col-md-4"><div id="collectable-${i}" class="collectable-option" hidden><label class="form-label d-block">Collectable? / പിരിവ് വേണോ?</label><div class="d-flex flex-wrap gap-3"><div class="form-check form-check-inline"><input class="form-check-input member-collectable" type="radio" name="collectable-${i}" id="collectable-yes-${i}" value="yes" checked><label class="form-check-label" for="collectable-yes-${i}">Yes / വേണം</label></div><div class="form-check form-check-inline"><input class="form-check-input member-collectable" type="radio" name="collectable-${i}" id="collectable-no-${i}" value="no"><label class="form-check-label" for="collectable-no-${i}">No / വേണ്ട</label></div></div></div></div><div class="col-md-2"><label class="form-label">Marital Status / വൈവാഹിക നില *</label><select id="marital-${i}" class="form-select member-marital" data-i="${i}" required><option value="">Select</option><option>Single</option><option>Married</option><option>Widower</option></select></div><div class="col-md-3"><label class="form-label">Phone / ഫോൺ *</label><div class="phone-field"><select id="country-${i}" class="form-select member-country" data-i="${i}" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="phone-${i}" class="form-control member-phone" data-i="${i}" inputmode="numeric" type="tel" maxlength="10" placeholder="10-digit number" required></div></div>${document.getElementById("receiptMode")?.value === "each" ? `<div class="col-md-4"><label class="form-label">Member Receipt / അംഗത്തിന്റെ രസീത് *</label><input id="memberReceipt-${i}" class="form-control member-receipt" data-i="${i}" required></div>` : ""}</div></div>`;
 }
+function snapshotHouseholdMemberRows() {
+  return [...document.querySelectorAll(".household-member-row")].map((row) => {
+    const values = {};
+    row.querySelectorAll("input,select,textarea").forEach((field) => {
+      if (!field.id) return;
+      values[field.id] = field.type === "radio" || field.type === "checkbox"
+        ? { checked: field.checked }
+        : { value: field.value };
+    });
+    return values;
+  });
+}
+function restoreHouseholdMemberRows(snapshot, count) {
+  snapshot.slice(0, count).forEach((values) => {
+    Object.entries(values).forEach(([id, saved]) => {
+      const field = document.getElementById(id);
+      if (!field) return;
+      if (Object.prototype.hasOwnProperty.call(saved, "checked")) field.checked = saved.checked;
+      else field.value = saved.value ?? "";
+    });
+  });
+}
 function renderRows() {
   const count = Number(document.getElementById("memberCount").value) || 1;
+  const savedRows = snapshotHouseholdMemberRows();
   document.getElementById("memberRows").innerHTML = Array.from(
     { length: count },
     (_, i) => memberRow(i),
   ).join("");
+  document
+    .querySelectorAll(".member-age")
+    .forEach((field) => field.setAttribute("max", "99"));
+  restoreHouseholdMemberRows(savedRows, count);
+  Array.from({ length: count }, (_, i) => i).forEach(updateCollectableUI);
   renderPayers();
   document
     .querySelectorAll(
@@ -183,7 +211,11 @@ document.getElementById("householdForm").addEventListener("submit", (e) => {
 document.getElementById("saveHoldBtn").addEventListener("click", () => {
   saveHousehold(true);
 });
-function saveHousehold(hold) {
+function normalizedMemberName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("en");
+}
+
+async function saveHousehold(hold) {
   const form = document.getElementById("householdForm"),
     err = document.getElementById("formError");
   err.classList.add("d-none");
@@ -245,10 +277,10 @@ function saveHousehold(hold) {
   );
   const addingToExistingHouse = existingHouseMembers.length > 0;
   const validAge = draft.every(
-    (m) => Number(m.age) >= 1 && Number(m.age) <= 100,
+    (m) => Number(m.age) >= 1 && Number(m.age) <= 99,
   );
   if (!validAge) {
-    err.textContent = "Age must be between 1 and 100.";
+    err.textContent = "Age must be between 1 and 99.";
     err.classList.remove("d-none");
     return;
   }
@@ -285,12 +317,60 @@ function saveHousehold(hold) {
     err.classList.remove("d-none");
     return;
   }
+  // A changed phone number must not silently create a duplicate person in the
+  // same household. Let the operator decide whether to reuse the existing
+  // member or deliberately create a separate member with the same name.
+  const matchedExistingMembers = [];
+  for (const d of draft) {
+    const matches = existingHouseMembers.filter(
+      (m) => normalizedMemberName(m.name) === normalizedMemberName(d.name),
+    );
+    if (!matches.length) {
+      matchedExistingMembers.push(null);
+      continue;
+    }
+    const exactPhoneMatch = matches.find(
+      (m) =>
+        String(m.countryCode || "+91") === String(d.countryCode || "+91") &&
+        normalizePhone(m.phone || "") === normalizePhone(d.phone || ""),
+    );
+    const existing = exactPhoneMatch || matches[0];
+    const existingPhone = `${existing.countryCode || "+91"} ${existing.phone || "Not recorded"}`;
+    const enteredPhone = `${d.countryCode || "+91"} ${d.phone || "Not recorded"}`;
+    if (exactPhoneMatch) {
+      const addToExisting = await confirmDialog(
+        `${existing.name} already exists in house ${house} with phone ${existingPhone}. This payment will be added under the existing member; a new member will not be created.`,
+        {
+          title: "Member Already Exists",
+          confirmLabel: "Add Payment to Existing Member",
+          cancelLabel: "Cancel",
+          tone: "primary",
+          dismissible: false,
+        },
+      );
+      if (!addToExisting) return;
+      matchedExistingMembers.push(existing);
+      continue;
+    }
+    const samePerson = await confirmDialog(
+      `${existing.name} already exists in house ${house}. Existing phone: ${existingPhone}. Entered phone: ${enteredPhone}. Is this the same member?`,
+      {
+        title: "Possible Existing Member",
+        confirmLabel: "Same Member — Add Payment",
+        cancelLabel: "Different Member — Create New",
+        tone: "primary",
+        dismissible: false,
+      },
+    );
+    matchedExistingMembers.push(samePerson ? existing : null);
+  }
   const status = hold ? "hold" : "completed";
   const holdNote = hold
     ? " Marked Hold — receipt issued, payment to be collected and confirmed later."
     : "";
   const created = [];
-  draft.forEach((d) => {
+  const resolvedMembers = draft.map((d, index) => {
+    if (matchedExistingMembers[index]) return matchedExistingMembers[index];
     const member = {
       id: uid("m"),
       memberCode: makeMemberCode(pradeshikamId, db),
@@ -308,12 +388,52 @@ function saveHousehold(hold) {
     };
     db.members.push(member);
     created.push(member);
+    return member;
   });
   let remaining = total,
     allocated = 0;
-  created.forEach((m, i) => {
+  // A Hold represents the payer's full promised amount, not money already
+  // allocated between contribution and donation. The split is calculated
+  // later from the amount actually received when Main Committee confirms it.
+  if (hold && total > 0) {
+    const payer = resolvedMembers[payerIndex] || resolvedMembers[0];
+    const payerDraft = draft[payerIndex] || draft[0];
+    const rec = receiptMode === "one" ? masterReceipt : payerDraft.receiptNumber;
+    const promisedPayment = {
+      id: uid("pay"),
+      memberId: payer.id,
+      receiptNumber: rec,
+      masterReceiptNumber: receiptMode === "one" ? masterReceipt : null,
+      amount: total,
+      paymentMode: mode,
+      transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("mode") : "",
+      status: "hold",
+      remarks: remarks || "",
+      paymentDate: new Date(date + "T12:00:00").toISOString(),
+      source: "household-promise",
+      promisedAmount: total,
+    };
+    db.payments.push(promisedPayment);
+    addActivity(db, {
+      action: "Payment Added (Hold)",
+      entityType: "payment",
+      entityId: promisedPayment.id,
+      memberId: payer.id,
+      pradeshikamId,
+      summary: `${money(total)} promised by ${payer.name}`,
+      details: `Household ${house}. Receipt ${rec}.${holdNote}`,
+      newValue: paymentSnapshot(promisedPayment),
+    });
+    remaining = 0;
+    allocated = total;
+  }
+  resolvedMembers.forEach((m, i) => {
+    if (hold && total > 0) return;
     if (remaining <= 0) return;
-    const due = Number(m.requiredAmount) || 0;
+    const isExisting = !!matchedExistingMembers[i];
+    const due = isExisting
+      ? Math.max(0, Number(m.requiredAmount || 0) - Number(memberStats(m, db).paid || 0))
+      : Number(m.requiredAmount) || 0;
     const pay = Math.min(due, remaining);
     if (pay > 0) {
       const rec =
@@ -346,10 +466,10 @@ function saveHousehold(hold) {
       });
     }
   });
-  const donationAmount = Math.max(0, total - allocated);
+  const donationAmount = hold && total > 0 ? 0 : Math.max(0, total - allocated);
   if (hold && total === 0) {
     if (receiptMode === "one") {
-      const payer = created[payerIndex] || created[0];
+      const payer = resolvedMembers[payerIndex] || resolvedMembers[0];
       const payment = {
         id: uid("pay"),
         memberId: payer.id,
@@ -375,7 +495,7 @@ function saveHousehold(hold) {
         newValue: paymentSnapshot(payment),
       });
     } else {
-      created.forEach((m, i) => {
+      resolvedMembers.forEach((m, i) => {
         const rec = draft[i].receiptNumber;
         const payment = {
           id: uid("pay"),
@@ -405,7 +525,7 @@ function saveHousehold(hold) {
     }
   }
   if (donationAmount > 0) {
-    const donor = created[payerIndex] || created[0];
+    const donor = resolvedMembers[payerIndex] || resolvedMembers[0];
     const donorReceipt =
       receiptMode === "one"
         ? masterReceipt
@@ -468,7 +588,7 @@ function saveHousehold(hold) {
   function snapshotMemberRows(){
     const rows = [
       ...document.querySelectorAll(
-        '[data-member-index], .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
+        '[data-member-index], .household-member-row, .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
       )
     ];
 
@@ -504,7 +624,7 @@ function saveHousehold(hold) {
   function restoreMemberRows(snapshot, limit){
     const rows = [
       ...document.querySelectorAll(
-        '[data-member-index], .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
+        '[data-member-index], .household-member-row, .member-row, .member-card, .member-section, [id^="member-"], [id^="member_"]'
       )
     ].filter(row => row instanceof HTMLElement && row.querySelector("input,select,textarea"));
 

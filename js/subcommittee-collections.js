@@ -67,7 +67,7 @@ ${selector}
 <div class="col-md-3"><label class="form-label">Date / തീയതി *</label><input id="scDate" type="date" class="form-control" required></div>
 <div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="scRemarks" class="form-control"></div>
 </div><div id="scError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary"><i class="bi ${scCommitteeIcon()} me-1"></i>Save Collection</button></div></form></div>
-<div class="panel"><div class="row g-2 mb-3"><div class="col-md-8"><input id="scSearch" class="form-control" placeholder="Search name, place, receipt"></div><div class="col-md-4"><select id="scFilterSource" class="form-select"><option value="">All sources</option><option>Member</option><option>Person</option><option>Shop</option><option>Organization</option><option>Other</option></select></div></div><div id="scTable"></div></div>`;
+<div class="panel collection-history-panel"><div class="collection-history-heading"><div><div class="panel-title">Collection History</div><div class="small text-muted">All collections recorded for ${escapeHTML(c.name)}</div></div><div class="collection-history-totals"><span><b id="scHistoryCount">0</b> records</span><span><b id="scHistoryAmount">${money(0)}</b> total</span></div></div><div class="collection-filter-row is-subcommittee mb-4"><div class="filter-search"><input id="scSearch" class="form-control" placeholder="Search name, place, receipt"></div><div><select id="scFilterSource" class="form-select"><option value="">All sources</option><option>Member</option><option>Person</option><option>Shop</option><option>Organization</option><option>Other</option></select></div></div><div id="scTable"></div></div>`;
   document.getElementById("scDate").value = todayValue();
   function updateScSourceFields() {
     const type = document.getElementById("scSource").value,
@@ -171,6 +171,10 @@ ${selector}
         (a, b) =>
           new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt),
       );
+    document.getElementById("scHistoryCount").textContent = String(arr.length);
+    document.getElementById("scHistoryAmount").textContent = money(
+      arr.reduce((sum, x) => sum + Number(x.amount || 0), 0),
+    );
     document.getElementById("scTable").innerHTML = !arr.length
       ? `<div class="empty-state"><i class="bi ${scCommitteeIcon()}"></i>No collections found.</div>`
       : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Source</th><th>Name</th><th>Place</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${arr

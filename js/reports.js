@@ -39,7 +39,9 @@ function fcmsDateYMD(d){
 function fcmsDatePreset(key){
   const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12);
   let from="",to="";
-  if(key==="yesterday"){
+  if(key==="today"){
+    from=to=fcmsDateYMD(today);
+  }else if(key==="yesterday"){
     const d=new Date(today); d.setDate(d.getDate()-1); from=to=fcmsDateYMD(d);
   }else if(key==="last7"){
     const d=new Date(today); d.setDate(d.getDate()-6); from=fcmsDateYMD(d); to=fcmsDateYMD(today);
@@ -56,6 +58,7 @@ function fcmsReportDateFilterFieldsHTML(){
   return `
     <div class="fcms-report-date-presets">
       <button type="button" class="fcms-report-date-chip active" data-range="all">All</button>
+      <button type="button" class="fcms-report-date-chip" data-range="today">Today</button>
       <button type="button" class="fcms-report-date-chip" data-range="yesterday">Yesterday</button>
       <button type="button" class="fcms-report-date-chip" data-range="last7">Last 7 Days</button>
       <button type="button" class="fcms-report-date-chip" data-range="lastmonth">Last Month</button>
@@ -157,6 +160,7 @@ function renderMainReport(){
   document.getElementById("page-content").innerHTML = `${pageTitle("Reports","View financial and operational reports.")}
   <div class="panel mb-4 fcms-reports-filter-panel">
     <div id="reportControls"></div>
+    <div class="fcms-report-section-heading"><span>Report view and date range</span><small>Dates are optional</small></div>
     <div class="fcms-report-secondary-row" data-date-filter="main">
       <div class="fcms-report-view-field">
         <label class="form-label">View Reports / റിപ്പോർട്ടുകൾ കാണുക *</label>
@@ -181,14 +185,14 @@ function renderMainReport(){
         <div class="col-md-5"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select">
           <option value="subcommitteeOverview">Sub Committee Overview</option><option value="subcommittee">Collections</option><option value="subcommitteePayments">Additional Payments</option><option value="subcommitteeAllocations">Allocations</option><option value="subcommitteeExpenses">Expenses</option><option value="subcommitteeSubmissions">Submissions</option><option value="subcommitteeDocuments">Documents</option><option value="subcommitteeFull">Full Report</option>
         </select></div>
-        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i><span>Export CSV</span></button></div>
       </div>`;
     } else {
       controlsEl.innerHTML = `<div class="fcms-reports-primary-row">
         <div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><select id="pr" class="form-select" ${!isAdmin?'disabled':''}>${isAdmin?'<option value="">All Pradeshikams</option>':''}${db.pradeshikams.filter(p=>isAdmin||Number(p.id)===Number(fixedPradeshikam)).map(p=>`<option value="${p.id}" ${!isAdmin?'selected':''}>${escapeHTML(p.name)}</option>`).join("")}</select></div>
         <div class="col-md-2"><label class="form-label">Status / നില</label><select id="st" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div>
         <div class="col-md-4"><label class="form-label">Report / റിപ്പോർട്ട്</label><select id="type" class="form-select"><option value="members">Members</option><option value="payments">Collections</option><option value="donations">Donations</option></select></div>
-        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button></div>
+        <div class="col-md-2"><button id="download" class="btn btn-primary w-100 export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i><span>Export CSV</span></button></div>
       </div>`;
     }
     bindControls();
