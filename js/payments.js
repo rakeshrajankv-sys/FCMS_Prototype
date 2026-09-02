@@ -86,8 +86,9 @@ function exportVisiblePayments() {
   }),"fcms-payments.csv");
 }
 
+const renderPaymentsSoon=fcmsDebounce(render,180);
 ["search","mode","statusFilter","prFilter","receiptBookFilter"].forEach(id=>{
-  const el=document.getElementById(id); if(el) el.addEventListener(id==="search"?"input":"change",render);
+  const el=document.getElementById(id); if(el) el.addEventListener(id==="search"?"input":"change",id==="search"?renderPaymentsSoon:render);
 });
 if(s.role==="admin"&&requestedPradeshikam){const el=document.getElementById("prFilter");if(el)el.value=requestedPradeshikam;}
 document.getElementById("exportBtn").addEventListener("click",exportVisiblePayments);

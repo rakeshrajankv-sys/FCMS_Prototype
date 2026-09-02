@@ -1001,6 +1001,15 @@ html.fcms-lang-fade body {
   overflow: auto;
   padding: 6px;
 }
+#memberResults.member-results {
+  position: static;
+  width: 100%;
+  margin-top: 7px;
+  max-height: none;
+  overflow: visible;
+  scrollbar-width: none;
+}
+#memberResults.member-results::-webkit-scrollbar { display: none; }
 .member-result {
   width: 100%;
   border: 0;
@@ -1446,6 +1455,21 @@ body {
   place-items: center;
   font-size: 22px;
   margin: 0 auto 14px;
+}
+.fcms-modal-tone-primary .fcms-modal-icon {
+  background: #e8efff;
+  color: #315fdb;
+  box-shadow: 0 8px 20px rgba(49,95,219,.12);
+}
+.fcms-modal-tone-success .fcms-modal-icon {
+  background: #dcfce7;
+  color: #15803d;
+  box-shadow: 0 8px 20px rgba(21,128,61,.10);
+}
+.fcms-modal-tone-warning .fcms-modal-icon {
+  background: #fef3c7;
+  color: #b45309;
+  box-shadow: 0 8px 20px rgba(180,83,9,.10);
 }
 .fcms-modal-title {
   font-weight: 800;
@@ -2692,6 +2716,177 @@ html[lang="ml"] .form-label {
   .page-content { padding: 12px 10px 20px; }
   .page-title h1 { font-size: 20px; }
   .form-label { font-size: 11.5px; }
+}
+
+/* Pradeshikam overview cards: long names and counts stay aligned on phones. */
+.pradeshikam-overview-card {
+  padding: 20px;
+  border: 1px solid rgba(148,163,184,.24);
+  border-radius: 18px;
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 8px 24px rgba(15,23,42,.045);
+}
+.pradeshikam-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.pradeshikam-card-name {
+  min-width: 0;
+  color: #172033;
+  font-size: 16px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.pradeshikam-member-count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #edf3ff;
+  color: #47617f;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.pradeshikam-member-count i { color: #315fdb; font-size: 13px; }
+.pradeshikam-member-count strong { color: #172033; }
+.pradeshikam-card-metrics > div { min-width: 0; }
+.pradeshikam-card-metrics span { line-height: 1.4; }
+.pradeshikam-card-metrics b {
+  display: block;
+  margin-top: 3px;
+  color: #172033;
+  font-size: 15px;
+}
+.pradeshikam-card-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(148,163,184,.18);
+}
+[data-theme="dark"] .pradeshikam-overview-card {
+  background: rgba(17,24,39,.72);
+  border-color: rgba(148,163,184,.18);
+}
+[data-theme="dark"] .pradeshikam-card-name,
+[data-theme="dark"] .pradeshikam-card-metrics b,
+[data-theme="dark"] .pradeshikam-member-count strong { color: #e5e7eb; }
+[data-theme="dark"] .pradeshikam-member-count { background: rgba(59,130,246,.14); color: #bfdbfe; }
+@media (max-width: 420px) {
+  .pradeshikam-overview-card { padding: 17px; }
+  .pradeshikam-card-head { align-items: center; }
+  .pradeshikam-member-count span { display: none; }
+  .pradeshikam-member-count { min-width: 48px; justify-content: center; }
+}
+
+/* Short phone landscape screens still scroll normally, but without bulky
+   operating-system scrollbars cutting through the interface. */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 950px) {
+  html,
+  body,
+  .main,
+  .page-content,
+  .sidebar-nav,
+  .table-responsive,
+  .fcms-form-overlay {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  .main::-webkit-scrollbar,
+  .page-content::-webkit-scrollbar,
+  .sidebar-nav::-webkit-scrollbar,
+  .table-responsive::-webkit-scrollbar,
+  .fcms-form-overlay::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .sidebar-nav {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+.fcms-list-search { position: relative; }
+.fcms-list-search > i {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  color: #8290a8;
+  pointer-events: none;
+}
+.fcms-list-search .form-control { padding-left: 43px; }
+[data-theme="dark"] .fcms-list-search > i { color: #94a3b8; }
+
+.fcms-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+}
+.fcms-pagination-status {
+  min-width: 100px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.fcms-page-size { width: 78px; }
+[data-theme="dark"] .fcms-pagination-status { color: #a8b3c7; }
+
+.fcms-donation-choice { width: min(580px, 100%); max-height: calc(100vh - 28px); overflow-y: auto; scrollbar-width: none; }
+.fcms-donation-choice::-webkit-scrollbar { display: none; }
+.fcms-donation-choice-preview { display: grid; gap: 10px; margin: 0 0 20px; }
+.fcms-donation-choice-preview > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 15px;
+  border: 1px solid #dfe7f3;
+  border-radius: 14px;
+  background: #f7faff;
+  font-size: 13px;
+}
+.fcms-donation-choice-preview span { color: #64748b; }
+.fcms-donation-choice-preview b { color: #172033; text-align: right; }
+.fcms-donation-choice-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fcms-donation-choice-actions [data-choice="house"],
+.fcms-donation-choice-actions [data-choice="cancel"] { grid-column: 1 / -1; }
+.fcms-donation-choice-actions [data-choice="cancel"] { order: 2; }
+[data-theme="dark"] .fcms-donation-choice-preview > div { background: #121d31; border-color: rgba(148,163,184,.18); }
+[data-theme="dark"] .fcms-donation-choice-preview b { color: #f1f5f9; }
+@media (max-width: 575.98px) {
+  .fcms-pagination { justify-content: center; }
+  .fcms-pagination .btn { min-height: 38px; }
+  .fcms-pagination-status { order: -1; width: 100%; }
+  .fcms-donation-choice-preview > div { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .fcms-donation-choice-preview b { text-align: left; }
+  .fcms-donation-choice-actions { display: flex; flex-direction: column; }
+  .fcms-donation-choice-actions [data-choice="cancel"] { order: initial; }
+}
+
+/* Modern browsers can skip layout/paint work for off-screen panels. Browsers
+   without content-visibility simply ignore these declarations. */
+.panel,
+.stat-card,
+.house-card,
+.pradeshikam-overview-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
 }
 
 /* Dark mode: same glass system, deeper and calmer. */
@@ -4513,6 +4708,19 @@ img { max-width: 100%; height: auto; }
   box-shadow: 0 5px 18px rgba(15,23,42,.10);
 }
 .fcms-low-power .login-slide { transition-duration: .2s !important; }
+.fcms-low-power .login-card,
+.fcms-low-power .sidebar-brand,
+.fcms-low-power .fcms-form-overlay,
+.fcms-low-power .fcms-form-modal,
+.fcms-low-power .fcms-modal-overlay,
+.fcms-low-power .fcms-modal,
+.fcms-low-power .fcms-camera-backdrop,
+.fcms-low-power .fcms-camera-status {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.fcms-low-power .app-shell,
+.fcms-low-power .page-content { animation: none !important; }
 .fcms-low-power .fcms-device-card { background: rgba(255,255,255,.96); }
 [data-theme="dark"].fcms-low-power .fcms-device-card { background: rgba(17,24,39,.98); }
 @media (prefers-reduced-motion: reduce) {
@@ -7354,6 +7562,56 @@ html.fcms-verification-active .fcms-device-card{
   background: transparent;
   border-color: transparent;
   color: #93c5fd;
+}
+
+/* Professional confirmation dialogs: readable comparisons and clear actions. */
+.fcms-modal {
+  width: min(430px, 100%);
+  padding: 28px 28px 24px;
+  border-radius: 22px;
+}
+.fcms-modal-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(220,38,38,.10);
+}
+.fcms-modal-title {
+  margin-bottom: 10px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+.fcms-modal-body {
+  margin: 0 auto 24px;
+  max-width: 360px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.fcms-modal-actions {
+  align-items: stretch;
+  gap: 12px;
+}
+.fcms-modal-actions .btn {
+  min-height: 50px;
+  padding: 10px 14px;
+  line-height: 1.3;
+  white-space: normal;
+}
+@media (max-width: 480px) {
+  .fcms-modal-overlay { padding: 14px; }
+  .fcms-modal {
+    padding: 24px 20px 20px;
+    border-radius: 20px;
+  }
+  .fcms-modal-actions {
+    flex-direction: column-reverse;
+  }
+  .fcms-modal-actions .btn {
+    width: 100%;
+    flex: 0 0 auto;
+  }
 }
 
 /* Malayalam uses wider glyph groups; translated controls need wrapping room. */

@@ -28,5 +28,5 @@ function render() {
     ? `<div class="list-group">${arr.map((m) => `<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="add-payment.html?id=${encodeURIComponent(m.id)}"><span><b>${escapeHTML(m.name)}</b><span class="d-block small text-muted">${escapeHTML(formatPhone(m.phone, m.countryCode))} · House ${escapeHTML(m.houseNumber || "-")}</span></span><i class="bi bi-chevron-right"></i></a>`).join("")}</div>`
     : `<div class="empty-state"><i class="bi bi-people"></i>No members found.</div>`;
 }
-document.getElementById("q").addEventListener("input", render);
+document.getElementById("q").addEventListener("input", fcmsDebounce(render,180));
 render();

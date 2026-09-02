@@ -190,7 +190,7 @@ ${selector}
       );
   }
   renderTable();
-  document.getElementById("scSearch").addEventListener("input", renderTable);
+  document.getElementById("scSearch").addEventListener("input", fcmsDebounce(renderTable,180));
   document
     .getElementById("scFilterSource")
     .addEventListener("change", renderTable);

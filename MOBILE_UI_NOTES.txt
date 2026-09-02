@@ -1,9 +1,0 @@
-Mobile UI update:
-- Collapsible sidebar with larger touch target.
-- Dashboard cards adapt to 2 columns and 1 column on very small screens.
-- Search/filter controls stack vertically.
-- Tables become mobile cards instead of requiring horizontal scrolling.
-- Forms become single-column.
-- Modals become bottom sheets for easier phone use.
-- Buttons use touch-friendly sizing.
-- Very small screens are handled separately.

@@ -23,7 +23,7 @@ ${pageTitle("Donations", "", `<button id="exportDonations" class="btn btn-outlin
 <div class="col-md-4" id="memberField"><label class="form-label">Member / അംഗം *</label><div class="member-picker"><input id="memberSearch" class="form-control" placeholder="Search name, phone or house number" autocomplete="off"><input id="donorMember" type="hidden"><div id="memberResults" class="member-results d-none"></div><div id="selectedMember" class="selected-member d-none"></div></div></div>
 <div class="col-md-4" id="nameField"><label class="form-label">Donor / Organization Name / ദാതാവ് / സ്ഥാപനത്തിന്റെ പേര് *</label><input id="donorName" class="form-control"></div>
 <div class="col-md-4" id="phoneField"><label class="form-label">Phone Number / ഫോൺ നമ്പർ *</label><div class="phone-field"><select id="donorPhoneCode" class="form-select" aria-label="Country code"><option value="+91">+91</option><option value="+971">+971</option></select><input id="donorPhone" class="form-control" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit number"></div></div>
-<div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം *</label>${s.role === "admin" ? `<select id="donationPradeshikam" class="form-select" required><option value="">Select Pradeshikam</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : `<input id="donationPradeshikam" class="form-control" value="${escapeHTML(db.pradeshikams.find((p) => p.id === s.pradeshikamId)?.name || "")}" disabled>`}</div>
+<div class="col-md-4" id="donationPradeshikamField"><label class="form-label">Pradeshikam / പ്രദേശികം *</label>${s.role === "admin" ? `<select id="donationPradeshikam" class="form-select" required><option value="">Select Pradeshikam</option>${db.pradeshikams.map((p) => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join("")}</select>` : `<input id="donationPradeshikam" class="form-control" value="${escapeHTML(db.pradeshikams.find((p) => p.id === s.pradeshikamId)?.name || "")}" disabled>`}</div>
 <div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="donationAmount" type="number" min="1" step="1" class="form-control" required></div><div class="col-md-4"><label class="form-label">Receipt Number / രസീത് നമ്പർ *</label><input id="donationReceipt" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="donationMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div class="col-md-4"><label class="form-label">Date / തീയതി *</label><input id="donationDate" type="date" class="form-control" required></div><div class="col-md-4"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="donationRemarks" class="form-control"></div>
 </div><div id="donationError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary"><i class="bi bi-gift me-1"></i>Save Donation</button></div></form></div>
@@ -33,6 +33,42 @@ function todayValue() {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 10);
+}
+function chooseMemberDonationAllocation(member, amount, balance, householdBalance) {
+  return new Promise((resolve) => {
+    const applied = Math.min(amount, balance), excess = Math.max(0, amount - applied);
+    const houseApplied = Math.min(amount, householdBalance), houseExcess = Math.max(0, amount - houseApplied);
+    const ml = document.documentElement.lang === "ml";
+    const label = (en, mlText) => ml ? mlText : en;
+    const overlay = document.createElement("div");
+    overlay.className = "fcms-modal-overlay";
+    overlay.innerHTML = `<div class="fcms-modal fcms-modal-tone-primary fcms-donation-choice" role="dialog" aria-modal="true" aria-labelledby="donationChoiceTitle">
+      <div class="fcms-modal-icon"><i class="bi bi-arrow-left-right"></i></div>
+      <div class="fcms-modal-title" id="donationChoiceTitle">${label("How should this amount be recorded?", "ഈ തുക എങ്ങനെ രേഖപ്പെടുത്തണം?")}</div>
+      <div class="fcms-modal-body"><b>${escapeHTML(member.name)}</b> ${label(`has ${money(balance)} remaining; the household has ${money(householdBalance)} remaining.`, `അടയ്ക്കാൻ ${money(balance)} ബാക്കിയുണ്ട്; വീട്ടിലെ ആകെ ബാക്കി ${money(householdBalance)} ആണ്.`)}</div>
+      <div class="fcms-donation-choice-preview">
+        <div><span>${label("Keep as full donation", "മുഴുവൻ സംഭാവനയായി രേഖപ്പെടുത്തുക")}</span><b>${money(amount)} ${label("donation", "സംഭാവന")}</b></div>
+        <div><span>${label("Pay selected member first", "തിരഞ്ഞെടുത്ത അംഗത്തിന്റെ തുക ആദ്യം അടയ്ക്കുക")}</span><b>${money(applied)} ${label("payment", "പേയ്മെന്റ്")}${excess ? ` + ${money(excess)} ${label("donation", "സംഭാവന")}` : ""}</b></div>
+        <div><span>${label("Pay entire household first", "വീട്ടിലെ എല്ലാ അംഗങ്ങളുടെയും ബാക്കി ആദ്യം അടയ്ക്കുക")}</span><b>${money(houseApplied)} ${label("payment", "പേയ്മെന്റ്")}${houseExcess ? ` + ${money(houseExcess)} ${label("donation", "സംഭാവന")}` : ""}</b></div>
+      </div>
+      <div class="fcms-modal-actions fcms-donation-choice-actions"><button type="button" class="btn btn-light" data-choice="cancel">${label("Cancel", "റദ്ദാക്കുക")}</button><button type="button" class="btn btn-outline-primary" data-choice="donation">${label("Full Donation", "മുഴുവൻ സംഭാവന")}</button><button type="button" class="btn btn-outline-primary" data-choice="member">${label("Selected Member First", "തിരഞ്ഞെടുത്ത അംഗം ആദ്യം")}</button><button type="button" class="btn btn-primary" data-choice="house">${label("Entire House First", "മുഴുവൻ വീടും ആദ്യം")}</button></div>
+    </div>`;
+    document.body.appendChild(overlay);
+    if (typeof applyFcmsMalayalamToDom === "function") applyFcmsMalayalamToDom(overlay);
+    requestAnimationFrame(() => overlay.classList.add("show"));
+    let settled = false;
+    const onKey = (event) => { if (event.key === "Escape") close(null); };
+    const close = (choice) => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener("keydown", onKey);
+      overlay.classList.remove("show");
+      setTimeout(() => overlay.remove(), 200);
+      resolve(choice);
+    };
+    document.addEventListener("keydown", onKey);
+    overlay.querySelectorAll("[data-choice]").forEach((button) => button.addEventListener("click", () => close(button.dataset.choice === "cancel" ? null : button.dataset.choice)));
+  });
 }
 document.getElementById("donationDate").value = todayValue();
 function updateSourceFields() {
@@ -47,6 +83,9 @@ function updateSourceFields() {
   document.getElementById("phoneField").style.display = isMember
     ? "none"
     : "block";
+  document.getElementById("donationPradeshikamField").style.display = isMember
+    ? "none"
+    : "block";
   document.getElementById("donorMember").required = isMember;
   document.getElementById("donorName").required = !isMember;
   document.getElementById("donorPhone").required = !isMember;
@@ -58,6 +97,7 @@ function updateSourceFields() {
     document.getElementById("memberResults").classList.add("d-none");
     document.getElementById("selectedMember").classList.add("d-none");
     document.getElementById("donorMember").value = "";
+    if (s.role === "admin") document.getElementById("donationPradeshikam").value = "";
   }
 }
 function allDonations() {
@@ -84,16 +124,20 @@ function donationView(d) {
 function renderMemberResults() {
   const q = document.getElementById("memberSearch").value.trim().toLowerCase();
   const box = document.getElementById("memberResults");
+  if (!q) {
+    box.innerHTML = "";
+    box.classList.add("d-none");
+    return;
+  }
   const arr = visibleMembers
     .filter(
       (m) =>
-        !q ||
         [m.name, m.phone, m.houseNumber, m.memberCode, m.countryCode]
           .join(" ")
           .toLowerCase()
           .includes(q),
     )
-    .slice(0, 30);
+    .slice(0, window.innerWidth <= 575 ? 5 : 6);
   box.innerHTML = !arr.length
     ? `<div class="member-result-empty">No matching member</div>`
     : arr
@@ -120,7 +164,8 @@ function selectMember(id) {
   document.getElementById("memberSearch").value = "";
   document.getElementById("memberResults").classList.add("d-none");
   const sel = document.getElementById("selectedMember");
-  sel.innerHTML = `<span><b>${escapeHTML(m.name || "-")}</b><small>${escapeHTML(formatPhone(m.phone, m.countryCode))} &middot; House ${escapeHTML(m.houseNumber || "-")}</small></span><button type="button" class="btn btn-sm btn-light" id="clearMember">Change</button>`;
+  const pr = db.pradeshikams.find((p) => Number(p.id) === Number(m.pradeshikamId));
+  sel.innerHTML = `<span><b>${escapeHTML(m.name || "-")}</b><small>${escapeHTML(formatPhone(m.phone, m.countryCode))} &middot; House ${escapeHTML(m.houseNumber || "-")} &middot; ${escapeHTML(fcmsPradeshikamLabel(pr?.name || "-"))}</small></span><button type="button" class="btn btn-sm btn-light" id="clearMember">Change</button>`;
   sel.classList.remove("d-none");
   if (s.role === "admin")
     document.getElementById("donationPradeshikam").value = m.pradeshikamId;
@@ -224,14 +269,14 @@ document
 document
   .getElementById("memberSearch")
   .addEventListener("focus", renderMemberResults);
-document.getElementById("searchDonation").addEventListener("input", render);
+document.getElementById("searchDonation").addEventListener("input", fcmsDebounce(render,180));
 document.getElementById("filterSource").addEventListener("change", render);
 document.getElementById("filterPr")?.addEventListener("change", render);
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".member-picker"))
     document.getElementById("memberResults")?.classList.add("d-none");
 });
-document.getElementById("donationForm").addEventListener("submit", (e) => {
+document.getElementById("donationForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.currentTarget,
     err = document.getElementById("donationError");
@@ -327,13 +372,44 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     failDonationSave("This receipt number is already in use.", receiptEl);
     return;
   }
-  const donation = {
+  const transactionId = mode === "UPI" ? fcmsGetUpiTransactionId("donationMode") : "";
+  const memberBalance = donor ? memberStats(donor, db).balance : 0;
+  const householdMembers = donor
+    ? (String(donor.houseNumber || "").trim() ? houseMembersFor(donor, db) : [donor])
+    : [];
+  const householdBalance = householdMembers.reduce((sum, member) => sum + memberStats(member, db).balance, 0);
+  let allocationChoice = "donation";
+  if (donor && householdBalance > 0) {
+    if (form.dataset.allocationChoiceOpen === "true") return;
+    form.dataset.allocationChoiceOpen = "true";
+    allocationChoice = await chooseMemberDonationAllocation(donor, amount, memberBalance, householdBalance);
+    delete form.dataset.allocationChoiceOpen;
+    if (!allocationChoice) return;
+  }
+  let paymentRemaining = amount;
+  const paymentTargets = allocationChoice === "house"
+    ? [donor, ...householdMembers.filter((member) => member.id !== donor.id)]
+    : allocationChoice === "member" ? [donor] : [];
+  const paymentParts = [];
+  paymentTargets.forEach((member) => {
+    if (paymentRemaining <= 0) return;
+    const applied = Math.min(paymentRemaining, memberStats(member, db).balance);
+    if (applied > 0) {
+      paymentParts.push({ member, amount: applied });
+      paymentRemaining -= applied;
+    }
+  });
+  const paymentAmount = paymentParts.reduce((sum, part) => sum + part.amount, 0);
+  const donationAmount = amount - paymentAmount;
+  const commonDate = new Date(date + "T12:00:00").toISOString();
+  const splitId = paymentAmount && donationAmount ? uid("split") : null;
+  const donation = donationAmount > 0 ? {
     id: uid("don"),
     donorMemberId: donor?.id || null,
     donorName: donor?.name || name,
     pradeshikamId,
     houseNumber: donor?.houseNumber || "",
-    amount,
+    amount: donationAmount,
     receiptNumber: receipt,
     sourceType: type,
     sourceLabel: type,
@@ -341,26 +417,46 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     donorPhoneCode:
       type === "Member" ? donor?.countryCode || "+91" : donorPhoneCode,
     paymentMode: mode,
-    transactionId: mode === "UPI" ? fcmsGetUpiTransactionId("donationMode") : "",
+    transactionId,
     status: "completed",
-    date: new Date(date + "T12:00:00").toISOString(),
+    date: commonDate,
     remarks,
     createdAt: new Date().toISOString(),
-  };
+    splitPaymentId: splitId,
+  } : null;
+  const payments = paymentParts.map((part) => ({
+    id: uid("pay"), memberId: part.member.id, receiptNumber: receipt,
+    amount: part.amount, paymentMode: mode, transactionId,
+    status: "completed", remarks, paymentDate: commonDate,
+    paidByMemberId: donor.id, splitDonationId: splitId,
+    householdDonationAllocation: allocationChoice === "house",
+    createdAt: new Date().toISOString(),
+  }));
+  const activityStart = (db.activities || []).length;
   try {
-    fcmsMarkNewElectronicPending(donation);
-    db.donations.push(donation);
-
-    addActivity(db, {
-      action: "Donation Added",
-      entityType: "donation",
-      entityId: donation.id,
-      memberId: donor?.id || null,
-      pradeshikamId,
-      summary: `${money(amount)} donation recorded`,
-      details: `${type} donation from ${donation.donorName} with receipt ${receipt}.`,
-      newValue: donationSnapshot(donation),
+    payments.forEach((payment) => {
+      const paidMember = paymentParts.find((part) => part.member.id === payment.memberId)?.member;
+      fcmsMarkNewElectronicPending(payment);
+      db.payments.push(payment);
+      addActivity(db, {
+        action: "Payment Added", entityType: "payment", entityId: payment.id,
+        memberId: payment.memberId, pradeshikamId,
+        summary: `${money(payment.amount)} applied to required amount`,
+        details: `${paidMember?.name || donor.name}'s required balance was paid from receipt ${receipt}, paid by ${donor.name}.`,
+        newValue: paymentSnapshot(payment),
+      });
     });
+    if (donation) {
+      fcmsMarkNewElectronicPending(donation);
+      db.donations.push(donation);
+      addActivity(db, {
+        action: "Donation Added", entityType: "donation", entityId: donation.id,
+        memberId: donor?.id || null, pradeshikamId,
+        summary: `${money(donationAmount)} donation recorded`,
+        details: `${type} donation from ${donation.donorName} with receipt ${receipt}.${paymentAmount ? ` ${money(paymentAmount)} was applied to the member's required amount first.` : ""}`,
+        newValue: donationSnapshot(donation),
+      });
+    }
 
     saveDB(db);
     fcmsClearPageDraft();
@@ -371,14 +467,28 @@ document.getElementById("donationForm").addEventListener("submit", (e) => {
     render();
 
     if (typeof toast === "function") {
+      const ml = document.documentElement.lang === "ml";
+      const paymentTarget = allocationChoice === "house"
+        ? (ml ? `വീട് ${donor.houseNumber}` : `house ${donor.houseNumber}`)
+        : donor?.name;
+      const successMessage = payments.length && donation
+        ? (ml ? `${paymentTarget}: ${money(paymentAmount)} പേയ്മെന്റും ${money(donationAmount)} സംഭാവനയും സേവ് ചെയ്തു.` : `Saved — ${money(paymentAmount)} payment for ${paymentTarget} and ${money(donationAmount)} donation.`)
+        : payments.length
+          ? (ml ? `${paymentTarget}: ${money(paymentAmount)} ആവശ്യമായ തുകയിലേക്ക് ചേർത്തു.` : `Saved — ${money(paymentAmount)} applied to the required amount for ${paymentTarget}.`)
+          : (ml ? `${donation.donorName}: ${money(donationAmount)} സംഭാവന സേവ് ചെയ്തു · രസീത് ${receipt}.` : `Donation saved successfully — ${donation.donorName} · ${money(donationAmount)} · Receipt ${receipt}.`);
       toast(
-        `Donation saved successfully — ${donation.donorName} · ${money(amount)} · Receipt ${receipt}.`,
+        successMessage,
         "success"
       );
     }
   } catch (saveError) {
     // Roll back the in-memory record if persistence fails.
-    db.donations = (db.donations || []).filter((x) => String(x.id) !== String(donation.id));
+    if (donation) db.donations = (db.donations || []).filter((x) => String(x.id) !== String(donation.id));
+    if (payments.length) {
+      const paymentIds = new Set(payments.map((payment) => String(payment.id)));
+      db.payments = (db.payments || []).filter((x) => !paymentIds.has(String(x.id)));
+    }
+    if (db.activities && db.activities.length > activityStart) db.activities.splice(0, db.activities.length - activityStart);
     failDonationSave("Donation was not saved. Please try again.");
     console.error("Donation save failed:", saveError);
     return;

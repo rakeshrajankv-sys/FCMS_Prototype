@@ -1,5 +1,6 @@
 const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
+const FCMS_MEMBER_STATS_CACHE = new WeakMap();
 
 const PRADESHIKAM_NAMES = [
   "Ambangad",
@@ -8,18 +9,18 @@ const PRADESHIKAM_NAMES = [
   "Chalingal",
   "Chemmanad",
   "Kalanad",
-  "kuttikkol",
+  "Kuttikkol",
   "Kolathur/Maruthadukkam",
   "Kaniyamabdi",
   "Melbara",
   "Poinachi",
-  "pakkam",
+  "Pakkam",
   "Periya",
   "Poochakkad",
-  "Thokkanam/karuvakod",
+  "Thokkanam/Karuvakod",
   "Thiravakoli",
   "Udma",
-  "chendalam",
+  "Chendalam",
 ];
 const DEFAULT_PRADESHIKAMS = PRADESHIKAM_NAMES.map((name, i) => ({
   id: i + 1,
@@ -195,6 +196,7 @@ function getDB() {
   return seedDemoData();
 }
 function saveDB(db) {
+  FCMS_MEMBER_STATS_CACHE.delete(db);
   localStorage.setItem(FCMS_KEY, JSON.stringify(db));
   // Provide a shared success notification for CRUD pages that do not have a
   // page-specific toast. The UI layer suppresses this fallback when a clearer
@@ -272,12 +274,20 @@ function percent(required, paid) {
   return Math.min(100, required > 0 ? (paid / required) * 100 : 100);
 }
 function memberStats(member, db = getDB()) {
-  const paid = db.payments
-    .filter((p) => p.memberId === member.id && p.status !== "hold")
-    .reduce((s, p) => s + Number(p.amount || 0), 0);
-  const held = db.payments
-    .filter((p) => p.memberId === member.id && p.status === "hold")
-    .reduce((s, p) => s + Number(p.amount || 0), 0);
+  let index = FCMS_MEMBER_STATS_CACHE.get(db);
+  if (!index) {
+    index = new Map();
+    (db.payments || []).forEach((payment) => {
+      const current = index.get(payment.memberId) || { paid:0, held:0 };
+      if (payment.status === "hold") current.held += Number(payment.amount || 0);
+      else current.paid += Number(payment.amount || 0);
+      index.set(payment.memberId, current);
+    });
+    FCMS_MEMBER_STATS_CACHE.set(db, index);
+  }
+  const totals = index.get(member.id) || { paid:0, held:0 };
+  const paid = totals.paid;
+  const held = totals.held;
   const req = Number(member.requiredAmount) || 0;
   return {
     paid,

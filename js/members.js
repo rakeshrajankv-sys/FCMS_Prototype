@@ -35,6 +35,8 @@ ${pageTitle("Members", "", s.role === "admin" || myCommittee?.financeAccess ? `<
 <div id="memberView"></div>`;
 
 const viewRoot = document.getElementById("memberView");
+let memberSearchTerm = "";
+let houseSearchTerm = "";
 function houseKey(v) {
   return String(v || "")
     .trim()
@@ -42,9 +44,9 @@ function houseKey(v) {
     .replace(/\s+/g, " ");
 }
 function renderMemberList() {
-  viewRoot.innerHTML = `<div class="panel"><div class="row g-2 mb-3"><div class="col-md-7"><input id="search" class="form-control" placeholder="Search name, phone, house number or member ID"></div><div class="col-md-3"><select id="statusFilter" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div><div class="col-md-2"><select id="genderFilter" class="form-select"><option value="">All genders</option><option>Male</option><option>Female</option></select></div></div><div id="memberTable"></div></div>`;
+  viewRoot.innerHTML = `<div class="panel"><div class="row g-2 mb-3"><div class="col-md-7"><div class="fcms-list-search"><i class="bi bi-search"></i><input id="search" class="form-control" value="${escapeHTML(memberSearchTerm)}" placeholder="Search name, phone, house number or member ID" aria-label="Search members"></div></div><div class="col-md-3"><select id="statusFilter" class="form-select"><option value="">All statuses</option><option>Green</option><option>Yellow</option><option>Red</option></select></div><div class="col-md-2"><select id="genderFilter" class="form-select"><option value="">All genders</option><option>Male</option><option>Female</option></select></div></div><div id="memberTable"></div></div>`;
   const render = () => {
-    const q = document.getElementById("search").value.toLowerCase(),
+    const q = document.getElementById("search").value.trim().toLowerCase(),
       sf = document.getElementById("statusFilter").value,
       gf = document.getElementById("genderFilter").value;
     const arr = members.filter((m) => {
@@ -70,11 +72,13 @@ function renderMemberList() {
           })
           .join("")}</tbody></table></div>`;
   };
+  const renderSoon = fcmsDebounce(render, 180);
+  document.getElementById("search").addEventListener("input", e => { memberSearchTerm=e.target.value; });
   render();
   ["search", "statusFilter", "genderFilter"].forEach((id) =>
     document
       .getElementById(id)
-      .addEventListener(id === "search" ? "input" : "change", render),
+      .addEventListener(id === "search" ? "input" : "change", id === "search" ? renderSoon : render),
   );
 }
 function renderHouses() {
@@ -94,10 +98,19 @@ function renderHouses() {
         houseKey(g[0].houseNumber) === houseKey(requestedHouse) &&
         (!requestedPradeshikam || Number(g[0].pradeshikamId) === Number(requestedPradeshikam)),
     );
-  viewRoot.innerHTML = `<div class="panel"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div class="panel-title">Households</div><span class="small text-muted">${arr.length} house${arr.length === 1 ? "" : "s"}</span></div><div class="row g-3" id="houseList"></div></div>`;
-  document.getElementById("houseList").innerHTML = !arr.length
+  const filterHouses=()=>{
+    const q=houseSearchTerm.trim().toLowerCase();
+    return !q ? arr : arr.filter(g=>{
+      const p=db.pradeshikams.find(x=>Number(x.id)===Number(g[0].pradeshikamId));
+      return [g[0].houseNumber,fcmsPradeshikamLabel(p?.name||""),...g.flatMap(m=>[m.name,m.phone,m.memberCode,m.countryCode])].join(" ").toLowerCase().includes(q);
+    });
+  };
+  let housePage=0, housePageSize=document.documentElement.classList.contains("fcms-low-power")?25:50;
+  viewRoot.innerHTML = `<div class="panel"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div class="panel-title">Households</div><span class="small text-muted" id="houseCount"></span></div><div class="fcms-list-search mb-3"><i class="bi bi-search"></i><input id="houseSearch" class="form-control" value="${escapeHTML(houseSearchTerm)}" placeholder="Search house number, member, phone or Pradeshikam" aria-label="Search households"></div><div class="row g-3" id="houseList"></div><div class="fcms-pagination" id="housePagination"><button type="button" class="btn btn-sm btn-light" data-page="previous">Previous</button><span class="fcms-pagination-status"></span><button type="button" class="btn btn-sm btn-light" data-page="next">Next</button><select class="form-select form-select-sm fcms-page-size" aria-label="Houses per page"><option>25</option><option>50</option><option>100</option></select></div></div>`;
+  const renderHouseResults=()=>{ const visible=filterHouses(), pages=Math.max(1,Math.ceil(visible.length/housePageSize)); housePage=Math.max(0,Math.min(housePage,pages-1)); const start=housePage*housePageSize, pageRows=visible.slice(start,start+housePageSize); document.getElementById("houseCount").textContent=`${visible.length} house${visible.length===1?"":"s"}`;
+  document.getElementById("houseList").innerHTML = !visible.length
     ? `<div class="col-12"><div class="empty-state py-4"><i class="bi bi-house"></i>No houses found.</div></div>`
-    : arr
+    : pageRows
         .map((g) => {
           const req = g.reduce((a, m) => a + Number(m.requiredAmount || 0), 0),
             paid = g.reduce((a, m) => a + memberStats(m, db).paid, 0),
@@ -110,6 +123,12 @@ function renderHouses() {
         .join("");
   document.querySelectorAll(".house-payment-btn").forEach((btn) => btn.addEventListener("click", () => openHousePayment(btn.dataset.house, Number(btn.dataset.pradeshikam))));
   document.querySelectorAll(".house-history-btn").forEach((btn) => btn.addEventListener("click", () => openHouseHistory(btn.dataset.house, Number(btn.dataset.pradeshikam))));
+  const pager=document.getElementById("housePagination"); pager.hidden=visible.length<=housePageSize; pager.querySelector(".fcms-pagination-status").textContent=visible.length?`${start+1}\u2013${Math.min(visible.length,start+housePageSize)} of ${visible.length}`:"0 of 0"; pager.querySelector('[data-page="previous"]').disabled=housePage===0; pager.querySelector('[data-page="next"]').disabled=housePage>=pages-1;
+  };
+  const renderHousesSoon=fcmsDebounce(renderHouseResults,180);
+  document.getElementById("houseSearch").addEventListener("input",e=>{houseSearchTerm=e.target.value;housePage=0;renderHousesSoon();});
+  const housePager=document.getElementById("housePagination"); housePager.querySelector(".fcms-page-size").value=String(housePageSize); housePager.addEventListener("click",e=>{const btn=e.target.closest("button[data-page]");if(!btn)return;housePage+=btn.dataset.page==="next"?1:-1;renderHouseResults();}); housePager.querySelector(".fcms-page-size").addEventListener("change",e=>{housePageSize=Number(e.target.value)||50;housePage=0;renderHouseResults();});
+  renderHouseResults();
 }
 
 function houseGroup(house, pradeshikamId) {

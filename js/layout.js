@@ -22,7 +22,7 @@ if (session) {
   document.getElementById("app").innerHTML = `
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-brand"><img src="logo.png?v=20260821logo2" alt="Logo"><span>${t("app_name")}</span></div>
+  <div class="sidebar-brand"><img src="logo.png?v=20260902optimized1" alt="Logo" width="512" height="512" decoding="async"><span>${t("app_name")}</span></div>
   <div class="px-3 small sidebar-role">${escapeHTML(isAdminRole ? t("main_committee") : session.name)}</div>
   <nav class="sidebar-nav">
     <div class="nav-section">${t("nav_main")}</div>
@@ -190,6 +190,35 @@ async function logout() {
 
 // Smooth visual transition for normal in-app navigation. This only delays navigation;
 // it does not replace, alter, or remove any existing link/function behavior.
+window.addEventListener("pagehide", () => {
+  // Do not let the browser save a transparent exit state into its back/forward
+  // cache. This is especially important for Android browser Back navigation.
+  document.body.classList.remove("fcms-page-exit");
+});
+window.addEventListener("pageshow", (event) => {
+  // A page restored from the back-forward cache can retain the exit animation
+  // class that made it transparent. Always restore it to its visible state.
+  document.body.classList.remove("fcms-page-exit");
+  document.documentElement.classList.remove("fcms-lang-fade");
+  document.body.style.removeProperty("opacity");
+  document.body.style.removeProperty("visibility");
+  const shell = document.querySelector(".app-shell");
+  const content = document.querySelector(".page-content");
+  if (event.persisted || performance.getEntriesByType("navigation")[0]?.type === "back_forward") {
+    shell?.getAnimations?.().forEach((animation) => animation.cancel());
+    content?.getAnimations?.().forEach((animation) => animation.cancel());
+  }
+  if (shell) {
+    shell.style.opacity = "1";
+    shell.style.transform = "none";
+    shell.style.visibility = "visible";
+  }
+  if (content) {
+    content.style.opacity = "1";
+    content.style.transform = "none";
+    content.style.visibility = "visible";
+  }
+});
 document.addEventListener("click", (event) => {
   const link = event.target.closest?.("a[href]");
   if (!link || event.defaultPrevented || link.target === "_blank" || link.hasAttribute("download")) return;

@@ -31,28 +31,28 @@
   <body class="login-page">
     <div class="login-slideshow" aria-hidden="true">
       <div class="login-slide is-active">
-        <img src="assets/login/slide-01.webp" alt="" loading="eager" />
+        <img src="assets/login/slide-01.webp" alt="" loading="eager" fetchpriority="high" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-02.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-02.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-03.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-03.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-04.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-04.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-05.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-05.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-06.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-06.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-07.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-07.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
       <div class="login-slide">
-        <img src="assets/login/slide-08.webp" alt="" loading="lazy" />
+        <img data-src="assets/login/slide-08.webp" alt="" loading="lazy" fetchpriority="low" decoding="async" />
       </div>
     </div>
     <div class="login-bg-overlay" aria-hidden="true"></div>
@@ -60,8 +60,11 @@
       <div class="login-brand">
         <img
           class="brand-logo"
-          src="logo.png?v=20260821logo2"
+          src="logo.png?v=20260902optimized1"
           alt="Fund Collection logo"
+          width="512"
+          height="512"
+          decoding="async"
         />
         <p>Fund Collection Management System</p>
       </div>
@@ -110,7 +113,7 @@
         </form>
       </div>
     </div>
-    <script src="js/ui-kit.js?v=20260829design2"></script>
+    <script src="js/ui-kit.js?v=20260902logicSafe1"></script>
     <script src="js/data.js?v=20260821program1"></script>
     <script src="js/device-verification.js?v=20260829design2"></script>
     <script src="js/auth.js?v=20260829design2"></script>
@@ -152,6 +155,12 @@
         ).matches;
         const slides = Array.from(slideshow.querySelectorAll(".login-slide"));
         if (slides.length < 2) return;
+        const ensureImage = (slide) => {
+          const img = slide && slide.querySelector("img[data-src]");
+          if (!img) return;
+          img.src = img.dataset.src;
+          img.removeAttribute("data-src");
+        };
         let order = slides.map((_, i) => i);
         const shuffle = (arr) => {
           for (let i = arr.length - 1; i > 0; i--) {
@@ -181,8 +190,9 @@
           const slide = slides[idx];
           slide.style.order = String(position);
           slide.classList.toggle("is-active", position === 0);
-          if (position === 0) {
-            const img = slide.querySelector("img");
+           if (position === 0) {
+             ensureImage(slide);
+             const img = slide.querySelector("img");
             if (img) img.loading = "eager";
           }
         });
@@ -193,8 +203,9 @@
             slideshow.querySelectorAll(".login-slide"),
           ).sort((a, b) => Number(a.style.order) - Number(b.style.order));
           orderedSlides[current]?.classList.remove("is-active");
-          current = (current + 1) % orderedSlides.length;
-          orderedSlides[current]?.classList.add("is-active");
+           current = (current + 1) % orderedSlides.length;
+           ensureImage(orderedSlides[current]);
+           orderedSlides[current]?.classList.add("is-active");
         }, 5600);
         window.addEventListener("pageshow", (event) => {
           if (event.persisted) window.location.reload();
@@ -203,4 +214,3 @@
     </script>
   </body>
 </html>
-w

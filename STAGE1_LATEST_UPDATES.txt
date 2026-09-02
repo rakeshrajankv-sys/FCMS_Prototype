@@ -1,7 +1,0 @@
-Only requested updates applied to the uploaded Stage 1 prototype:
-- Phone number uses +91 prefix and exactly 10 digits after +91.
-- Phone values are displayed with +91.
-- All member/payment form fields are required.
-- Age validation is 1-100 to preserve the existing 21+ amount rules.
-- Expected Collection is shown in the existing dashboard Collection Progress panel and is calculated from registered members.
-No existing HTML layout, CSS design, logo, permissions, activity history, member/payment functions, or page structure was redesigned.

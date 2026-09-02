@@ -361,11 +361,11 @@ async function saveHousehold(hold) {
       continue;
     }
     const samePerson = await confirmDialog(
-      `${existing.name} already exists in house ${house}. Existing phone: ${existingPhone}. Entered phone: ${enteredPhone}. Is this the same member?`,
+      `A member named ${existing.name} already exists in House ${house}.\n\nExisting phone: ${existingPhone}\nEntered phone: ${enteredPhone}\n\nAre these details for the same person?`,
       {
-        title: "Possible Existing Member",
-        confirmLabel: "Same Member — Add Payment",
-        cancelLabel: "Different Member — Create New",
+        title: "Possible Matching Member",
+        confirmLabel: "Add to Existing Member",
+        cancelLabel: "Create New Member",
         tone: "primary",
         dismissible: false,
       },

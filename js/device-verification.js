@@ -37,7 +37,7 @@ function requestDeviceEnrollment(user) {
   return new Promise(resolve=>{
     const overlay=document.createElement("div"); overlay.className="fcms-device-overlay fcms-device-enter";
     overlay.innerHTML=`<div class="fcms-device-card">
-      <div class="fcms-verification-brand"><img src="logo.png" alt="FCMS"><h2>Verification</h2><span></span></div>
+      <div class="fcms-verification-brand"><img src="logo.png?v=20260902optimized1" alt="FCMS" width="512" height="512" decoding="async"><h2>Verification</h2><span></span></div>
       <div id="dvStep1">
         <div class="fcms-input-icon"><i class="bi bi-person"></i><input id="dvName" class="form-control form-control-lg" value="" autocomplete="name" placeholder="Enter your full name" required></div>
         <div class="fcms-phone-field"><span class="fcms-country-code">+91</span><div class="fcms-input-icon"><i class="bi bi-telephone"></i><input id="dvPhone" class="form-control form-control-lg" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="Enter mobile number" required></div></div>

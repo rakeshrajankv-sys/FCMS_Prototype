@@ -219,26 +219,9 @@ function toggleFcmsLang() {
 
 
 
-/* ---------- Prevent submitted forms from returning via browser Back ---------- */
-(function () {
-  function skipStaleSavedFormOnBack() {
-    try {
-      const nav = performance.getEntriesByType("navigation")[0];
-      if (!nav || nav.type !== "back_forward") return;
-      const raw = sessionStorage.getItem("fcms_last_saved_page");
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      const current = location.pathname + location.search;
-      if (saved?.path !== current || Date.now() - Number(saved.at || 0) > 120000) {
-        if (Date.now() - Number(saved?.at || 0) > 120000) sessionStorage.removeItem("fcms_last_saved_page");
-        return;
-      }
-      sessionStorage.removeItem("fcms_last_saved_page");
-      history.go(-1);
-    } catch (_) {}
-  }
-  window.addEventListener("pageshow", skipStaleSavedFormOnBack);
-})();
+/* Browser Back must move exactly one history entry. Draft handling now makes
+   it safe to revisit submitted form pages, so the former automatic second
+   history.go(-1) is intentionally removed. */
 
 /* ---------- Malayalam UI coverage for dynamically rendered pages ---------- */
 const FCMS_PRADESHIKAM_ML = {
@@ -787,6 +770,29 @@ const FCMS_ML_EXACT_TEXT = {
   "Total": "ആകെ"
 };
 Object.assign(FCMS_ML_EXACT_TEXT, {
+  "Records in Period": "\u0d15\u0d3e\u0d32\u0d2f\u0d33\u0d35\u0d3f\u0d32\u0d46 \u0d30\u0d47\u0d16\u0d15\u0d7e",
+  "Collected in Period": "\u0d15\u0d3e\u0d32\u0d2f\u0d33\u0d35\u0d3f\u0d7d \u0d2a\u0d3f\u0d30\u0d3f\u0d1a\u0d4d\u0d1a\u0d24\u0d4d",
+  "Donations in Period": "\u0d15\u0d3e\u0d32\u0d2f\u0d33\u0d35\u0d3f\u0d32\u0d46 \u0d38\u0d02\u0d2d\u0d3e\u0d35\u0d28\u0d15\u0d7e",
+  "Total in Period": "\u0d15\u0d3e\u0d32\u0d2f\u0d33\u0d35\u0d3f\u0d32\u0d46 \u0d06\u0d15\u0d46",
+  "Search name, phone, house number or member ID": "\u0d2a\u0d47\u0d30\u0d4d, \u0d2b\u0d4b\u0d7a, \u0d35\u0d40\u0d1f\u0d4d\u0d1f\u0d41\u0d28\u0d2e\u0d4d\u0d2a\u0d7c \u0d05\u0d32\u0d4d\u0d32\u0d46\u0d19\u0d4d\u0d15\u0d3f\u0d7d \u0d05\u0d02\u0d17 \u0d10\u0d21\u0d3f \u0d24\u0d3f\u0d30\u0d2f\u0d41\u0d15",
+  "Search house number, member, phone or Pradeshikam": "\u0d35\u0d40\u0d1f\u0d4d\u0d1f\u0d41\u0d28\u0d2e\u0d4d\u0d2a\u0d7c, \u0d05\u0d02\u0d17\u0d02, \u0d2b\u0d4b\u0d7a \u0d05\u0d32\u0d4d\u0d32\u0d46\u0d19\u0d4d\u0d15\u0d3f\u0d7d \u0d2a\u0d4d\u0d30\u0d26\u0d47\u0d36\u0d3f\u0d15\u0d02 \u0d24\u0d3f\u0d30\u0d2f\u0d41\u0d15",
+  "Search members": "\u0d05\u0d02\u0d17\u0d19\u0d4d\u0d19\u0d33\u0d46 \u0d24\u0d3f\u0d30\u0d2f\u0d41\u0d15",
+  "Search households": "\u0d35\u0d40\u0d1f\u0d41\u0d15\u0d33\u0d46 \u0d24\u0d3f\u0d30\u0d2f\u0d41\u0d15"
+  ,"Previous": "\u0d2e\u0d41\u0d7b\u0d2a\u0d24\u0d4d\u0d24\u0d46"
+  ,"Next": "\u0d05\u0d1f\u0d41\u0d24\u0d4d\u0d24\u0d24\u0d4d"
+  ,"First page": "\u0d06\u0d26\u0d4d\u0d2f \u0d2a\u0d47\u0d1c\u0d4d"
+  ,"Last page": "\u0d05\u0d35\u0d38\u0d3e\u0d28 \u0d2a\u0d47\u0d1c\u0d4d"
+  ,"Records per page": "\u0d13\u0d30\u0d4b \u0d2a\u0d47\u0d1c\u0d3f\u0d32\u0d41\u0d2e\u0d41\u0d33\u0d4d\u0d33 \u0d30\u0d47\u0d16\u0d15\u0d7e"
+  ,"Houses per page": "\u0d13\u0d30\u0d4b \u0d2a\u0d47\u0d1c\u0d3f\u0d32\u0d41\u0d2e\u0d41\u0d2e\u0d41\u0d33\u0d4d\u0d33 \u0d35\u0d40\u0d1f\u0d41\u0d15\u0d7e"
+});
+Object.assign(FCMS_ML_EXACT_TEXT, {
+  "How should this amount be recorded?": "ഈ തുക എങ്ങനെ രേഖപ്പെടുത്തണം?",
+  "Keep as full donation": "മുഴുവൻ സംഭാവനയായി രേഖപ്പെടുത്തുക",
+  "Keep Full Donation": "മുഴുവൻ സംഭാവനയായി രേഖപ്പെടുത്തുക",
+  "Apply requirement first": "ആദ്യം ആവശ്യമായ തുകയിൽ ചേർക്കുക",
+  "Apply Requirement First": "ആദ്യം ആവശ്യമായ തുകയിൽ ചേർക്കുക"
+});
+Object.assign(FCMS_ML_EXACT_TEXT, {
   "Donation Source / സംഭാവനയുടെ ഉറവിടം *": "സംഭാവനയുടെ ഉറവിടം *",
   "Donation Source": "സംഭാവനയുടെ ഉറവിടം",
   "Save Donation": "സംഭാവന സേവ് ചെയ്യുക",
@@ -805,7 +811,8 @@ Object.assign(FCMS_ML_EXACT_TEXT, {
   "Save Submission": "സമർപ്പണം സേവ് ചെയ്യുക",
   "No submission history recorded yet.": "ഇതുവരെ സമർപ്പണ ചരിത്രമൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല.",
   "A receipt/voucher image is required to save the submission.": "സമർപ്പണം സേവ് ചെയ്യാൻ രസീത് / വൗച്ചർ ചിത്രം ആവശ്യമാണ്.",
-  "Take Photo": "ഫോട്ടോ എടുക്കുക"
+  "Take Photo": "ഫോട്ടോ എടുക്കുക",
+  "members": "അംഗങ്ങൾ"
 });
 function fcmsTranslateValue(value) {
   let out = String(value ?? "");
@@ -899,6 +906,9 @@ function applyFcmsMalayalamToDom(root=document.body) {
   // Without an explicit value attribute, translating the option text also
   // changes option.value and breaks those rules in Malayalam mode.
   if (root.querySelectorAll) {
+    if (root.matches?.("option:not([value])")) {
+      root.setAttribute("value", root.textContent.trim());
+    }
     root.querySelectorAll("option:not([value])").forEach((option) => {
       option.setAttribute("value", option.textContent.trim());
     });
@@ -916,10 +926,8 @@ function applyFcmsMalayalamToDom(root=document.body) {
       if (el.hasAttribute(a)) el.setAttribute(a,fcmsTranslateValue(el.getAttribute(a)));
     });
   });
-  root.querySelectorAll("input[readonly], input:disabled").forEach((el)=>{
-    const raw = String(el.value || "");
-    if (FCMS_PRADESHIKAM_ML[raw]) el.value = fcmsLang() === "ml" ? FCMS_PRADESHIKAM_ML[raw] : raw;
-  });
+  // Never translate input/select values. They are application data used by
+  // calculations and permission checks; only labels and text nodes are visual.
 }
 function initFcmsMalayalamObserver() {
   if (window.__fcmsMlObserver || document.body?.classList.contains("login-page")) return;
@@ -1151,7 +1159,7 @@ function confirmDialog(message, opts = {}) {
     const overlay = document.createElement("div");
     overlay.className = "fcms-modal-overlay";
     overlay.innerHTML = `
-      <div class="fcms-modal" role="dialog" aria-modal="true">
+      <div class="fcms-modal fcms-modal-tone-${confirmTone}" role="dialog" aria-modal="true">
         <div class="fcms-modal-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
         <div class="fcms-modal-title">${opts.title ? String(opts.title).replace(/</g, "&lt;") : t("are_you_sure")}</div>
         <div class="fcms-modal-body">${String(message).replace(/</g, "&lt;")}</div>
@@ -1417,7 +1425,8 @@ window.addEventListener("beforeunload", (event) => {
   try {
     const lowCpu = Number(navigator.hardwareConcurrency || 8) <= 4;
     const lowMem = "deviceMemory" in navigator && Number(navigator.deviceMemory || 8) <= 4;
-    if (lowCpu || lowMem) document.documentElement.classList.add("fcms-low-power");
+    const saveData = !!(navigator.connection && navigator.connection.saveData);
+    if (lowCpu || lowMem || saveData) document.documentElement.classList.add("fcms-low-power");
   } catch (_) {}
 })();
 
@@ -2155,5 +2164,83 @@ window.addEventListener("beforeunload", (event) => {
   });
 
   // Expose for any existing page-specific toggle code.
-  window.fcmsCloseMobileSidebar = closeMobileSidebar;
+window.fcmsCloseMobileSidebar = closeMobileSidebar;
+})();
+
+/* Large-data rendering: keep complete datasets available while limiting the
+   number of live table/card nodes that older browsers must lay out at once. */
+(function () {
+  const processed = new WeakSet();
+  const lowPower = document.documentElement.classList.contains("fcms-low-power");
+  const defaultSize = lowPower ? 25 : 50;
+
+  window.fcmsDebounce = function (fn, delay) {
+    let timer;
+    return function () {
+      const context = this, args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () { fn.apply(context, args); }, delay || 180);
+    };
+  };
+
+  function paginate(container, items, anchor) {
+    if (!container || items.length <= defaultSize || processed.has(container)) return;
+    processed.add(container);
+    let page = 0, size = defaultSize;
+    const nav = document.createElement("div");
+    nav.className = "fcms-pagination";
+    nav.innerHTML = '<button type="button" class="btn btn-sm btn-light" data-page="first" aria-label="First page">&laquo;</button><button type="button" class="btn btn-sm btn-light" data-page="previous">Previous</button><span class="fcms-pagination-status" aria-live="polite"></span><button type="button" class="btn btn-sm btn-light" data-page="next">Next</button><button type="button" class="btn btn-sm btn-light" data-page="last" aria-label="Last page">&raquo;</button><select class="form-select form-select-sm fcms-page-size" aria-label="Records per page"><option>25</option><option>50</option><option>100</option></select>';
+    nav.querySelector(".fcms-page-size").value = String(size);
+    anchor.parentNode.insertBefore(nav, anchor.nextSibling);
+
+    const render = function () {
+      const pages = Math.max(1, Math.ceil(items.length / size));
+      page = Math.max(0, Math.min(page, pages - 1));
+      const start = page * size, end = Math.min(items.length, start + size);
+      const fragment = document.createDocumentFragment();
+      for (let i = start; i < end; i++) fragment.appendChild(items[i]);
+      while (container.firstChild) container.removeChild(container.firstChild);
+      container.appendChild(fragment);
+      nav.querySelector(".fcms-pagination-status").textContent = `${start + 1}\u2013${end} of ${items.length}`;
+      nav.querySelector('[data-page="first"]').disabled = page === 0;
+      nav.querySelector('[data-page="previous"]').disabled = page === 0;
+      nav.querySelector('[data-page="next"]').disabled = page >= pages - 1;
+      nav.querySelector('[data-page="last"]').disabled = page >= pages - 1;
+    };
+    nav.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-page]");
+      if (!button) return;
+      const pages = Math.max(1, Math.ceil(items.length / size));
+      if (button.dataset.page === "first") page = 0;
+      if (button.dataset.page === "previous") page--;
+      if (button.dataset.page === "next") page++;
+      if (button.dataset.page === "last") page = pages - 1;
+      render();
+    });
+    nav.querySelector(".fcms-page-size").addEventListener("change", function (event) {
+      size = Number(event.target.value) || defaultSize;
+      page = 0;
+      render();
+    });
+    render();
+  }
+
+  function scan(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    scope.querySelectorAll("table tbody").forEach(function (tbody) {
+      if (processed.has(tbody)) return;
+      const rows = Array.prototype.slice.call(tbody.children);
+      if (rows.length > defaultSize) paginate(tbody, rows, tbody.closest(".table-responsive") || tbody.parentNode);
+      else processed.add(tbody);
+    });
+  }
+
+  let scanTimer;
+  function scheduleScan() {
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(function () { scan(document); }, 0);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", scheduleScan, { once:true });
+  else scheduleScan();
+  new MutationObserver(scheduleScan).observe(document.documentElement, { childList:true, subtree:true });
 })();

@@ -24,7 +24,7 @@
     });
   }
 
-  function resizeImage(dataUrl, maxSide=1600, quality=.82) {
+  function resizeImage(dataUrl, maxSide=1280, quality=.72) {
     return new Promise((resolve,reject)=>{
       const img=new Image();
       img.onload=()=>{
@@ -96,7 +96,7 @@
       canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
       canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
       canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-      const dataUrl=canvas.toDataURL('image/jpeg',.82);
+      const dataUrl=canvas.toDataURL('image/jpeg',.72);
       close();
       onCaptured({dataUrl,name:`receipt-${new Date().toISOString().replace(/[:.]/g,'-')}.jpg`,file:dataUrlToFile(dataUrl)});
     };

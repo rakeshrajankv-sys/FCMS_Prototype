@@ -72,6 +72,6 @@ function render() {
     </tr>`).join("") : `<tr><td colspan="10"><div class="empty-state py-5"><i class="bi bi-person-check"></i>${escapeHTML(t("no_verified_users"))}</div></td></tr>`;
 }
 
-document.getElementById("vuSearch").addEventListener("input", render);
+document.getElementById("vuSearch").addEventListener("input", fcmsDebounce(render,180));
 document.getElementById("vuRole").addEventListener("change", render);
 render();
