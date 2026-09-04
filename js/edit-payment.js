@@ -16,7 +16,7 @@ ${pageTitle("Edit Collection")}
 <form id="editPaymentForm"><div class="row g-3">
 <div class="col-md-4"><label class="form-label">Receipt Number / രസീത് നമ്പർ *</label><input id="receipt" class="form-control" required value="${escapeHTML(payment.receiptNumber)}"></div>
 <div class="col-md-4"><label class="form-label">${payment.status === "hold" ? "Actual Amount Received / യഥാർത്ഥത്തിൽ ലഭിച്ച തുക" : "Amount / തുക"} *</label><input id="amount" type="number" min="0" step="1" class="form-control" required value="${Number(payment.amount)}">${payment.status === "hold" ? '<div class="form-text">The required balance is taken first; any excess becomes this member\'s donation.</div>' : ""}</div>
-<div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="mode" class="form-select" data-transaction-id="${escapeHTML(payment.transactionId || "")}" required><option ${payment.paymentMode === "Cash" ? "selected" : ""}>Cash</option><option ${payment.paymentMode === "UPI" ? "selected" : ""}>UPI</option><option ${payment.paymentMode === "Bank" ? "selected" : ""}>Bank</option><option ${payment.paymentMode === "Cheque" ? "selected" : ""}>Cheque</option></select></div>
+<div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="mode" class="form-select" data-transaction-id="${escapeHTML(payment.transactionId || "")}" data-cheque-number="${escapeHTML(payment.chequeNumber || "")}" required><option ${payment.paymentMode === "Cash" ? "selected" : ""}>Cash</option><option ${payment.paymentMode === "UPI" ? "selected" : ""}>UPI</option><option ${payment.paymentMode === "Bank" ? "selected" : ""}>Bank</option><option ${payment.paymentMode === "Cheque" ? "selected" : ""}>Cheque</option></select></div>
 <div class="col-md-4"><label class="form-label">Status / നില *</label><select id="status" class="form-select" required><option value="completed" ${(payment.status || "completed") === "completed" ? "selected" : ""}>Completed</option><option value="hold" ${payment.status === "hold" ? "selected" : ""}>Hold (payment not yet received)</option></select></div>
 <div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="3">${escapeHTML(payment.remarks || "")}</textarea></div>
 </div><div id="formError" class="alert alert-danger d-none mt-3"></div>
@@ -80,6 +80,7 @@ ${pageTitle("Edit Collection")}
     payment.amount = contributionAmount;
     payment.paymentMode = document.getElementById("mode").value;
     payment.transactionId = fcmsGetUpiTransactionId("mode");
+    payment.chequeNumber = fcmsGetChequeNumber("mode");
     payment.status = status;
     payment.remarks = document.getElementById("remarks").value.trim();
     payment.confirmedTotalAmount = isConfirmingHold ? amount : payment.confirmedTotalAmount;

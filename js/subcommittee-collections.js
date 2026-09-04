@@ -272,6 +272,7 @@ ${selector}
       receiptNumber: receipt,
       paymentMode: document.getElementById("scMode").value,
       transactionId: fcmsGetUpiTransactionId("scMode"),
+      chequeNumber: fcmsGetChequeNumber("scMode"),
       date: new Date(
         document.getElementById("scDate").value + "T12:00:00",
       ).toISOString(),

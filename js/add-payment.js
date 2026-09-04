@@ -122,6 +122,7 @@ ${pageTitle("Add Collection")}
       amount,
       paymentMode: document.getElementById("mode").value,
       transactionId: fcmsGetUpiTransactionId("mode"),
+      chequeNumber: fcmsGetChequeNumber("mode"),
       status: "completed",
       remarks: document.getElementById("remarks").value.trim(),
       paymentDate: new Date().toISOString(),

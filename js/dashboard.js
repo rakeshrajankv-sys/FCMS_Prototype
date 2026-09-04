@@ -152,7 +152,7 @@ ${s.role === "admin" ? `<button type="button"
   title="${fcmsLang()==="ml" ? "രസീത് ബുക്ക് പരിധി" : "Receipt Book Limit"}"
   aria-label="${fcmsLang()==="ml" ? "രസീത് ബുക്ക് പരിധി" : "Receipt Book Limit"}">
   <i class="bi bi-journal-bookmark"></i>
-</button>` : ""}
+</button><button type="button" id="openReceiptBookAllocation" class="fcms-main-book-limit-icon" title="${fcmsLang()==="ml"?"രസീത് ബുക്ക് അനുവദിക്കൽ":"Receipt Book Allocation"}" aria-label="${fcmsLang()==="ml"?"രസീത് ബുക്ക് അനുവദിക്കൽ":"Receipt Book Allocation"}"><i class="bi bi-journals"></i></button>` : ""}
 <a href="add-member.html" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>${t("add_member")}</a>
 </div>`)}
 <div class="row g-3 mb-4">
@@ -452,3 +452,62 @@ document.addEventListener("click",function(e){
   e.stopPropagation();
   window.openReceiptBookLimitModal();
 });
+
+window.openReceiptBookAllocationModal=function(){
+  const s=currentSession(); if(!s||s.role!=="admin")return;
+  const db=getDB(), ml=fcmsLang()==="ml", allocations=fcmsReceiptBookAllocations(db);
+  document.querySelector(".fcms-book-allocation-overlay")?.remove();
+  const overlay=document.createElement("div"); overlay.className="fcms-book-limit-overlay fcms-book-allocation-overlay";
+  const committeeOptions=(type)=>{
+    const rows=type==="pradeshikam"?db.pradeshikams:db.subCommittees;
+    return rows.map(x=>`<option value="${x.id}">${escapeHTML(typeof fcmsPradeshikamLabel==="function"&&type==="pradeshikam"?fcmsPradeshikamLabel(x.name):x.name)}</option>`).join("");
+  };
+  const ownerLabel=(key)=>{const [ownerType,ownerId]=String(key).split(":"),list=ownerType==="pradeshikam"?db.pradeshikams:db.subCommittees;return list.find(x=>Number(x.id)===Number(ownerId))?.name||key;};
+  const allocationRows=()=>Object.entries(allocations).map(([key,books])=>{
+    const [type,id]=key.split(":"), list=type==="pradeshikam"?db.pradeshikams:db.subCommittees;
+    const item=list.find(x=>Number(x.id)===Number(id)); if(!item)return "";
+    const name=type==="pradeshikam"&&typeof fcmsPradeshikamLabel==="function"?fcmsPradeshikamLabel(item.name):item.name;
+    return `<div class="fcms-book-allocation-row"><div><strong>${escapeHTML(name)}</strong><span>${ml?"ബുക്കുകൾ":"Books"} ${(books||[]).join(", ")||"-"}</span></div><div class="fcms-book-allocation-row-actions"><button type="button" class="btn btn-sm btn-light" data-book-edit="${type}:${id}" title="${ml?"തിരുത്തുക":"Edit"}"><i class="bi bi-pencil"></i><span>${ml?"തിരുത്തുക":"Edit"}</span></button><button type="button" class="btn btn-sm btn-outline-danger" data-book-delete="${type}:${id}" title="${ml?"നീക്കം ചെയ്യുക":"Remove"}"><i class="bi bi-trash"></i><span>${ml?"നീക്കം ചെയ്യുക":"Remove"}</span></button></div></div>`;
+  }).join("");
+  overlay.innerHTML=`<div class="fcms-book-limit-modal fcms-book-allocation-modal" role="dialog" aria-modal="true">
+    <div class="fcms-book-limit-modal-head"><div><h3>${ml?"രസീത് ബുക്ക് അനുവദിക്കൽ":"Receipt Book Allocation"}</h3><p class="text-muted mb-0">${ml?"ഒരു ബുക്ക് ഒരു കമ്മിറ്റിക്ക് മാത്രം അനുവദിക്കാം.":"A receipt book can belong to only one committee."}</p></div><button type="button" class="fcms-book-limit-close"><i class="bi bi-x-lg"></i></button></div>
+    <div class="fcms-book-limit-modal-body">
+      <label class="form-label">${ml?"കമ്മിറ്റി തരം":"Committee Type"}</label><select id="bookOwnerType" class="form-select mb-3"><option value="pradeshikam">${ml?"പ്രാദേശികം":"Pradeshikam"}</option><option value="subcommittee">${ml?"ഉപസമിതി":"Sub Committee"}</option></select>
+      <label class="form-label">${ml?"കമ്മിറ്റി":"Committee"}</label><select id="bookOwnerId" class="form-select mb-3">${committeeOptions("pradeshikam")}</select>
+      <label class="form-label">${ml?"ബുക്ക് നമ്പറുകൾ":"Book Numbers"}</label><input id="allocatedBooks" class="form-control" inputmode="numeric" placeholder="Example: 4, 5, 6"><div class="form-text">${ml?"കോമ ഉപയോഗിച്ച് ബുക്ക് നമ്പറുകൾ നൽകുക.":"Enter book numbers separated by commas."}</div>
+      <div class="fcms-book-allocation-list"><h6>${ml?"നിലവിലെ അനുവദിക്കലുകൾ":"Current Allocations"}</h6><div>${allocationRows()}</div></div>
+    </div><div class="fcms-book-limit-modal-actions"><button class="btn btn-light fcms-book-limit-cancel">${ml?"റദ്ദാക്കുക":"Cancel"}</button><button class="btn btn-primary fcms-book-allocation-save">${ml?"അനുവദിക്കൽ സേവ് ചെയ്യുക":"Save Allocation"}</button></div></div>`;
+  document.body.appendChild(overlay);
+  const type=overlay.querySelector("#bookOwnerType"), id=overlay.querySelector("#bookOwnerId"), input=overlay.querySelector("#allocatedBooks"), saveButton=overlay.querySelector(".fcms-book-allocation-save");
+  let editMode=false;
+  const sync=()=>{id.innerHTML=committeeOptions(type.value); load(false);};
+  const load=(editing=false)=>{editMode=editing;input.value=editing?fcmsAllocatedReceiptBooks(type.value,id.value,getDB()).join(", "):"";saveButton.textContent=editing?(ml?"മാറ്റങ്ങൾ സേവ് ചെയ്യുക":"Save Changes"):(ml?"ബുക്കുകൾ ചേർക്കുക":"Add Books");};
+  type.addEventListener("change",sync); id.addEventListener("change",()=>load(false)); load(false);
+  const close=()=>overlay.remove(); overlay.querySelector(".fcms-book-limit-close").onclick=close; overlay.querySelector(".fcms-book-limit-cancel").onclick=close; overlay.addEventListener("click",e=>{if(e.target===overlay)close();});
+  overlay.querySelectorAll("[data-book-edit]").forEach(button=>button.onclick=()=>{
+    const [nextType,nextId]=button.dataset.bookEdit.split(":"); type.value=nextType; id.innerHTML=committeeOptions(nextType); id.value=nextId; load(true); input.focus(); input.scrollIntoView({block:"center",behavior:"smooth"});
+  });
+  overlay.querySelectorAll("[data-book-delete]").forEach(button=>button.onclick=async()=>{
+    const [removeType,removeId]=button.dataset.bookDelete.split(":"), list=removeType==="pradeshikam"?db.pradeshikams:db.subCommittees, item=list.find(x=>Number(x.id)===Number(removeId));
+    const confirmed=await confirmDialog(ml?`${item?.name||"ഈ കമ്മിറ്റിയുടെ"} എല്ലാ രസീത് ബുക്ക് അനുവദിക്കലുകളും നീക്കം ചെയ്യണോ?`:`Remove all receipt-book allocations from ${item?.name||"this committee"}?`,{title:ml?"അനുവദിക്കൽ നീക്കം ചെയ്യുക":"Remove Allocation",confirmLabel:ml?"നീക്കം ചെയ്യുക":"Remove",cancelLabel:ml?"റദ്ദാക്കുക":"Cancel",tone:"danger"});
+    if(!confirmed)return;
+    try{fcmsSetReceiptBookAllocation(removeType,removeId,[]);close();toast(ml?"അനുവദിക്കൽ നീക്കം ചെയ്തു.":"Receipt-book allocation removed.","success");window.openReceiptBookAllocationModal();}catch(error){toast(error.message||"Unable to remove allocation.","danger");}
+  });
+  overlay.querySelector(".fcms-book-allocation-save").onclick=async()=>{
+    const raw=input.value.trim();
+    if(raw&&!/^\s*\d+\s*(,\s*\d+\s*)*$/.test(raw)){toast(ml?"ബുക്ക് നമ്പറുകൾ കോമ ഉപയോഗിച്ച് ശരിയായി നൽകുക.":"Enter valid book numbers separated by commas.","danger");input.focus();return;}
+    const enteredBooks=raw?raw.split(",").map(x=>Number(x.trim())):[], existing=fcmsAllocatedReceiptBooks(type.value,id.value,getDB()), books=editMode?enteredBooks:[...new Set([...existing,...enteredBooks])].sort((a,b)=>a-b), selected=id.options[id.selectedIndex]?.textContent||"committee";
+    if(!editMode&&!enteredBooks.length){toast(ml?"ചേർക്കാൻ കുറഞ്ഞത് ഒരു ബുക്ക് നമ്പർ നൽകുക.":"Enter at least one book number to add.","danger");input.focus();return;}
+    const confirmed=await confirmDialog(ml?`${selected} എന്ന കമ്മിറ്റിക്ക് ${editMode?"ബുക്ക് അനുവദിക്കൽ മാറ്റി":"നിലവിലുള്ളവയോടൊപ്പം ബുക്കുകൾ ചേർത്ത്"} ${books.join(", ")||"ഒന്നുമില്ല"} ആയി സേവ് ചെയ്യണോ?`:`${editMode?"Replace the allocation":"Add to the existing allocation"} for ${selected} and save Books ${books.join(", ")||"None"}?`,{title:ml?"രസീത് ബുക്ക് അനുവദിക്കൽ സ്ഥിരീകരിക്കുക":"Confirm Book Allocation",confirmLabel:ml?"സ്ഥിരീകരിച്ച് സേവ് ചെയ്യുക":"Confirm & Save",cancelLabel:ml?"റദ്ദാക്കുക":"Cancel",tone:"primary"});
+    if(!confirmed)return;
+    try{fcmsSetReceiptBookAllocation(type.value,id.value,books);toast(ml?"രസീത് ബുക്കുകൾ അനുവദിച്ചു.":"Receipt books allocated successfully.","success");close();}
+    catch(error){
+      if(error?.code!=="RECEIPT_BOOK_CONFLICT"){toast(error.message||"Unable to save allocation.","danger");return;}
+      const details=(error.conflicts||[]).map(c=>`${ml?"ബുക്ക്":"Book"} ${c.books.join(", ")} — ${ownerLabel(c.ownerKey)}`).join("\n");
+      const overwrite=await confirmDialog(ml?`ഈ ബുക്കുകൾ ഇതിനകം അനുവദിച്ചിട്ടുണ്ട്:\n${details}\n\nനിലവിലെ കമ്മിറ്റിയിൽ നിന്ന് മാറ്റി ${selected} എന്ന കമ്മിറ്റിക്ക് അനുവദിക്കണോ?`:`These books are already allocated:\n${details}\n\nDo you want to remove them from the current committee and allocate them to ${selected}?`,{title:ml?"ബുക്ക് ഇതിനകം അനുവദിച്ചിട്ടുണ്ട്":"Book Already Allocated",confirmLabel:ml?"മാറ്റി അനുവദിക്കുക":"Overwrite Allocation",cancelLabel:ml?"വേണ്ട":"No, Keep Existing",tone:"danger"});
+      if(!overwrite)return;
+      try{fcmsSetReceiptBookAllocation(type.value,id.value,books,{overwrite:true});toast(ml?"ബുക്ക് അനുവദിക്കൽ മാറ്റി സേവ് ചെയ്തു.":"Book allocation overwritten successfully.","success");close();}catch(overwriteError){toast(overwriteError.message||"Unable to overwrite allocation.","danger");}
+    }
+  };
+};
+document.addEventListener("click",e=>{const b=e.target.closest?.("#openReceiptBookAllocation");if(!b)return;e.preventDefault();window.openReceiptBookAllocationModal();});

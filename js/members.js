@@ -190,10 +190,12 @@ function openHousePayment(house, pradeshikamId) {
       <div class="col-md-6"><label class="form-label">Receipt Number *</label><input id="houseReceipt" class="form-control" required autocomplete="off"></div>
       <div class="col-md-6"><label class="form-label">Payment Amount *</label><input id="houseAmount" type="number" min="1" step="1" class="form-control" required></div>
       <div class="col-md-6"><label class="form-label">Payment Mode *</label><select id="housePaymentMode" class="form-select" required><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div>
+      <div class="col-12"><label class="form-label">Apply Payment To *</label><select id="housePaymentScope" class="form-select" required><option value="payer">Payer only</option><option value="selected">Selected household members</option><option value="house">Entire household</option></select></div>
+      <div class="col-12 d-none" id="housePaymentMemberSelection"><label class="form-label">Select Members *</label><div class="house-payment-member-options">${group.map(m=>{const balance=memberStats(m,db).balance;return `<label class="house-payment-member-option ${balance<=0?"is-paid":""}"><input type="checkbox" value="${escapeHTML(m.id)}" ${balance<=0?"disabled":""}><span><b>${escapeHTML(m.name)}</b><small>${balance<=0?"Fully paid":`${money(balance)} remaining`}</small></span></label>`}).join("")}</div></div>
       <div class="col-md-6"><label class="form-label">Date *</label><input id="housePaymentDate" type="date" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div>
       <div class="col-12"><label class="form-label">Remarks</label><textarea id="housePaymentRemarks" class="form-control" rows="2"></textarea></div>
     </div>
-    <div class="house-payment-summary"><span>House Balance <b id="houseBalancePreview">${money(outstanding)}</b></span><span>Excess Donation <b id="houseDonationPreview">${money(0)}</b></span></div>
+    <div class="house-payment-summary"><span>Selected Required Balance <b id="houseBalancePreview">${money(0)}</b></span><span>Excess Donation <b id="houseDonationPreview">${money(0)}</b></span></div>
     <div id="housePaymentError" class="alert alert-danger d-none mt-3"></div>
     <div class="d-flex justify-content-end gap-2 mt-4"><button type="button" class="btn btn-light" id="housePayCancel">Cancel</button><button class="btn btn-primary">Save Payment</button></div></form>
   </div>`;
@@ -202,44 +204,60 @@ function openHousePayment(house, pradeshikamId) {
   fcmsAttachUpiTransactionFields(overlay);
   fcmsAttachDraftSaving(overlay);
   const amountInput = overlay.querySelector("#houseAmount");
-  const preview = () => { const a=Math.max(0,Number(amountInput.value||0)); overlay.querySelector("#houseDonationPreview").textContent=money(Math.max(0,a-outstanding)); };
+  const scope=overlay.querySelector("#housePaymentScope"), payerSelect=overlay.querySelector("#housePayer"), memberSelection=overlay.querySelector("#housePaymentMemberSelection");
+  const selectedMembers=()=>{if(scope.value==="house")return group;if(scope.value==="payer")return group.filter(m=>String(m.id)===String(payerSelect.value));const ids=new Set([...memberSelection.querySelectorAll("input:checked")].map(input=>String(input.value)));return group.filter(m=>ids.has(String(m.id)));};
+  const preview = () => { const balance=selectedMembers().reduce((sum,m)=>sum+memberStats(m,db).balance,0),a=Math.max(0,Number(amountInput.value||0));overlay.querySelector("#houseBalancePreview").textContent=money(balance);overlay.querySelector("#houseDonationPreview").textContent=money(Math.max(0,a-balance)); };
   amountInput.addEventListener("input", preview);
+  scope.addEventListener("change",()=>{memberSelection.classList.toggle("d-none",scope.value!=="selected");preview();});
+  payerSelect.addEventListener("change",preview);
+  memberSelection.addEventListener("change",preview);
+  preview();
   overlay.querySelector("#housePayClose").addEventListener("click", closeHousePayment);
   overlay.querySelector("#housePayCancel").addEventListener("click", closeHousePayment);
   overlay.addEventListener("click", e => { if (e.target === overlay) closeHousePayment(); });
   overlay.querySelector("#housePaymentForm").addEventListener("submit", e => saveHousePayment(e, group, pradeshikamId));
 }
-function saveHousePayment(e, group, pradeshikamId) {
+async function saveHousePayment(e, group, pradeshikamId) {
   e.preventDefault();
   const form=e.currentTarget, err=form.querySelector("#housePaymentError");
   const payer=db.members.find(m=>m.id===form.querySelector("#housePayer").value);
   const receipt=form.querySelector("#houseReceipt").value.trim();
   const amount=Number(form.querySelector("#houseAmount").value);
   const mode=form.querySelector("#housePaymentMode").value;
+  const scope=form.querySelector("#housePaymentScope").value;
   const transactionId=fcmsGetUpiTransactionId("housePaymentMode");
+  const chequeNumber=fcmsGetChequeNumber("housePaymentMode");
   const date=form.querySelector("#housePaymentDate").value;
   const remarks=form.querySelector("#housePaymentRemarks").value.trim();
   const showError=(msg)=>{err.textContent=msg;err.classList.remove("d-none");};
   err.classList.add("d-none");
   if(!payer || !receipt || !Number.isFinite(amount) || amount<=0 || !date) return showError("Enter all required payment details.");
   if(mode === "UPI" && !transactionId) return showError("Enter the UPI transaction ID.");
+  const selectedIds=scope==="house"?group.map(m=>m.id):scope==="payer"?[payer.id]:[...form.querySelectorAll("#housePaymentMemberSelection input:checked")].map(input=>input.value);
+  if(!selectedIds.length) return showError("Select at least one household member for this payment.");
   const receiptUsed=[...(db.payments||[]),...(db.donations||[])].some(x=>String(x.receiptNumber||"").trim().toLowerCase()===receipt.toLowerCase());
   if(receiptUsed) return showError("This receipt number has already been used.");
+  const selectedMembers=group.filter(m=>selectedIds.some(id=>String(id)===String(m.id))), selectedBalance=selectedMembers.reduce((sum,m)=>sum+memberStats(m,db).balance,0), contribution=Math.min(amount,selectedBalance), donationAmount=Math.max(0,amount-selectedBalance);
+  const ml=fcmsLang()==="ml", selectedNames=selectedMembers.map(m=>m.name).join(", ");
+  const confirmMessage=ml?`${selectedNames} അംഗങ്ങൾക്കായി ${money(contribution)} ചേർക്കുക${donationAmount?`, കൂടാതെ ${money(donationAmount)} ${payer.name} നൽകിയ സംഭാവനയായി രേഖപ്പെടുത്തുക`:""}?`:`Apply ${money(contribution)} to ${selectedNames}${donationAmount?` and record ${money(donationAmount)} as a donation from ${payer.name}`:""}?`;
+  const confirmed=await confirmDialog(confirmMessage,{title:ml?"വീട്ടിലെ പേയ്മെന്റ് സ്ഥിരീകരിക്കുക":"Confirm Household Payment",confirmLabel:ml?"സ്ഥിരീകരിച്ച് സേവ് ചെയ്യുക":"Confirm & Save",cancelLabel:ml?"റദ്ദാക്കുക":"Cancel",tone:"primary"});
+  if(!confirmed)return;
   const groupId=uid("hpay"), paymentDate=new Date(date+"T12:00:00").toISOString();
   let remaining=amount;
-  const ordered=[payer,...group.filter(m=>m.id!==payer.id)];
+  const eligible=group.filter(m=>selectedIds.some(id=>String(id)===String(m.id)));
+  const ordered=[...(eligible.some(m=>m.id===payer.id)?[payer]:[]),...eligible.filter(m=>m.id!==payer.id)];
   const created=[];
   ordered.forEach(m=>{
     if(remaining<=0) return;
     const bal=memberStats(m,db).balance;
     const applied=Math.min(remaining,bal);
     if(applied<=0) return;
-    const payment={id:uid("pay"),memberId:m.id,receiptNumber:receipt,amount:applied,paymentMode:mode,transactionId,status:"completed",remarks,paymentDate,housePaymentId:groupId,paidByMemberId:payer.id};
+    const payment={id:uid("pay"),memberId:m.id,receiptNumber:receipt,amount:applied,paymentMode:mode,transactionId,chequeNumber,status:"completed",remarks,paymentDate,housePaymentId:groupId,paidByMemberId:payer.id,coveredMemberIds:selectedIds};
     fcmsMarkNewElectronicPending(payment); db.payments.push(payment); created.push({m,payment}); remaining-=applied;
   });
   created.forEach(({m,payment})=>addActivity(db,{action:"Payment Added",entityType:"payment",entityId:payment.id,memberId:m.id,pradeshikamId:m.pradeshikamId,summary:`Receipt ${receipt} added`,details:`${money(payment.amount)} applied to ${m.name}; paid by ${payer.name}.`,newValue:paymentSnapshot(payment)}));
   if(remaining>0){
-    const donation={id:uid("don"),donorMemberId:payer.id,donorName:payer.name,pradeshikamId:Number(pradeshikamId),houseNumber:payer.houseNumber||"",amount:remaining,receiptNumber:receipt,sourceType:"Member",sourceLabel:"Member",donorPhone:payer.phone||"",donorPhoneCode:payer.countryCode||"+91",paymentMode:mode,transactionId,status:"completed",date:paymentDate,remarks:remarks ? `${remarks} · Excess from household payment` : "Excess from household payment",createdAt:new Date().toISOString(),housePaymentId:groupId};
+    const donation={id:uid("don"),donorMemberId:payer.id,donorName:payer.name,pradeshikamId:Number(pradeshikamId),houseNumber:payer.houseNumber||"",amount:remaining,receiptNumber:receipt,sourceType:"Member",sourceLabel:"Member",donorPhone:payer.phone||"",donorPhoneCode:payer.countryCode||"+91",paymentMode:mode,transactionId,chequeNumber,status:"completed",date:paymentDate,remarks:remarks ? `${remarks} · Excess from selected household payment` : "Excess from selected household payment",createdAt:new Date().toISOString(),housePaymentId:groupId,coveredMemberIds:selectedIds};
     fcmsMarkNewElectronicPending(donation); db.donations.push(donation);
     addActivity(db,{action:"Donation Added",entityType:"donation",entityId:donation.id,memberId:payer.id,pradeshikamId:Number(pradeshikamId),summary:`${money(remaining)} donation recorded`,details:`Excess from household payment by ${payer.name} with receipt ${receipt}.`,newValue:donationSnapshot(donation)});
   }

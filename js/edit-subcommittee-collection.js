@@ -16,7 +16,7 @@ if (!canEdit) {
 <div class="col-md-4"><label class="form-label">Phone Number / ഫോൺ നമ്പർ</label><div class="phone-field"><select id="phoneCode" class="form-select"><option value="+91" ${(item.donorPhoneCode || "+91") === "+91" ? "selected" : ""}>+91</option><option value="+971" ${item.donorPhoneCode === "+971" ? "selected" : ""}>+971</option></select><input id="phone" class="form-control" type="tel" inputmode="numeric" maxlength="10" value="${escapeHTML(item.donorPhone || "")}"></div></div>
 <div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="1" class="form-control" ${financialLocked ? "readonly" : ""} required value="${Number(item.amount)}"></div>
 <div class="col-md-4"><label class="form-label">Receipt Number / രസീത് നമ്പർ *</label><input id="receipt" class="form-control" ${financialLocked ? "readonly" : ""} required value="${escapeHTML(item.receiptNumber || "")}"></div>
-<div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="mode" class="form-select" ${financialLocked ? "disabled data-payment-locked=\"1\"" : ""} data-transaction-id="${escapeHTML(item.transactionId || "")}" required>${["Cash", "UPI", "Bank", "Cheque"].map((x) => `<option ${item.paymentMode === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
+<div class="col-md-4"><label class="form-label">Payment Mode / പേയ്മെന്റ് രീതി *</label><select id="mode" class="form-select" ${financialLocked ? "disabled data-payment-locked=\"1\"" : ""} data-transaction-id="${escapeHTML(item.transactionId || "")}" data-cheque-number="${escapeHTML(item.chequeNumber || "")}" required>${["Cash", "UPI", "Bank", "Cheque"].map((x) => `<option ${item.paymentMode === x ? "selected" : ""}>${x}</option>`).join("")}</select></div>
 <div class="col-md-6"><label class="form-label">Date / തീയതി *</label><input id="date" type="date" class="form-control" required value="${new Date(item.date || item.createdAt).toISOString().slice(0, 10)}"></div>
 <div class="col-md-6"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><input id="remarks" class="form-control" value="${escapeHTML(item.remarks || "")}"></div>
 </div><div id="formError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end gap-2 mt-4"><a href="subcommittee-collections.html?committee=${item.subCommitteeId}" class="btn btn-light">Cancel</a><button class="btn btn-primary">Save Changes</button></div></form></div>`;
@@ -52,6 +52,7 @@ if (!canEdit) {
       receiptNumber: receipt,
       paymentMode: financialLocked ? item.paymentMode : document.getElementById("mode").value,
       transactionId: financialLocked ? (item.transactionId || "") : fcmsGetUpiTransactionId("mode"),
+      chequeNumber: financialLocked ? (item.chequeNumber || "") : fcmsGetChequeNumber("mode"),
       date: new Date(
         document.getElementById("date").value + "T12:00:00",
       ).toISOString(),

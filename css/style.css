@@ -6588,15 +6588,43 @@ html{
 
 /* WORKING BOOK LIMIT MODAL */
 .fcms-book-limit-overlay{position:fixed;inset:0;z-index:99999;background:rgba(10,18,35,.45);display:flex;align-items:center;justify-content:center;padding:18px}
-.fcms-book-limit-modal{width:min(480px,100%);background:#fff;border-radius:22px;box-shadow:0 24px 70px rgba(10,25,55,.22);overflow:hidden}
+.fcms-book-limit-modal{width:min(480px,100%);max-height:calc(100dvh - 36px);background:#fff;border-radius:22px;box-shadow:0 24px 70px rgba(10,25,55,.22);overflow:hidden;display:flex;flex-direction:column}
 .fcms-book-limit-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px 24px 14px}
 .fcms-book-limit-modal-head h3{margin:0 0 6px;font-size:1.18rem}
 .fcms-book-limit-modal-head p{margin:0;font-size:.86rem;line-height:1.45;opacity:.68}
 .fcms-book-limit-close{width:40px;min-width:40px;height:40px;border:0;border-radius:12px;background:#f5f7fb;display:inline-flex;align-items:center;justify-content:center}
-.fcms-book-limit-modal-body{padding:10px 24px 22px}
+.fcms-book-limit-modal-body{padding:10px 24px 22px;overflow-y:auto;min-height:0}
 .fcms-book-limit-modal-body label{display:block;margin-bottom:8px;font-size:.88rem;font-weight:700}
 .fcms-book-limit-info{margin-top:12px;padding:12px 14px;border-radius:13px;background:#f5f8ff;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.86rem}
-.fcms-book-limit-modal-actions{padding:16px 24px 24px;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.fcms-book-limit-modal-actions{padding:16px 24px 24px;display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:none;background:#fff;border-top:1px solid #e8edf5}
+.fcms-book-allocation-modal{width:min(760px,100%)}
+.fcms-book-allocation-overlay~.fcms-modal-overlay{z-index:100000}
+.fcms-book-allocation-list{margin-top:24px}
+.fcms-book-allocation-list>div{border:1px solid #e2e8f2;border-radius:14px;overflow:hidden}
+.fcms-book-allocation-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 14px;border-bottom:1px solid #e8edf5}
+.fcms-book-allocation-row:last-child{border-bottom:0}
+.fcms-book-allocation-row>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fcms-book-allocation-row span{color:#66758c;font-size:.86rem}
+.fcms-book-allocation-row-actions{display:flex;gap:7px;flex:none}
+.fcms-book-allocation-row-actions .btn{display:inline-flex;align-items:center;gap:6px}
+.house-payment-member-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.house-payment-member-option{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid #dce4f0;border-radius:13px;background:#fff;cursor:pointer}
+.house-payment-member-option:has(input:checked){border-color:#4770f5;background:#f1f5ff;box-shadow:0 0 0 2px rgba(71,112,245,.1)}
+.house-payment-member-option input{width:18px;height:18px;flex:none;accent-color:#3867f4}
+.house-payment-member-option span{display:flex;flex-direction:column;min-width:0}
+.house-payment-member-option small{color:#718096;margin-top:2px}
+.house-payment-member-option.is-paid{opacity:.55;cursor:not-allowed;background:#f6f8fb}
+@media(max-width:575.98px){
+  .fcms-book-limit-overlay{padding:8px;align-items:center}
+  .fcms-book-limit-modal{max-height:calc(100dvh - 16px);border-radius:16px}
+  .fcms-book-limit-modal-head{padding:18px 16px 12px}
+  .fcms-book-limit-modal-body{padding:8px 16px 16px}
+  .fcms-book-limit-modal-actions{padding:12px 16px;position:sticky;bottom:0}
+  .fcms-book-allocation-row{align-items:flex-start;flex-direction:column}
+  .fcms-book-allocation-row-actions{width:100%}
+  .fcms-book-allocation-row-actions .btn{flex:1;justify-content:center}
+  .house-payment-member-options{grid-template-columns:1fr}
+}
 
 
 /* FCMS styled Book Limit confirmation modal */

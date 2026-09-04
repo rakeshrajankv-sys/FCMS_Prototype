@@ -157,6 +157,8 @@ function seedDemoData() {
   db.subCommitteeAllocations ||= [];
   db.subCommitteeExpenses ||= [];
   db.verifiedUsers ||= [];
+  db.settings ||= {};
+  db.settings.receiptBookAllocations ||= JSON.parse(JSON.stringify(FCMS_DEFAULT_RECEIPT_BOOK_ALLOCATIONS));
   db.members.forEach((m) => {
     m.countryCode ||= "+91";
     m.maritalStatus ||= "Single";
@@ -727,6 +729,63 @@ function fcmsCashCollectedForSubCommittee(subCommitteeId, db=getDB()){
 /* FCMS Receipt Book helpers: 50 receipts per book, Books 1-100 (1-5000). */
 const FCMS_RECEIPTS_PER_BOOK = 50;
 const FCMS_MAX_RECEIPT_BOOKS = 200;
+const FCMS_DEFAULT_RECEIPT_BOOK_ALLOCATIONS = {
+  "subcommittee:4": [1, 2, 3],
+  "pradeshikam:16": [4, 5, 6],
+  "pradeshikam:9": [7, 8, 9],
+  "pradeshikam:17": [10, 11, 12],
+  "pradeshikam:12": [13, 14, 15],
+  "pradeshikam:14": [16, 17, 18],
+  "pradeshikam:8": [19, 20, 21],
+  "pradeshikam:3": [22, 23, 24],
+  "pradeshikam:7": [25, 26, 27],
+  "pradeshikam:5": [28, 29, 30],
+  "pradeshikam:2": [31, 32, 33],
+  "pradeshikam:10": [34, 35, 36],
+  "pradeshikam:18": [37, 38],
+  "pradeshikam:11": [39, 40, 41],
+  "pradeshikam:4": [42, 43, 44],
+  "pradeshikam:15": [45, 46, 47],
+  "pradeshikam:1": [48, 49, 50],
+  "pradeshikam:13": [51, 52, 53],
+  "pradeshikam:6": [54, 55, 56]
+};
+function fcmsReceiptBookAllocations(dbArg){
+  const db=dbArg||getDB();
+  db.settings ||= {};
+  if(!db.settings.receiptBookAllocations){
+    db.settings.receiptBookAllocations=JSON.parse(JSON.stringify(FCMS_DEFAULT_RECEIPT_BOOK_ALLOCATIONS));
+  }
+  return db.settings.receiptBookAllocations;
+}
+function fcmsAllocatedReceiptBooks(type,id,dbArg){
+  return [...(fcmsReceiptBookAllocations(dbArg)[`${type}:${Number(id)}`]||[])].sort((a,b)=>a-b);
+}
+function fcmsReceiptAllowedForCommittee(value,type,id,dbArg){
+  const info=fcmsReceiptBookInfo(value);
+  if(!info) return true; // Blank/non-numeric and temporary receipt 0 are handled by form rules.
+  return fcmsAllocatedReceiptBooks(type,id,dbArg).includes(info.book);
+}
+function fcmsSetReceiptBookAllocation(type,id,books,options={}){
+  const s=typeof currentSession==="function"?currentSession():null;
+  if(!s||s.role!=="admin") throw new Error("Only Main Committee can allocate receipt books.");
+  if(!["pradeshikam","subcommittee"].includes(type)) throw new Error("Invalid committee type.");
+  const clean=[...new Set((books||[]).map(Number))].filter(n=>Number.isInteger(n)&&n>=1&&n<=FCMS_MAX_RECEIPT_BOOKS).sort((a,b)=>a-b);
+  const db=getDB(), allocations=fcmsReceiptBookAllocations(db), key=`${type}:${Number(id)}`;
+  const conflicts=Object.entries(allocations).filter(([otherKey,list])=>otherKey!==key&&clean.some(book=>(list||[]).map(Number).includes(book)));
+  if(conflicts.length&&!options.overwrite){
+    const conflictBooks=[...new Set(conflicts.flatMap(([,list])=>(list||[]).map(Number).filter(book=>clean.includes(book))))].sort((a,b)=>a-b);
+    const error=new Error(`Book ${conflictBooks.join(", ")} is already allocated to another committee.`);
+    error.code="RECEIPT_BOOK_CONFLICT"; error.conflicts=conflicts.map(([ownerKey,list])=>({ownerKey,books:(list||[]).map(Number).filter(book=>clean.includes(book))}));
+    throw error;
+  }
+  const old=[...(allocations[key]||[])]; allocations[key]=clean;
+  if(conflicts.length&&options.overwrite){
+    conflicts.forEach(([otherKey,list])=>{allocations[otherKey]=(list||[]).map(Number).filter(book=>!clean.includes(book));});
+  }
+  addActivity(db,{action:"RECEIPT_BOOK_ALLOCATION_CHANGED",entityType:type,entityId:Number(id),summary:`Receipt books allocated: ${clean.join(", ")||"None"}`,details:`Allocation changed from ${old.join(", ")||"None"} to ${clean.join(", ")||"None"}.`,oldValue:{books:old},newValue:{books:clean}});
+  saveDB(db); return clean;
+}
 function fcmsReceiptNumberValue(value){
   const raw=String(value??"").trim();
   if(!/^\d+$/.test(raw)) return null;

@@ -227,22 +227,22 @@ function toggleFcmsLang() {
 const FCMS_PRADESHIKAM_ML = {
   "Ambangad": "അമ്പങ്ങാട്",
   "Bara/Mukkunnoth": "ബാര / മുക്കുന്നോത്ത്",
-  "Bedakam": "ബേഡകം",
-  "Chalingal": "ചാലിങ്ങൽ",
+  "Bedakam": "ബേടകം",
+  "Chalingal": "ചാലിങ്കാൽ",
   "Chemmanad": "ചെമ്മനാട്",
   "Kalanad": "കളനാട്",
-  "kuttikkol": "കുറ്റിക്കോൽ",
+  "Kuttikkol": "കുറ്റിക്കോൽ",
   "Kolathur/Maruthadukkam": "കൊളത്തൂർ / മരുതടുക്കം",
-  "Kaniyamabdi": "കനിയാമ്ബാടി",
+  "Kaniyamabdi": "കണിയംബാടി",
   "Melbara": "മേൽബാര",
   "Poinachi": "പൊയിനാച്ചി",
-  "pakkam": "പാക്കം",
+  "Pakkam": "പാക്കം",
   "Periya": "പെരിയ",
   "Poochakkad": "പൂച്ചക്കാട്",
-  "Thokkanam/karuvakod": "തോക്കാനം / കരുവാക്കോട്",
-  "Thiravakoli": "തിരവക്കോളി",
+  "Thokkanam/Karuvakod": "തോക്കാനം / കരുവാക്കോട്",
+  "Thiravakoli": "തിരുവക്കോളി",
   "Udma": "ഉദുമ",
-  "chendalam": "ചെണ്ടളം"
+  "Chendalam": "ചെന്തളം"
 };
 function fcmsPradeshikamLabel(name) {
   const raw = String(name || "");
@@ -294,24 +294,6 @@ const FCMS_ML_TEXT = {
   "Collected By / ശേഖരിച്ചത്": "ശേഖരിച്ചത്",
   "Date / തീയതി": "തീയതി",
   "Source / ഉറവിടം *": "ഉറവിടം *",
-  "Ambangad": "അമ്പങ്ങാട്",
-  "Bara/Mukkunnoth": "ബാര / മുക്കുന്നോത്ത്",
-  "Bedakam": "ബേഡകം",
-  "Chalingal": "ചാലിങ്കാൽ",
-  "Chemmanad": "ചെമ്മനാട്",
-  "Kalanad": "കളനാട്",
-  "kuttikkol": "കുട്ടിക്കോൽ",
-  "Kolathur/Maruthadukkam": "കോളത്തൂർ / മരുതടുക്കം",
-  "Kaniyamabdi": "കണിയാമ്പാടി",
-  "Melbara": "മേൽബാര",
-  "Poinachi": "പൊയിനാച്ചി",
-  "pakkam": "പക്കം",
-  "Periya": "പെരിയ",
-  "Poochakkad": "പൂച്ചക്കാട്",
-  "Thokkanam/karuvakod": "തോക്കാനം / കരുവാക്കോട്",
-  "Thiravakoli": "തിറവക്കോലി",
-  "Udma": "ഉദുമ",
-  "chendalam": "ചെണ്ടയാട് / ചെന്തളം",
   "Souvenir Committee": "സ്മരണിക കമ്മിറ്റി",
   "Publicity Committee": "പ്രചാരണ കമ്മിറ്റി",
   "Audio Video Committee": "ഓഡിയോ വീഡിയോ കമ്മിറ്റി",
@@ -332,6 +314,11 @@ const FCMS_ML_TEXT = {
   "Source": "ഉറവിടം", "Source *": "ഉറവിടം *", "Name": "പേര്", "Donor": "ദാതാവ്", "Donor Name *": "ദാതാവിന്റെ പേര് *",
   "Place": "സ്ഥലം", "Phone Number": "ഫോൺ നമ്പർ", "Country code": "രാജ്യ കോഡ്", "Receipt Number": "രസീത് നമ്പർ", "Receipt Number *": "രസീത് നമ്പർ *",
   "Payment Mode": "പേയ്മെന്റ് രീതി", "Payment Mode *": "പേയ്മെന്റ് രീതി *", "Cash": "കാഷ്", "UPI": "UPI", "Bank": "ബാങ്ക്", "Cheque": "ചെക്ക്",
+  "Apply Payment To *": "പേയ്മെന്റ് ആർക്കുവേണ്ടി നൽകണം *", "Payer only": "പണം നൽകുന്ന അംഗത്തിന് മാത്രം", "Selected household members": "തിരഞ്ഞെടുത്ത വീട്ടംഗങ്ങൾക്ക്", "Entire household": "മുഴുവൻ വീട്ടംഗങ്ങൾക്കും",
+  "Select Members *": "അംഗങ്ങളെ തിരഞ്ഞെടുക്കുക *", "Selected Required Balance": "തിരഞ്ഞെടുത്തവരുടെ ബാക്കി തുക", "Excess Donation": "അധിക സംഭാവന", "Fully paid": "പൂർണ്ണമായി അടച്ചു", "remaining": "ബാക്കി",
+  "Select at least one household member for this payment.": "ഈ പേയ്മെന്റിനായി കുറഞ്ഞത് ഒരു വീട്ടംഗത്തെയെങ്കിലും തിരഞ്ഞെടുക്കുക.",
+  "Cheque Number *": "ചെക്ക് നമ്പർ *", "Enter cheque number": "ചെക്ക് നമ്പർ നൽകുക",
+  "Enter the cheque number before saving.": "സേവ് ചെയ്യുന്നതിന് മുമ്പ് ചെക്ക് നമ്പർ നൽകുക.",
   "UPI Transaction ID": "UPI ട്രാൻസാക്ഷൻ ഐഡി", "UPI Transaction ID *": "UPI ട്രാൻസാക്ഷൻ ഐഡി *", "Enter transaction ID": "ട്രാൻസാക്ഷൻ ഐഡി നൽകുക",
   "Enter the UPI transaction ID before saving.": "സേവ് ചെയ്യുന്നതിന് മുമ്പ് UPI ട്രാൻസാക്ഷൻ ഐഡി നൽകുക.",
   "Receipt Setup": "രസീത് ക്രമീകരണം", "Receipt Setup *": "രസീത് ക്രമീകരണം *", "One receipt": "ഒരു രസീത്", "Receipt to each member": "ഓരോ അംഗത്തിനും രസീത്",
@@ -1208,6 +1195,12 @@ function fcmsGetUpiTransactionId(selectId) {
   const input = document.getElementById(`${selectId}TransactionId`);
   return String(input?.value || "").trim();
 }
+function fcmsGetChequeNumber(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select || fcmsNormalizePaymentMode(select.value) !== "CHEQUE") return "";
+  const input = document.getElementById(`${selectId}ChequeNumber`);
+  return String(input?.value || "").trim();
+}
 function fcmsAttachUpiTransactionFields(root = document) {
   root.querySelectorAll?.("form select").forEach((select) => {
     if (!select.id || select.dataset.fcmsUpiReady === "1") return;
@@ -1229,11 +1222,25 @@ function fcmsAttachUpiTransactionFields(root = document) {
       input.readOnly = true;
       wrap.classList.add("fcms-upi-locked");
     }
+    const chequeWrap = document.createElement("div");
+    chequeWrap.className = `${widthClass} fcms-cheque-number-field d-none`;
+    chequeWrap.innerHTML = `<label class="form-label">Cheque Number *</label><input id="${select.id}ChequeNumber" class="form-control" autocomplete="off" inputmode="numeric" pattern="[0-9]+" placeholder="Enter cheque number" maxlength="30">`;
+    wrap.insertAdjacentElement("afterend", chequeWrap);
+    const chequeInput = chequeWrap.querySelector("input");
+    chequeInput.addEventListener("input", () => {
+      chequeInput.value = chequeInput.value.replace(/\D/g, "");
+    });
+    if (select.dataset.chequeNumber) chequeInput.value = select.dataset.chequeNumber;
+    if (select.disabled || select.dataset.paymentLocked === "1") chequeInput.readOnly = true;
     const sync = () => {
       const show = fcmsNormalizePaymentMode(select.value) === "UPI";
       wrap.classList.toggle("d-none", !show);
       input.required = show && !input.readOnly;
       if (!show && !input.readOnly) input.classList.remove("is-invalid");
+      const showCheque = fcmsNormalizePaymentMode(select.value) === "CHEQUE";
+      chequeWrap.classList.toggle("d-none", !showCheque);
+      chequeInput.required = showCheque && !chequeInput.readOnly;
+      if (!showCheque && !chequeInput.readOnly) chequeInput.classList.remove("is-invalid");
     };
     select.addEventListener("change", sync);
     sync();
@@ -1250,11 +1257,22 @@ function fcmsAttachUpiTransactionFields(root = document) {
             firstInvalid ||= txn;
           } else txn?.classList.remove("is-invalid");
         });
+        form.querySelectorAll("select[data-fcms-upi-ready='1']").forEach((modeSelect) => {
+          if (fcmsNormalizePaymentMode(modeSelect.value) !== "CHEQUE") return;
+          const cheque = document.getElementById(`${modeSelect.id}ChequeNumber`);
+          if (cheque && !cheque.readOnly && !String(cheque.value || "").trim()) {
+            cheque.classList.add("is-invalid");
+            firstInvalid ||= cheque;
+          } else cheque?.classList.remove("is-invalid");
+        });
         if (firstInvalid) {
           event.preventDefault();
           event.stopImmediatePropagation();
           firstInvalid.focus();
-          toast?.("Enter the UPI transaction ID before saving.", "danger");
+          const message = firstInvalid.id.endsWith("ChequeNumber")
+            ? "Enter the cheque number before saving."
+            : "Enter the UPI transaction ID before saving.";
+          toast?.(message, "danger");
         }
       }, true);
     }
@@ -1999,7 +2017,76 @@ window.addEventListener("beforeunload", (event) => {
     timer=setTimeout(refresh,50);
   }).observe(document.body,{childList:true,subtree:true});
 
-  window.fcmsRefreshSeparateBookIndicators=refresh;
+window.fcmsRefreshSeparateBookIndicators=refresh;
+})();
+
+/* Receipt books allocated to a Pradeshikam/Sub Committee are exclusive. */
+(function(){
+  function owner(el){
+    const s=typeof currentSession==="function"?currentSession():null;
+    if(s?.role==="pradeshikam") return {type:"pradeshikam",id:s.pradeshikamId};
+    if(s?.role==="subcommittee") return {type:"subcommittee",id:s.subCommitteeId};
+    if(s?.role==="admin"){
+      const db=typeof getDB==="function"?getDB():{};
+      const prSelect=document.getElementById("pradeshikam")||document.getElementById("donationPradeshikam");
+      if(prSelect?.value&&/^\d+$/.test(prSelect.value)) return {type:"pradeshikam",id:Number(prSelect.value)};
+      const memberId=document.getElementById("donorMember")?.value||document.getElementById("housePaymentMember")?.value;
+      const picked=(db.members||[]).find(m=>String(m.id)===String(memberId));
+      if(picked?.pradeshikamId) return {type:"pradeshikam",id:picked.pradeshikamId};
+      const params=new URLSearchParams(location.search), path=(location.pathname||"").toLowerCase();
+      if(path.endsWith("add-payment.html")){
+        const member=(db.members||[]).find(m=>String(m.id)===String(params.get("id")));
+        if(member?.pradeshikamId)return {type:"pradeshikam",id:member.pradeshikamId};
+      }
+      if(path.endsWith("edit-payment.html")){
+        const payment=(db.payments||[]).find(p=>String(p.id)===String(params.get("id")));
+        const member=(db.members||[]).find(m=>String(m.id)===String(payment?.memberId));
+        if(member?.pradeshikamId)return {type:"pradeshikam",id:member.pradeshikamId};
+      }
+      if(path.endsWith("edit-donation.html")){
+        const donation=(db.donations||[]).find(d=>String(d.id)===String(params.get("id")));
+        if(donation?.pradeshikamId)return {type:"pradeshikam",id:donation.pradeshikamId};
+      }
+      const committeeId=document.getElementById("committeeSelect")?.value||params.get("committee");
+      if(committeeId&&/^\d+$/.test(committeeId))return {type:"subcommittee",id:Number(committeeId)};
+      if(path.includes("subcommittee")){
+        const recordId=params.get("id");
+        const record=[...(db.subCommitteeCollections||[]),...(db.subCommitteeCollectionPayments||[])].find(x=>String(x.id)===String(recordId));
+        if(record?.subCommitteeId)return {type:"subcommittee",id:record.subCommitteeId};
+      }
+    }
+    return null;
+  }
+  function isReceiptInput(el){
+    if(!owner(el)||!el||el.tagName!=="INPUT") return false;
+    if(el.closest?.(".fcms-book-limit-overlay, .fcms-book-allocation-overlay")) return false;
+    const key=((el.id||"")+" "+(el.name||"")+" "+(el.placeholder||"")).toLowerCase();
+    return key.includes("receipt");
+  }
+  function validate(el,report){
+    if(!isReceiptInput(el)) return true;
+    const raw=String(el.value||"").trim();
+    if(!raw||raw==="0"||!/^[0-9]+$/.test(raw)) return true;
+    const o=owner(el), db=getDB(), info=fcmsReceiptBookInfo(raw);
+    if(!info||fcmsReceiptAllowedForCommittee(raw,o.type,o.id,db)){
+      el.setCustomValidity(""); delete el.dataset.fcmsAllocationInvalid; return true;
+    }
+    const books=fcmsAllocatedReceiptBooks(o.type,o.id,db);
+    const message=fcmsLang()==="ml"
+      ? `രസീത് ബുക്ക് ${info.book} ഈ കമ്മിറ്റിക്ക് അനുവദിച്ചിട്ടില്ല. മെയിൻ കമ്മിറ്റി അഡ്മിൻ അനുവദിച്ച ബുക്കിൽ നിന്നുള്ള രസീത് നമ്പർ നൽകുക. അനുവദിച്ച ബുക്കുകൾ: ${books.join(", ")||"ഒന്നുമില്ല"}.`
+      : `Receipt Book ${info.book} is not allocated to this committee. Please enter a receipt number from a book allocated by the Main Committee admin. Allocated books: ${books.join(", ")||"None"}.`;
+    el.dataset.fcmsAllocationInvalid="1"; el.setCustomValidity(message);
+    if(report) el.reportValidity(); return false;
+  }
+  document.addEventListener("input",e=>{if(isReceiptInput(e.target))validate(e.target,false);},true);
+  document.addEventListener("change",e=>{if(isReceiptInput(e.target))validate(e.target,true);},true);
+  document.addEventListener("submit",e=>{
+    if(!(e.target instanceof HTMLFormElement)) return;
+    const bad=[...e.target.querySelectorAll("input")].find(el=>isReceiptInput(el)&&!validate(el,false));
+    if(!bad)return;
+    e.preventDefault(); e.stopImmediatePropagation(); bad.focus(); bad.reportValidity();
+    if(typeof toast==="function") toast(bad.validationMessage,"danger");
+  },true);
 })();
 
 

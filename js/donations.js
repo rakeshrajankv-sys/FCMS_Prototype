@@ -373,6 +373,7 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
     return;
   }
   const transactionId = mode === "UPI" ? fcmsGetUpiTransactionId("donationMode") : "";
+  const chequeNumber = mode === "Cheque" ? fcmsGetChequeNumber("donationMode") : "";
   const memberBalance = donor ? memberStats(donor, db).balance : 0;
   const householdMembers = donor
     ? (String(donor.houseNumber || "").trim() ? houseMembersFor(donor, db) : [donor])
@@ -417,6 +418,7 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
     donorPhoneCode:
       type === "Member" ? donor?.countryCode || "+91" : donorPhoneCode,
     paymentMode: mode,
+    chequeNumber,
     transactionId,
     status: "completed",
     date: commonDate,
@@ -426,7 +428,7 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
   } : null;
   const payments = paymentParts.map((part) => ({
     id: uid("pay"), memberId: part.member.id, receiptNumber: receipt,
-    amount: part.amount, paymentMode: mode, transactionId,
+    amount: part.amount, paymentMode: mode, transactionId, chequeNumber,
     status: "completed", remarks, paymentDate: commonDate,
     paidByMemberId: donor.id, splitDonationId: splitId,
     householdDonationAllocation: allocationChoice === "house",
