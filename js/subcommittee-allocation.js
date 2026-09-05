@@ -235,7 +235,7 @@ if (s.role !== "admin") {
           Purpose: a.allocationPurpose || "",
           Remarks: a.remarks || "",
         }));
-      exportCSV(data, "fcms-subcommittee-allocations.csv");
+      exportCSV(data, "nidhi-subcommittee-allocations.csv");
     });
   }
   function renderTable() {

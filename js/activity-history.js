@@ -109,7 +109,7 @@ const renderHistorySoon=fcmsDebounce(render,180);
 ["search","scope","module","action","actor"].forEach(id=>document.getElementById(id).addEventListener(id==="search"?"input":"change",id==="search"?renderHistorySoon:render));
 document.getElementById("exportActivity").addEventListener("click",()=>{
   const data=(db.activities||[]).map(a=>{const va=verifiedActor(a);return {DateTime:new Date(a.timestamp).toLocaleString("en-IN"),PerformedBy:va.name,Mobile:va.phone,Role:va.role,Committee:va.belongs,Action:a.action,Module:entityTypeLabel(a.entityType),Summary:a.summary||"",Details:a.details||""};});
-  exportCSV(data,"fcms-activity-history.csv");
+  exportCSV(data,"nidhi-activity-history.csv");
 });
 render();
 

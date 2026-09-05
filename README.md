@@ -1,6 +1,6 @@
-# FCMS Prototype
+# NIDHI
 
-A standalone HTML/CSS/JavaScript prototype for the Fund Collection Management System.
+A standalone HTML/CSS/JavaScript application for NIDHI.
 
 ## Run
 
@@ -12,10 +12,33 @@ No XAMPP, PHP, MySQL, Composer or Node.js is required.
 
 ### Demo accounts
 
-- Main Committee: `admin` / `admin123`
-- Pradeshikam 1: `p1` / `p123`
-- Pradeshikam 2: `p2` / `p123`
-- ... through Pradeshikam 18: `p18` / `p123`
+- Main Committee: `admin` / `6gWWoHB8n!!uvX`
+
+| Committee | Username | Password |
+| --- | --- | --- |
+| Ambangad | `ambangad` | `cxTKj8ek9fPK` |
+| Bara/Mukkunnoth | `baramukkunnoth` | `Z#o9EpR3RZ24` |
+| Bedakam | `bedakam` | `GB3TJXJ2skqQ` |
+| Chalingal | `chalingal` | `pU2VfWfA4kCi` |
+| Chemmanad | `chemmanad` | `prKTayVFpVM9` |
+| Kalanad | `kalanad` | `RHab4KSMzKqd` |
+| Kuttikkol | `kuttikkol` | `dYg4gwku7xtL` |
+| Kolathur/Maruthadukkam | `kolathurmaruthadukkam` | `r4Jr8a3agTPB` |
+| Kaniyamabdi | `kaniyamabdi` | `hKSgVvpZRhFr` |
+| Melbara | `melbara` | `6xreqzN8kj@H` |
+| Poinachi | `poinachi` | `6U235PGTNAaj` |
+| Pakkam | `pakkam` | `M9aojdnxiR9p` |
+| Periya | `periya` | `y62dxKD#jX@N` |
+| Poochakkad | `poochakkad` | `Rmt5rmm6YV6a` |
+| Thokkanam/Karuvakod | `thokkanamkaruvakod` | `3q9#geGQR@7Y` |
+| Thiravakoli | `thiravakoli` | `xBZhW8B6QgXn` |
+| Udma | `udma` | `T722YX5BN4iv` |
+| Chendalam | `chendalam` | `rifUJCh9g3Y!` |
+| Souvenir Committee | `souvenir` | `d3@2XXSkPo6i` |
+| Publicity Committee | `publicity` | `ZEZjSnnXqKjw` |
+| Audio Video Committee | `audiovideo` | `LY#CiKMgEMYD` |
+| Finance Committee | `finance` | `zh!nyigdtkwv` |
+| Program Committee | `program` | `JbR88xGZ8w2@` |
 
 ## Important
 

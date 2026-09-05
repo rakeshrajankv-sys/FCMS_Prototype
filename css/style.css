@@ -76,6 +76,23 @@ html.fcms-lang-fade body {
   color: var(--muted);
   margin: 5px 0;
 }
+.login-brand .login-project-name {
+  margin: 10px 0 3px;
+  color: #f8fafc;
+  font-size: clamp(1.65rem, 2.4vw, 2rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .55);
+}
+.login-temple-name {
+  color: rgba(248, 250, 252, .86);
+  font-size: clamp(.68rem, 1.1vw, .8rem);
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: .1em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .65);
+}
 .login-card {
   background: #fff;
   border: 1px solid var(--border);
@@ -3839,6 +3856,7 @@ html[data-theme="dark"] .login-card {
 html[data-theme="dark"] .login-card h2 { color: #f8fafc; }
 html[data-theme="dark"] .login-card .text-muted,
 html[data-theme="dark"] .login-brand p { color: #aab6c8 !important; }
+html[data-theme="dark"] .login-brand .login-project-name { color: #f8fafc !important; }
 html[data-theme="dark"] .login-card .form-label { color: #d8e0eb; }
 
 /* Prevent Bootstrap light surfaces and muted text from disappearing in dark mode. */
@@ -6626,7 +6644,6 @@ html{
   .house-payment-member-options{grid-template-columns:1fr}
 }
 
-
 /* FCMS styled Book Limit confirmation modal */
 .fcms-book-limit-confirm-overlay{
   position:fixed;
@@ -7680,8 +7697,18 @@ html[lang="ml"] .sidebar .submenu-link {
 .sidebar-nav {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+}
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 .topbar-tool {
   width: 42px;

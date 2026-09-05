@@ -3,6 +3,7 @@
    device-bound verification challenge. Replace sendOtp/verifyOtp with Supabase
    Phone Auth when SMS credentials are configured. */
 const FCMS_DEVICE_KEY = "fcms_verified_devices_v2";
+const FCMS_DEVICE_VERIFICATION_VALID_MS = 14 * 24 * 60 * 60 * 1000;
 function deviceFingerprint() {
   const raw = [navigator.userAgent, navigator.platform, screen.width, screen.height, Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
   let h = 2166136261;
@@ -10,7 +11,12 @@ function deviceFingerprint() {
   return "dev_" + (h >>> 0).toString(16);
 }
 function deviceRecords() { try { return JSON.parse(localStorage.getItem(FCMS_DEVICE_KEY) || "{}"); } catch (_) { return {}; } }
-function deviceRecord(userId) { const r=deviceRecords()[String(userId)]; return r && r.deviceId===deviceFingerprint() && r.verifiedAt ? r : null; }
+function deviceRecord(userId) {
+  const r=deviceRecords()[String(userId)];
+  if(!r || r.deviceId!==deviceFingerprint() || !r.verifiedAt) return null;
+  const verifiedAt=new Date(r.verifiedAt).getTime();
+  return Number.isFinite(verifiedAt) && Date.now()-verifiedAt < FCMS_DEVICE_VERIFICATION_VALID_MS ? r : null;
+}
 function deviceIsVerified(userId) { return !!deviceRecord(userId); }
 function saveDeviceVerification(userId, profile) {
   const now=new Date().toISOString(), deviceId=deviceFingerprint();
@@ -37,7 +43,7 @@ function requestDeviceEnrollment(user) {
   return new Promise(resolve=>{
     const overlay=document.createElement("div"); overlay.className="fcms-device-overlay fcms-device-enter";
     overlay.innerHTML=`<div class="fcms-device-card">
-      <div class="fcms-verification-brand"><img src="logo.png?v=20260902optimized1" alt="FCMS" width="512" height="512" decoding="async"><h2>Verification</h2><span></span></div>
+      <div class="fcms-verification-brand"><img src="logo.png?v=20260902optimized1" alt="NIDHI" width="512" height="512" decoding="async"><h2>Verification</h2><span></span></div>
       <div id="dvStep1">
         <div class="fcms-input-icon"><i class="bi bi-person"></i><input id="dvName" class="form-control form-control-lg" value="" autocomplete="name" placeholder="Enter your full name" required></div>
         <div class="fcms-phone-field"><span class="fcms-country-code">+91</span><div class="fcms-input-icon"><i class="bi bi-telephone"></i><input id="dvPhone" class="form-control form-control-lg" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="Enter mobile number" required></div></div>

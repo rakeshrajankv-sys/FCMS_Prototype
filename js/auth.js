@@ -35,10 +35,10 @@ function isSubCommittee() {
 }
 document.getElementById("loginForm")?.addEventListener("submit", (e) => {
   e.preventDefault();
-  const username = document.getElementById("username").value.trim();
+  const username = document.getElementById("username").value.trim().toLowerCase();
   const password = document.getElementById("password").value;
   const user = getDB().users.find(
-    (u) => u.username === username && u.password === password,
+    (u) => String(u.username||"").toLowerCase() === username && u.password === password,
   );
   const err = document.getElementById("loginError");
   if (!user) {

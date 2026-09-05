@@ -153,7 +153,7 @@ function render() {
       <th>${L("Remarks","കുറിപ്പുകൾ")}</th>
     </tr></thead>
     <tbody>${data.map(x => `<tr>
-      <td><span class="fcms-book-chip">${L("Book","ബുക്ക്")} ${x.book}</span></td>
+      <td><span class="nidhi-book-chip">${L("Book","ബുക്ക്")} ${x.book}</span></td>
       <td><strong>${escapeHTML(String(x.receipt))}</strong></td>
       <td>${x.date ? escapeHTML(new Date(x.date).toLocaleString("en-IN")) : "-"}</td>
       <td>${escapeHTML(x.type)}</td>
@@ -185,7 +185,7 @@ document.getElementById("downloadBookReport").addEventListener("click", () => {
     UPITransactionID: x.transactionId,
     Remarks: x.remarks
   }));
-  exportCSV(data, book ? `fcms-book-${book}-report.csv` : "fcms-all-books-report.csv");
+  exportCSV(data, book ? `nidhi-book-${book}-report.csv` : "nidhi-all-books-report.csv");
 });
 
 render();

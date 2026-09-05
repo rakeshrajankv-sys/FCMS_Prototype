@@ -83,7 +83,7 @@ function exportVisiblePayments() {
     const member=db.members.find(x=>x.id===payment.memberId);
     const pr=db.pradeshikams.find(x=>Number(x.id)===Number(member?.pradeshikamId));
     return {Receipt:payment.receiptNumber,Member:member?.name||"",MemberID:member?.memberCode||"",Pradeshikam:pr?.name||"",Amount:payment.amount,Mode:payment.paymentMode,TransactionID:payment.transactionId||"",Status:payment.status==="hold"?"Hold":"Completed",Date:new Date(payment.paymentDate).toLocaleString("en-IN"),Remarks:payment.remarks||""};
-  }),"fcms-payments.csv");
+  }),"nidhi-payments.csv");
 }
 
 const renderPaymentsSoon=fcmsDebounce(render,180);

@@ -293,7 +293,7 @@
       }));
       exportCSV(
         data,
-        `fcms-${committeeName(c.id).toLowerCase().replace(/\s+/g, "-")}-expenses.csv`,
+        `nidhi-${committeeName(c.id).toLowerCase().replace(/\s+/g, "-")}-expenses.csv`,
       );
     });
   }

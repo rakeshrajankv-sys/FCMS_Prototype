@@ -518,6 +518,6 @@ document.getElementById("exportDonations").addEventListener("click", () => {
       Remarks: d.remarks || "",
     };
   });
-  exportCSV(rows, "fcms-donations.csv");
+  exportCSV(rows, "nidhi-donations.csv");
 });
 render();

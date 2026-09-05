@@ -51,7 +51,7 @@
       <div class="fcms-camera-backdrop"></div>
       <div class="fcms-camera-dialog" role="dialog" aria-modal="true" aria-labelledby="fcmsCameraTitle">
         <div class="fcms-camera-head">
-          <div><div class="fcms-camera-kicker">FCMS</div><h3 id="fcmsCameraTitle">Take receipt photo</h3></div>
+          <div><div class="fcms-camera-kicker">NIDHI</div><h3 id="fcmsCameraTitle">Take receipt photo</h3></div>
           <button type="button" class="fcms-camera-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="fcms-camera-body">

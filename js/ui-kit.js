@@ -10,8 +10,8 @@
 /* ---------- i18n ---------- */
 const FCMS_I18N = {
   en: {
-    app_name: "Fund Collection",
-    app_full_name: "Fund Collection Management System",
+    app_name: "NIDHI",
+    app_full_name: "NIDHI",
     main_committee: "Main Committee",
     sub_committee: "Sub Committee",
     pradeshikam: "Pradeshikam",
@@ -98,8 +98,8 @@ const FCMS_I18N = {
     allocation_delete_blocked: "This allocation cannot be deleted because {amount} has already been spent by this Sub Committee.",
   },
   ml: {
-    app_name: "ഫണ്ട് കളക്ഷൻ",
-    app_full_name: "ഫണ്ട് കളക്ഷൻ മാനേജ്‌മെന്റ് സിസ്റ്റം",
+    app_name: "നിധി",
+    app_full_name: "നിധി",
     main_committee: "മെയിൻ കമ്മിറ്റി",
     sub_committee: "സബ് കമ്മിറ്റി",
     pradeshikam: "പ്രദേശികം",
@@ -300,7 +300,7 @@ const FCMS_ML_TEXT = {
   "Finance Committee": "ഫിനാൻസ് കമ്മിറ്റി",
   "Program Committee": "പ്രോഗ്രാം കമ്മിറ്റി",
 
-  "Fund Collection": "ഫണ്ട് കളക്ഷൻ", "Fund Collection Management System": "ഫണ്ട് കളക്ഷൻ മാനേജ്‌മെന്റ് സിസ്റ്റം",
+  "NIDHI": "നിധി", "Fund Collection": "നിധി", "Fund Collection Management System": "നിധി",
   "Main Committee": "മെയിൻ കമ്മിറ്റി", "Sub Committee": "സബ് കമ്മിറ്റി", "Sub Committees": "സബ് കമ്മിറ്റികൾ",
   "Dashboard": "ഡാഷ്ബോർഡ്", "Activity History": "പ്രവർത്തന ചരിത്രം", "Reports": "റിപ്പോർട്ടുകൾ", "Donations": "സംഭാവനകൾ",
   "Members": "അംഗങ്ങൾ", "Collections": "പിരിവുകൾ", "Submissions": "സമർപ്പണങ്ങൾ", "Pradeshikam": "പ്രദേശികം", "Pradeshikams": "പ്രദേശികങ്ങൾ",
@@ -409,7 +409,7 @@ const FCMS_ML_TEXT = {
 
   // Complete UI coverage for pages that render labels/messages dynamically.
   "The page you are looking for may have moved or does not exist.": "നിങ്ങൾ അന്വേഷിക്കുന്ന പേജ് മാറ്റിയിരിക്കാം അല്ലെങ്കിൽ നിലവിലില്ല.",
-  "Fund Collection Management System": "ഫണ്ട് കളക്ഷൻ മാനേജ്‌മെന്റ് സിസ്റ്റം",
+  "Fund Collection Management System": "നിധി",
   "Welcome back": "തിരികെ സ്വാഗതം",
   "Sign in to continue": "തുടരാൻ ലോഗിൻ ചെയ്യുക",
   "Switch to bright mode": "ബ്രൈറ്റ് മോഡിലേക്ക് മാറ്റുക",

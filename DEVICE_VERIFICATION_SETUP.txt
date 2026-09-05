@@ -4,7 +4,7 @@ FCMS FIRST-DEVICE IDENTITY VERIFICATION
 This update adds first-device identity enrollment for Admin, Pradeshikam and Sub Committee users.
 
 Flow:
-- First login on a browser/device: name + mobile number + OTP verification.
+- First login on a browser/device, and again every 14 days: name + mobile number + OTP verification.
 - Once verified, the browser remembers that device for that user.
 - Later logins on the same browser/device do not ask for the details again.
 - A different browser/device requires enrollment again.

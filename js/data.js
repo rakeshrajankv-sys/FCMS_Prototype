@@ -1,6 +1,7 @@
 const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
 const FCMS_MEMBER_STATS_CACHE = new WeakMap();
+const FCMS_ADMIN_PASSWORD = "6gWWoHB8n!!uvX";
 
 const PRADESHIKAM_NAMES = [
   "Ambangad",
@@ -22,11 +23,21 @@ const PRADESHIKAM_NAMES = [
   "Udma",
   "Chendalam",
 ];
+const PRADESHIKAM_PASSWORDS = [
+  "cxTKj8ek9fPK", "Z#o9EpR3RZ24", "GB3TJXJ2skqQ", "pU2VfWfA4kCi",
+  "prKTayVFpVM9", "RHab4KSMzKqd", "dYg4gwku7xtL", "r4Jr8a3agTPB",
+  "hKSgVvpZRhFr", "6xreqzN8kj@H", "6U235PGTNAaj", "M9aojdnxiR9p",
+  "y62dxKD#jX@N", "Rmt5rmm6YV6a", "3q9#geGQR@7Y", "xBZhW8B6QgXn",
+  "T722YX5BN4iv", "rifUJCh9g3Y!"
+];
+function fcmsCommitteeUsername(name){
+  return String(name||"").toLowerCase().replace(/\bcommittee\b/g,"").replace(/[^a-z0-9]+/g,"").trim();
+}
 const DEFAULT_PRADESHIKAMS = PRADESHIKAM_NAMES.map((name, i) => ({
   id: i + 1,
   name,
-  username: `p${i + 1}`,
-  password: "p123",
+  username: fcmsCommitteeUsername(name),
+  password: PRADESHIKAM_PASSWORDS[i],
 }));
 const SUBCOMMITTEE_DEFS = [
   { name: "Souvenir Committee", icon: "bi-book" },
@@ -36,11 +47,14 @@ const SUBCOMMITTEE_DEFS = [
   { name: "Program Committee", icon: "bi-calendar-event" },
 ];
 const SUBCOMMITTEE_NAMES = SUBCOMMITTEE_DEFS.map((c) => c.name);
+const SUBCOMMITTEE_PASSWORDS = [
+  "d3@2XXSkPo6i", "ZEZjSnnXqKjw", "LY#CiKMgEMYD", "zh!nyigdtkwv", "JbR88xGZ8w2@"
+];
 const DEFAULT_SUBCOMMITTEES = SUBCOMMITTEE_DEFS.map((c, i) => ({
   id: i + 1,
   name: c.name,
-  username: `sc${i + 1}`,
-  password: "sc123",
+  username: fcmsCommitteeUsername(c.name),
+  password: SUBCOMMITTEE_PASSWORDS[i],
   icon: c.icon,
   financeAccess: !!c.financeAccess,
 }));
@@ -50,7 +64,7 @@ const DEFAULT_USERS = [
     role: "admin",
     name: "Main Committee",
     username: "admin",
-    password: "admin123",
+    password: FCMS_ADMIN_PASSWORD,
     pradeshikamId: null,
   },
   ...DEFAULT_PRADESHIKAMS.map((p, i) => ({
@@ -92,7 +106,11 @@ function seedDemoData() {
     };
   db.pradeshikams ||= DEFAULT_PRADESHIKAMS;
   db.pradeshikams.forEach((p, i) => {
-    if (PRADESHIKAM_NAMES[i]) p.name = PRADESHIKAM_NAMES[i];
+    if (PRADESHIKAM_NAMES[i]) {
+      p.name = PRADESHIKAM_NAMES[i];
+      p.username = DEFAULT_PRADESHIKAMS[i].username;
+      p.password = DEFAULT_PRADESHIKAMS[i].password;
+    }
   });
   db.subCommittees ||= DEFAULT_SUBCOMMITTEES;
   // Add any sub committees introduced after this browser's data was first created
@@ -108,24 +126,36 @@ function seedDemoData() {
     );
     if (def) {
       c.name = def.name;
+      c.username = def.username;
+      c.password = def.password;
       c.icon ||= def.icon;
       c.financeAccess = def.financeAccess || !!c.financeAccess;
     }
   });
   db.users ||= DEFAULT_USERS;
   db.users.forEach((u) => {
+    if (u.role === "admin") {
+      u.username = "admin";
+      u.password = FCMS_ADMIN_PASSWORD;
+    }
     if (
       u.role === "pradeshikam" &&
       u.pradeshikamId &&
       PRADESHIKAM_NAMES[u.pradeshikamId - 1]
-    )
+    ) {
       u.name = PRADESHIKAM_NAMES[u.pradeshikamId - 1];
+      u.username = DEFAULT_PRADESHIKAMS[u.pradeshikamId - 1].username;
+      u.password = DEFAULT_PRADESHIKAMS[u.pradeshikamId - 1].password;
+    }
     if (
       u.role === "subcommittee" &&
       u.subCommitteeId &&
       SUBCOMMITTEE_NAMES[u.subCommitteeId - 1]
-    )
+    ) {
       u.name = SUBCOMMITTEE_NAMES[u.subCommitteeId - 1];
+      u.username = DEFAULT_SUBCOMMITTEES[u.subCommitteeId - 1].username;
+      u.password = DEFAULT_SUBCOMMITTEES[u.subCommitteeId - 1].password;
+    }
   });
   // Ensure every sub committee (including newly added ones) has a login account.
   const scUserCommitteeIds = new Set(
