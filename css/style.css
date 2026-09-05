@@ -5193,10 +5193,16 @@ html[lang="ml"] .nav-link, body.lang-ml .nav-link {
   flex: 0 0 58px;
 }
 .sidebar-brand span{
-  font-size: 1.12rem;
-  line-height: 1.25;
-  font-weight: 750;
-  letter-spacing: -.01em;
+  font-size: 1.42rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: .015em;
+  white-space: nowrap;
+}
+html[lang="ml"] .sidebar-brand span{
+  font-size: 1.52rem;
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 .sidebar-role{
   margin: 0 .35rem 1.25rem;

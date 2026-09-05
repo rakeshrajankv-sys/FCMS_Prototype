@@ -1,7 +1,7 @@
 const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
 const FCMS_MEMBER_STATS_CACHE = new WeakMap();
-const FCMS_ADMIN_PASSWORD = "6gWWoHB8n!!uvX";
+const FCMS_ADMIN_PASSWORD = "admin123";
 
 const PRADESHIKAM_NAMES = [
   "Ambangad",
@@ -23,13 +23,7 @@ const PRADESHIKAM_NAMES = [
   "Udma",
   "Chendalam",
 ];
-const PRADESHIKAM_PASSWORDS = [
-  "cxTKj8ek9fPK", "Z#o9EpR3RZ24", "GB3TJXJ2skqQ", "pU2VfWfA4kCi",
-  "prKTayVFpVM9", "RHab4KSMzKqd", "dYg4gwku7xtL", "r4Jr8a3agTPB",
-  "hKSgVvpZRhFr", "6xreqzN8kj@H", "6U235PGTNAaj", "M9aojdnxiR9p",
-  "y62dxKD#jX@N", "Rmt5rmm6YV6a", "3q9#geGQR@7Y", "xBZhW8B6QgXn",
-  "T722YX5BN4iv", "rifUJCh9g3Y!"
-];
+const PRADESHIKAM_PASSWORDS = Array(PRADESHIKAM_NAMES.length).fill("p123");
 function fcmsCommitteeUsername(name){
   return String(name||"").toLowerCase().replace(/\bcommittee\b/g,"").replace(/[^a-z0-9]+/g,"").trim();
 }
@@ -47,9 +41,7 @@ const SUBCOMMITTEE_DEFS = [
   { name: "Program Committee", icon: "bi-calendar-event" },
 ];
 const SUBCOMMITTEE_NAMES = SUBCOMMITTEE_DEFS.map((c) => c.name);
-const SUBCOMMITTEE_PASSWORDS = [
-  "d3@2XXSkPo6i", "ZEZjSnnXqKjw", "LY#CiKMgEMYD", "zh!nyigdtkwv", "JbR88xGZ8w2@"
-];
+const SUBCOMMITTEE_PASSWORDS = Array(SUBCOMMITTEE_NAMES.length).fill("sc123");
 const DEFAULT_SUBCOMMITTEES = SUBCOMMITTEE_DEFS.map((c, i) => ({
   id: i + 1,
   name: c.name,
