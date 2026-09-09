@@ -7693,6 +7693,12 @@ html[lang="ml"] .sidebar .submenu-link {
   line-height: 1.45;
 }
 
+/* Keep every native dropdown option readable after validation and at any zoom. */
+html:not([data-theme="dark"]) .form-select option {
+  color: #172033;
+  background-color: #fff;
+}
+
 /* Keep navigation viewport-bound on every screen size. Long dashboard pages
    must scroll in the content area without stretching the fixed sidebar. */
 .sidebar {
@@ -7730,4 +7736,81 @@ html[lang="ml"] .sidebar .submenu-link {
 @media (max-width: 600px) {
   html[lang="ml"] .fcms-reports-filter-panel .fcms-report-section-heading { flex-direction: column; }
   html[lang="ml"] .fcms-reports-filter-panel .fcms-report-section-heading small { text-align: left; }
+}
+
+/* Pradeshikam overview cards: contain large totals and keep rows aligned. */
+.pradeshikam-summary-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+}
+.pradeshikam-summary-card > .d-flex:first-child {
+  min-height: 64px;
+}
+.pradeshikam-summary-card > .d-flex:first-child h6 {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.pradeshikam-summary-card > .row {
+  margin-top: 8px !important;
+}
+.pradeshikam-summary-card > .row > [class*="col-"] {
+  min-width: 0;
+}
+.pradeshikam-summary-card .summary-metric {
+  min-width: 0;
+  min-height: 86px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+}
+.pradeshikam-summary-card > .row > .col-12 .summary-metric {
+  min-height: 62px;
+  flex-direction: row;
+  align-items: center;
+}
+.pradeshikam-summary-card .summary-metric span {
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.pradeshikam-summary-card .summary-metric b {
+  display: block;
+  max-width: 100%;
+  margin-top: 0;
+  font-size: clamp(13px, 1.05vw, 16px);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pradeshikam-summary-card > .d-flex:last-child {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px !important;
+  margin-top: auto !important;
+  padding-top: 18px;
+}
+.pradeshikam-summary-card > .d-flex:last-child .btn {
+  min-width: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pradeshikam-summary-card > .d-flex:last-child .btn:last-child {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1199.98px) {
+  .pradeshikam-summary-card .summary-metric b { font-size: 15px; }
+}
+@media (max-width: 430px) {
+  .pradeshikam-summary-card { padding: 18px; }
+  .pradeshikam-summary-card > .d-flex:first-child { min-height: 58px; }
+  .pradeshikam-summary-card .summary-metric { padding: 12px; }
+  .pradeshikam-summary-card > .row > .col-12 .summary-metric {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

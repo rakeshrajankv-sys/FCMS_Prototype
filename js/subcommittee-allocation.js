@@ -176,6 +176,7 @@ if (s.role !== "admin") {
         };
         if (voucherDataUrl) { updated.voucherDataUrl = voucherDataUrl; updated.voucherName = voucherName; }
         else if (removeExistingVoucher) { delete updated.voucherDataUrl; delete updated.voucherName; }
+        fcmsStampRecordEdited(updated, s);
         db.subCommitteeAllocations[idx] = updated;
         addActivity(db, {
           action: "Sub Committee Allocation Edited",
@@ -204,6 +205,7 @@ if (s.role !== "admin") {
           voucherName,
           createdAt: new Date().toISOString(),
           recordedBy: actorLabel(),
+          recordedByPhone: s.verifiedPhone || "",
         };
         db.subCommitteeAllocations.push(allocation);
         addActivity(db, {
@@ -244,10 +246,10 @@ if (s.role !== "admin") {
     );
     document.getElementById("allocTable").innerHTML = !rows.length
       ? `<div class="empty-state"><i class="bi bi-cash-stack"></i>No allocations yet.</div>`
-      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Sub Committee</th><th>Amount</th><th>Collected By</th><th>Purpose</th><th>Voucher</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows
+      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Sub Committee</th><th>Amount</th><th>Collected By</th><th>Purpose</th><th>Voucher</th><th>Remarks</th><th>Audit</th><th>Actions</th></tr></thead><tbody>${rows
           .map(
             (a) =>
-              `<tr><td data-label="Date">${new Date(a.date).toLocaleDateString("en-IN")}</td><td data-label="Sub Committee">${escapeHTML(String((a.subCommitteeId ?? a.committeeId) === "other" ? "Other" : committeeName(a.subCommitteeId ?? a.committeeId)))}</td><td data-label="Amount" class="fw-semibold">${money(a.amount)}</td><td data-label="Collected By"><b>${escapeHTML(a.collectedByName || "-")}</b><br><small class="text-muted">${escapeHTML(formatPhone(a.collectedByPhone, a.collectedByPhoneCode))}</small></td><td data-label="Purpose">${escapeHTML(a.allocationPurpose || "-")}</td><td data-label="Voucher">${a.voucherDataUrl ? `<a href="${a.voucherDataUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-light" title="View voucher"><i class="bi bi-image me-1"></i>View</a>` : "-"}</td><td data-label="Remarks">${escapeHTML(a.remarks || "-")}</td><td data-label="Actions"><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit-alloc" data-id="${escapeHTML(a.id)}" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger delete-alloc" data-id="${escapeHTML(a.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`,
+              `<tr><td data-label="Date">${new Date(a.date).toLocaleDateString("en-IN")}</td><td data-label="Sub Committee">${escapeHTML(String((a.subCommitteeId ?? a.committeeId) === "other" ? "Other" : committeeName(a.subCommitteeId ?? a.committeeId)))}</td><td data-label="Amount" class="fw-semibold">${money(a.amount)}</td><td data-label="Collected By"><b>${escapeHTML(a.collectedByName || "-")}</b><br><small class="text-muted">${escapeHTML(formatPhone(a.collectedByPhone, a.collectedByPhoneCode))}</small></td><td data-label="Purpose">${escapeHTML(a.allocationPurpose || "-")}</td><td data-label="Voucher">${a.voucherDataUrl ? `<a href="${a.voucherDataUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-light" title="View voucher"><i class="bi bi-image me-1"></i>View</a>` : "-"}</td><td data-label="Remarks">${escapeHTML(a.remarks || "-")}</td><td data-label="Audit">${fcmsAuditIdentityHTML(a)}</td><td data-label="Actions"><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit-alloc" data-id="${escapeHTML(a.id)}" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger delete-alloc" data-id="${escapeHTML(a.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`,
           )
           .join("")}</tbody></table></div>`;
     document

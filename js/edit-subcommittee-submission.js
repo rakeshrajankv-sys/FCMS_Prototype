@@ -41,6 +41,10 @@ if (!item || s.role !== "admin") {
     item.amount = amount;
     item.date = document.getElementById("date").value;
     item.remarks = document.getElementById("remarks").value.trim();
+    item.lastEditedBy = actorLabel();
+    item.lastEditedByPhone = s.verifiedPhone || "";
+    item.lastEditedByUserId = s.id;
+    item.lastEditedAt = new Date().toISOString();
     addActivity(db, {
       action: "Sub Committee Submission Edited",
       entityType: "subCommitteeSubmission",

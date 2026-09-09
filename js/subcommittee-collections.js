@@ -177,10 +177,10 @@ ${selector}
     );
     document.getElementById("scTable").innerHTML = !arr.length
       ? `<div class="empty-state"><i class="bi ${scCommitteeIcon()}"></i>No collections found.</div>`
-      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Source</th><th>Name</th><th>Place</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${arr
+      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Source</th><th>Name</th><th>Place</th><th>Receipt</th><th>Mode</th><th>Amount</th><th>Audit</th><th>Actions</th></tr></thead><tbody>${arr
           .map(
             (x) =>
-              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Actions"><div class="d-flex gap-1 fcms-inline-actions">${(s.role === "admin" || (s.role === "subcommittee" && Number(x.subCommitteeId) === Number(s.subCommitteeId))) ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}<a class="btn btn-sm btn-primary" href="subcommittee-add-payment.html?id=${encodeURIComponent(x.id)}" title="Add Payment"><i class="bi bi-plus-circle"></i></a></div></td></tr>`,
+              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Source">${escapeHTML(x.sourceType || "Person")}</td><td data-label="Name">${escapeHTML(x.donorName || "-")}</td><td data-label="Place">${escapeHTML(x.place || "-")}</td><td data-label="Receipt"><b>${escapeHTML(x.receiptNumber || "-")}</b></td><td data-label="Mode">${escapeHTML(x.paymentMode || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Audit">${fcmsAuditIdentityHTML(x)}</td><td data-label="Actions"><div class="d-flex gap-1 fcms-inline-actions">${(s.role === "admin" || (s.role === "subcommittee" && Number(x.subCommitteeId) === Number(s.subCommitteeId))) ? `<a class="btn btn-sm btn-light" href="edit-subcommittee-collection.html?id=${encodeURIComponent(x.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}${s.role === "subcommittee" ? `<button class="btn btn-sm btn-outline-danger delete-sc" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : ""}<a class="btn btn-sm btn-primary" href="subcommittee-add-payment.html?id=${encodeURIComponent(x.id)}" title="Add Payment"><i class="bi bi-plus-circle"></i></a></div></td></tr>`,
           )
           .join("")}</tbody></table></div>`;
     document
@@ -279,6 +279,7 @@ ${selector}
       remarks: document.getElementById("scRemarks").value.trim(),
       createdAt: new Date().toISOString(),
       recordedBy: actorLabel(),
+          recordedByPhone: s.verifiedPhone || "",
       recordedByUserId: s.id,
       recordedByRole: s.role,
     };

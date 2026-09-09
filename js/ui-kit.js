@@ -1069,12 +1069,37 @@ function fcmsQueueToast(message, type = "success") {
   } catch (_) {}
 }
 
+function fcmsSavedActivityMessage(activity) {
+  const action = String(activity?.action || "").trim();
+  const entity = String(activity?.entityType || "").toLowerCase();
+  const ml = typeof fcmsLang === "function" && fcmsLang() === "ml";
+  const labels = {
+    member: ["Member", "അംഗം"],
+    payment: ["Payment", "പേയ്മെന്റ്"],
+    donation: ["Donation", "സംഭാവന"],
+    submission: ["Submission", "സമർപ്പണം"],
+    subcommitteesubmission: ["Subcommittee submission", "സബ് കമ്മിറ്റി സമർപ്പണം"],
+    expense: ["Expense", "ചെലവ്"],
+    subcommitteeexpense: ["Subcommittee expense", "സബ് കമ്മിറ്റി ചെലവ്"],
+    allocation: ["Allocation", "വിഹിതം"],
+    subcommitteeallocation: ["Subcommittee allocation", "സബ് കമ്മിറ്റി വിഹിതം"],
+    subcommitteecollection: ["Collection", "പിരിവ്"],
+    subcommitteecollectionpayment: ["Payment", "പേയ്മെന്റ്"],
+  };
+  const pair = labels[entity] || ["Record", "വിവരം"];
+  const label = pair[ml ? 1 : 0];
+  if (/delet|remov/i.test(action)) return ml ? `${label} വിജയകരമായി ഇല്ലാതാക്കി.` : `${label} deleted successfully.`;
+  if (/edit|updat|chang/i.test(action)) return ml ? `${label} വിജയകരമായി തിരുത്തി.` : `${label} updated successfully.`;
+  if (/restor/i.test(action)) return ml ? `${label} വിജയകരമായി പുനഃസ്ഥാപിച്ചു.` : `${label} restored successfully.`;
+  return ml ? `${label} വിജയകരമായി സേവ് ചെയ്തു.` : `${label} saved successfully.`;
+}
+
 function fcmsScheduleSavedActivityToast(activity) {
   const action = String(activity?.action || "").trim();
-  if (!activity?.id || !/(added|saved|edited|updated|deleted|confirmed|restored)/i.test(action)) return;
+  if (!activity?.id || !/(add|sav|edit|updat|delet|remov|confirm|restor|chang)/i.test(action)) return;
   const item = {
     id: String(activity.id),
-    message: `${action} successfully.`,
+    message: fcmsSavedActivityMessage(activity),
     type: "success",
     at: Date.now(),
   };
@@ -1125,6 +1150,28 @@ function fcmsScheduleSavedActivityToast(activity) {
         node.querySelectorAll?.(".alert-danger:not(.d-none)").forEach(notifyVisibleError);
       });
     })).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+
+    let lastFailure = "";
+    let lastFailureAt = 0;
+    const notifyFailure = (reason) => {
+      const raw = String(reason?.message || reason || "").trim();
+      const signature = raw || "unknown";
+      if (signature === lastFailure && Date.now() - lastFailureAt < 2500) return;
+      lastFailure = signature;
+      lastFailureAt = Date.now();
+      const ml = typeof fcmsLang === "function" && fcmsLang() === "ml";
+      toast(
+        ml
+          ? "പ്രവർത്തനം പൂർത്തിയാക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക."
+          : "The action could not be completed. Please try again.",
+        "error",
+        5000,
+      );
+    };
+    window.addEventListener("unhandledrejection", (event) => notifyFailure(event.reason));
+    window.addEventListener("error", (event) => {
+      if (event.error) notifyFailure(event.error);
+    });
   };
   document.addEventListener("invalid", (event) => {
     const field = event.target;
@@ -1313,7 +1360,18 @@ function fcmsApplyFormDraft(form, data) {
     }
     if (!el || el instanceof RadioNodeList) return;
     if (item?.type === "checkbox") el.checked = !!item.value;
-    else if (item?.type === "value" && item.value != null) el.value = item.value;
+    else if (item?.type === "value" && item.value != null) {
+      if (el instanceof HTMLSelectElement) {
+        const savedValue = String(item.value);
+        const matchingOption = Array.from(el.options).find(
+          (option) => option.value === savedValue || option.textContent.trim() === savedValue,
+        );
+        // Never assign an unknown draft value to a select. Browsers otherwise
+        // set selectedIndex to -1, making a valid dropdown appear completely blank.
+        if (!matchingOption) return;
+        el.value = matchingOption.value;
+      } else el.value = item.value;
+    }
     else return;
     applied = true;
   });
@@ -1350,7 +1408,10 @@ function fcmsFormNeedsLeaveGuard(form) {
   return !!form.querySelector('button[type="submit"],input[type="submit"],button:not([type])');
 }
 function fcmsAttachDraftSaving(root = document) {
-  root.querySelectorAll?.("form").forEach((form) => {
+  const forms = root.matches?.("form")
+    ? [root]
+    : Array.from(root.querySelectorAll?.("form") || []);
+  forms.forEach((form) => {
     if (form.dataset.fcmsDraftReady === "1" || form.closest(".login-page") || form.id === "verificationForm") return;
     const controls = form.querySelectorAll("input:not([type='hidden']):not([type='password']):not([type='file']),select,textarea");
     if (!controls.length) return;
@@ -1415,7 +1476,7 @@ function fcmsAttachDraftSaving(root = document) {
       timer = setTimeout(() => {
         form.__fcmsDraftTimer = null;
         fcmsSaveFormDraft(form);
-      }, 180);
+      }, 550);
       form.__fcmsDraftTimer = timer;
     };
     form.addEventListener("input", saveSoon);
@@ -1436,9 +1497,12 @@ window.addEventListener("beforeunload", (event) => {
 });
 
 (function initFcmsSharedFormEnhancements(){
-  const run=()=>{ fcmsAttachUpiTransactionFields(document); fcmsAttachDraftSaving(document); };
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",run,{once:true}); else run();
-  const observer=new MutationObserver(()=>run());
+  const run=(root=document)=>{ fcmsAttachUpiTransactionFields(root); fcmsAttachDraftSaving(root); };
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",()=>run(),{once:true}); else run();
+  const observer=new MutationObserver((mutations)=>mutations.forEach((mutation)=>mutation.addedNodes.forEach((node)=>{
+    if(node.nodeType!==Node.ELEMENT_NODE) return;
+    run(node);
+  })));
   observer.observe(document.documentElement,{subtree:true,childList:true});
   try {
     const lowCpu = Number(navigator.hardwareConcurrency || 8) <= 4;
@@ -1501,14 +1565,22 @@ window.addEventListener("beforeunload", (event) => {
      if(pairs[t]) el.textContent=pairs[t];
    });
  }
- document.addEventListener("DOMContentLoaded",()=>setTimeout(apply,50));
- const o=new MutationObserver(()=>setTimeout(apply,0));
+ let applyTimer=0;
+ const scheduleApply=()=>{
+   clearTimeout(applyTimer);
+   applyTimer=setTimeout(apply,60);
+ };
+ document.addEventListener("DOMContentLoaded",scheduleApply);
+ const o=new MutationObserver(scheduleApply);
  document.addEventListener("DOMContentLoaded",()=>o.observe(document.body,{childList:true,subtree:true}));
 })();
 
 
 /* FCMS dynamic member receipt reinforcement */
 (function(){
+  // Superseded by the published-book validator below. Keeping this legacy
+  // scanner disabled avoids dispatching extra synthetic input events.
+  if (true) return;
   function candidate(el){
     if(!el || el.tagName !== "INPUT") return false;
     const fcmsPath=(location.pathname||"").toLowerCase();
@@ -1574,6 +1646,8 @@ window.addEventListener("beforeunload", (event) => {
 
 /* FCMS GLOBAL RECEIPT LIMIT VALIDATION */
 (function(){
+  // Superseded by PUBLISHED BOOK ENFORCEMENT below.
+  if (true) return;
   function isReceiptInput(el){
     if(!el || el.tagName !== "INPUT") return false;
     if(el.closest?.(".fcms-book-limit-overlay, .fcms-book-limit-confirm-overlay") ||
@@ -1675,6 +1749,8 @@ window.addEventListener("beforeunload", (event) => {
 
 /* DEFINITIVE BOOK LIMIT VALIDATION */
 (function(){
+  // Superseded by PUBLISHED BOOK ENFORCEMENT below.
+  if (true) return;
   const excluded=["donations.html","edit-donation.html","subcommittee-collections.html","edit-subcommittee-collection.html","subcommittee-add-payment.html"];
   function excludedPage(){
     const p=(location.pathname||"").toLowerCase();
@@ -2314,7 +2390,10 @@ window.fcmsCloseMobileSidebar = closeMobileSidebar;
 
   function scan(root) {
     const scope = root && root.querySelectorAll ? root : document;
-    scope.querySelectorAll("table tbody").forEach(function (tbody) {
+    const bodies = scope.matches?.("table tbody")
+      ? [scope]
+      : Array.from(scope.querySelectorAll("table tbody"));
+    bodies.forEach(function (tbody) {
       if (processed.has(tbody)) return;
       const rows = Array.prototype.slice.call(tbody.children);
       if (rows.length > defaultSize) paginate(tbody, rows, tbody.closest(".table-responsive") || tbody.parentNode);
@@ -2329,5 +2408,11 @@ window.fcmsCloseMobileSidebar = closeMobileSidebar;
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", scheduleScan, { once:true });
   else scheduleScan();
-  new MutationObserver(scheduleScan).observe(document.documentElement, { childList:true, subtree:true });
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === Node.ELEMENT_NODE) scan(node);
+      });
+    });
+  }).observe(document.documentElement, { childList:true, subtree:true });
 })();

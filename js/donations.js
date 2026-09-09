@@ -220,7 +220,7 @@ function render() {
   );
   document.getElementById("donationTable").innerHTML = !rows.length
     ? `<div class="empty-state"><i class="bi bi-gift"></i>No donations found.</div>`
-    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Actions"><div class="d-flex gap-1 fcms-inline-actions">${(s.role === "admin" || (s.role === "pradeshikam" && Number(x.d.pradeshikamId) === Number(s.pradeshikamId))) ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
+    : `${heldTotal > 0 ? `<div class="alert alert-primary small mb-3"><i class="bi bi-hourglass-split me-2"></i>${money(heldTotal)} in donations shown below are on Hold and not included in the totals above.</div>` : ""}<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Pradeshikam</th><th>Source</th><th>Donor</th><th>House</th><th>Receipt</th><th>Mode</th><th>Status</th><th>Amount</th><th>Audit</th><th>Actions</th></tr></thead><tbody>${rows.map((x) => `<tr><td data-label="Date">${new Date(x.d.date || x.d.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Pradeshikam">${escapeHTML(x.pr?.name || "-")}</td><td data-label="Source">${escapeHTML(x.d.sourceType || "Member")}</td><td data-label="Donor">${escapeHTML(x.name)}</td><td data-label="House">${escapeHTML(x.house)}</td><td data-label="Receipt"><b>${escapeHTML(x.d.receiptNumber || x.d.reference || "-")}</b></td><td data-label="Mode">${escapeHTML(x.d.paymentMode || "-")}</td><td data-label="Status">${x.d.status === "hold" ? `<span class="status-badge status-hold">● Hold</span>` : `<span class="status-badge status-green">● Completed</span>`}</td><td data-label="Amount" class="fw-semibold">${money(x.d.amount)}</td><td data-label="Audit">${fcmsAuditIdentityHTML(x.d)}</td><td data-label="Actions"><div class="d-flex gap-1 fcms-inline-actions">${(s.role === "admin" || (s.role === "pradeshikam" && Number(x.d.pradeshikamId) === Number(s.pradeshikamId))) ? `<a class="btn btn-sm btn-light" href="edit-donation.html?id=${encodeURIComponent(x.d.id)}" title="Edit details"><i class="bi bi-pencil"></i></a>` : ""}<button class="btn btn-sm btn-outline-danger delete-donation" data-id="${escapeHTML(x.d.id)}" title="Delete"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>`;
   document
     .querySelectorAll(".delete-donation")
     .forEach((btn) =>
@@ -424,6 +424,10 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
     date: commonDate,
     remarks,
     createdAt: new Date().toISOString(),
+    recordedBy: actorLabel(),
+    recordedByPhone: s.verifiedPhone || "",
+    recordedByUserId: s.id,
+    recordedByRole: s.role,
     splitPaymentId: splitId,
   } : null;
   const payments = paymentParts.map((part) => ({
@@ -433,6 +437,8 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
     paidByMemberId: donor.id, splitDonationId: splitId,
     householdDonationAllocation: allocationChoice === "house",
     createdAt: new Date().toISOString(),
+    recordedBy: actorLabel(), recordedByPhone: s.verifiedPhone || "",
+    recordedByUserId: s.id, recordedByRole: s.role,
   }));
   const activityStart = (db.activities || []).length;
   try {

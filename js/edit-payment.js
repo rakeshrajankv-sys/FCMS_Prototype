@@ -84,6 +84,7 @@ ${pageTitle("Edit Collection")}
     payment.status = status;
     payment.remarks = document.getElementById("remarks").value.trim();
     payment.confirmedTotalAmount = isConfirmingHold ? amount : payment.confirmedTotalAmount;
+    fcmsStampRecordEdited(payment, s);
     addActivity(db, {
       action:
         wasHold && status !== "hold" ? "Payment Confirmed" : "Payment Edited",
@@ -127,7 +128,8 @@ ${pageTitle("Edit Collection")}
         holdPaymentId: payment.id,
       };
       db.donations.push(donation);
-      addActivity(db, {
+      fcmsStampRecordEdited(payment, s);
+    addActivity(db, {
         action: "Donation Added",
         entityType: "donation",
         entityId: donation.id,

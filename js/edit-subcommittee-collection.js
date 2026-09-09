@@ -58,6 +58,7 @@ if (!canEdit) {
       ).toISOString(),
       remarks: document.getElementById("remarks").value.trim(),
     });
+    fcmsStampRecordEdited(item, s);
     addActivity(db, {
       action: "Sub Committee Collection Edited",
       entityType: "subCommitteeCollection",

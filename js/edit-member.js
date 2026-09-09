@@ -129,6 +129,7 @@ if (!canEditMember) {
     }
     const old = memberSnapshot(member);
     Object.assign(member, updated);
+    fcmsStampRecordEdited(member, s);
     addActivity(db, {
       action: "Member Edited",
       entityType: "member",

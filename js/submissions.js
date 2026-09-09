@@ -104,7 +104,7 @@ function renderForm() {
     return `<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Sub Committee / ഉപസമിതി</label><input class="form-control" value="${escapeHTML(targetName())}" disabled></div><div class="col-md-4"><label class="form-label">Amount / തുക *</label><input id="amount" type="number" min="0" max="${remaining}" class="form-control" required value="0"></div><div class="col-md-4"><label class="form-label">Submission Date / സമർപ്പിച്ച തീയതി *</label><input id="submissionDate" type="date" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div><div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>${receiptBlock()}</div><div id="submissionError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${remaining<=0?"disabled":""}>Save Submission</button></div></form></div>`;
   }
   const mr=prRemaining(target.id,"member"), dr=prRemaining(target.id,"donation");
-  return `<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><input class="form-control" value="${escapeHTML(targetName())}" disabled></div><div class="col-md-4"><label class="form-label">Amount Type / തുകയുടെ തരം *</label><select id="amountType" class="form-select"><option value="member">Collected by Pradeshikam</option><option value="donation">Donation</option><option value="both">Both</option></select></div><div class="col-md-4"><label class="form-label">Submission Date / സമർപ്പിച്ച തീയതി *</label><input id="submissionDate" type="date" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div><div class="col-md-6" id="memberAmountWrap"><label class="form-label">Amount / തുക *</label><input id="memberAmount" type="number" min="0" max="${mr}" class="form-control" value="0"></div><div class="col-md-6" id="donationAmountWrap"><label class="form-label">Donation Amount / സംഭാവന തുക *</label><input id="donationAmount" type="number" min="0" max="${dr}" class="form-control" value="0"></div><div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>${receiptBlock()}</div><div id="submissionPreview" class="receipt-box mt-3"></div><div id="submissionError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${mr+dr<=0?"disabled":""}>Save Submission</button></div></form></div>`;
+  return `<div class="panel form-card mb-4"><div class="panel-title mb-3">New Submission</div><form id="submissionForm"><div class="row g-3"><div class="col-md-4"><label class="form-label">Pradeshikam / പ്രദേശികം</label><input class="form-control" value="${escapeHTML(targetName())}" disabled></div><div class="col-md-4"><label class="form-label">Amount Type / തുകയുടെ തരം *</label><select id="amountType" class="form-select"><option value="both" selected>Both</option><option value="member">Collected by Pradeshikam</option><option value="donation">Donation</option></select></div><div class="col-md-4"><label class="form-label">Submission Date / സമർപ്പിച്ച തീയതി *</label><input id="submissionDate" type="date" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div><div class="col-md-6" id="memberAmountWrap"><label id="memberAmountLabel" class="form-label">Total Amount / ആകെ തുക *</label><input id="memberAmount" type="number" min="0" max="${mr+dr}" class="form-control" value="0"><div id="memberAmountHelp" class="form-text">Available cash to submit: ${money(mr+dr)}</div></div><div class="col-md-6" id="donationAmountWrap"><label class="form-label">Donation Amount / സംഭാവന തുക *</label><input id="donationAmount" type="number" min="0" max="${dr}" class="form-control" value="0"><div id="donationAmountHelp" class="form-text">Available donation cash: ${money(dr)}</div></div><div class="col-12"><label class="form-label">Remarks / അഭിപ്രായങ്ങൾ</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>${receiptBlock()}</div><div id="submissionPreview" class="receipt-box mt-3"></div><div id="submissionError" class="alert alert-danger d-none mt-3"></div><div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" ${mr+dr<=0?"disabled":""}>Save Submission</button></div></form></div>`;
 }
 
 function renderHistory(rows) {
@@ -131,11 +131,63 @@ function renderHistory(rows) {
       <td data-label="Type"><span class="badge rounded-pill text-bg-light">Cash Submission</span></td>
       <td data-label="Amount" class="fw-semibold">${money(amount)}</td>
       <td data-label="Receipt / UPI">${receipt?`<a href="${receipt}" target="_blank" class="btn btn-sm btn-light"><i class="bi bi-image me-1"></i>View</a>`:"-"}</td>
-      <td data-label="Recorded / Verified By">${escapeHTML(x.recordedBy||"-")}</td>
+      <td data-label="Recorded / Verified By">${fcmsAuditIdentityHTML(x)}</td>
       <td data-label="Remarks">${escapeHTML(x.remarks||"-")}</td>
       <td data-label="Actions">${s.role==="admin"?`<div class="d-flex gap-1"><a class="btn btn-sm btn-light" href="edit-submission.html?id=${encodeURIComponent(x.id)}&type=${target.type}" title="Edit"><i class="bi bi-pencil"></i></a><button class="btn btn-sm btn-outline-danger delete-submission" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button></div>`:"—"}</td>
     </tr>`;
   }).join("")}</tbody></table></div>`;
+}
+
+function bindReceipt() {
+  const input = document.getElementById("receiptFile");
+  const cameraButton = document.getElementById("receiptCameraBtn");
+  const preview = document.getElementById("receiptPreview");
+  const errorBox = document.getElementById("submissionError");
+  let receiptDataUrl = "";
+
+  const showError = (message) => {
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.classList.remove("d-none");
+  };
+  const showReceipt = (item) => {
+    if (!item?.dataUrl || !preview) return;
+    receiptDataUrl = item.dataUrl;
+    preview.replaceChildren();
+    const image = document.createElement("img");
+    image.src = item.dataUrl;
+    image.alt = item.name || "Receipt preview";
+    image.style.cssText = "max-width:240px;max-height:180px;border-radius:12px;object-fit:contain";
+    preview.appendChild(image);
+    preview.classList.remove("d-none");
+    errorBox?.classList.add("d-none");
+  };
+
+  input?.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!window.FCMSReceiptCamera) {
+      showError("Camera helper could not be loaded. Please refresh and try again.");
+      return;
+    }
+    const result = await window.FCMSReceiptCamera.processFile(file);
+    input.value = "";
+    if (result?.error) {
+      showError(result.error);
+      return;
+    }
+    if (result) showReceipt(result);
+  });
+
+  cameraButton?.addEventListener("click", () => {
+    if (window.FCMSReceiptCamera) {
+      window.FCMSReceiptCamera.open(showReceipt);
+      return;
+    }
+    input?.click();
+  });
+
+  return () => receiptDataUrl;
 }
 
 function bindForm() {
@@ -149,15 +201,16 @@ function bindForm() {
       if(amount>remaining){err.textContent=`Amount cannot exceed remaining balance of ${money(remaining)}.`;err.classList.remove("d-none");return;}
       if(!receipt){err.textContent="Receipt / Voucher is required before saving this submission.";err.classList.remove("d-none");return;}
       const date=document.getElementById("submissionDate").value;if(!date){err.textContent="Select a submission date.";err.classList.remove("d-none");return;}
-      const sub={id:uid("scsub"),subCommitteeId:target.id,amount,date,remarks:document.getElementById("remarks").value.trim(),receiptDataUrl:receipt,createdAt:new Date().toISOString(),recordedBy:actorLabel(),recordedByUserId:s.id,recordedByRole:s.role};
+      const sub={id:uid("scsub"),subCommitteeId:target.id,amount,date,remarks:document.getElementById("remarks").value.trim(),receiptDataUrl:receipt,createdAt:new Date().toISOString(),recordedBy:actorLabel(),recordedByPhone:s.verifiedPhone||"",recordedByUserId:s.id,recordedByRole:s.role};
       db.subCommitteeSubmissions.push(sub); addActivity(db,{action:"Sub Committee Submission Added",entityType:"subCommitteeSubmission",entityId:sub.id,summary:`${committeeName(target.id)} submitted ${money(amount)}`,details:"Submitted to Main Office.",newValue:sub}); fcmsClearPageDraft(); saveDB(db); render();
     });
     return;
   }
   const type=document.getElementById("amountType"), ma=document.getElementById("memberAmount"), da=document.getElementById("donationAmount"), preview=document.getElementById("submissionPreview");
-  function update(){const t=type.value,mr=prRemaining(target.id,"member"),dr=prRemaining(target.id,"donation");document.getElementById("memberAmountWrap").style.display=t==="donation"?"none":"block";document.getElementById("donationAmountWrap").style.display=t==="member"?"none":"block";ma.max=mr;da.max=dr;if(t==="member")da.value=0;if(t==="donation")ma.value=0;preview.innerHTML=`<div class="d-flex justify-content-between"><span>Pradeshikam amount</span><b>${money(Number(ma.value)||0)}</b></div><div class="d-flex justify-content-between"><span>Donation amount</span><b>${money(Number(da.value)||0)}</b></div><div class="d-flex justify-content-between"><span>Total submission</span><b>${money((Number(ma.value)||0)+(Number(da.value)||0))}</b></div><div class="small text-muted mt-2">Remaining: ${money(mr)} pradeshikam · ${money(dr)} donation</div>`;}
+  function submissionAmounts(){const t=type.value,mr=prRemaining(target.id,"member"),enteredMember=Number(ma.value)||0,enteredDonation=Number(da.value)||0;if(t==="both")return{memberAmount:Math.min(enteredMember,mr),donationAmount:Math.max(0,enteredMember-mr)};if(t==="donation")return{memberAmount:0,donationAmount:enteredDonation};return{memberAmount:enteredMember,donationAmount:0};}
+  function update(){const t=type.value,mr=prRemaining(target.id,"member"),dr=prRemaining(target.id,"donation"),available=mr+dr,memberWrap=document.getElementById("memberAmountWrap"),donationWrap=document.getElementById("donationAmountWrap"),memberLabel=document.getElementById("memberAmountLabel"),memberHelp=document.getElementById("memberAmountHelp");memberWrap.style.display=t==="donation"?"none":"block";donationWrap.style.display=t==="donation"?"block":"none";memberLabel.textContent=t==="both"?"Total Amount / ആകെ തുക *":"Pradeshikam Amount / പ്രദേശികം തുക *";memberHelp.textContent=t==="both"?`Available combined cash: ${money(available)}`:`Available Pradeshikam cash: ${money(mr)}`;ma.max=t==="both"?available:mr;da.max=dr;if(t!=="donation")da.value=0;if(t==="donation")ma.value=0;const amounts=submissionAmounts(),total=amounts.memberAmount+amounts.donationAmount;preview.innerHTML=`<div class="d-flex justify-content-between"><span>Pradeshikam collection</span><b>${money(amounts.memberAmount)}</b></div><div class="d-flex justify-content-between"><span>Donation</span><b>${money(amounts.donationAmount)}</b></div><div class="d-flex justify-content-between"><span>Total submission</span><b>${money(total)}</b></div><div class="small text-muted mt-2">Available cash: ${money(available)} (${money(mr)} Pradeshikam · ${money(dr)} donation)</div>`;}
   type.addEventListener("change",update);[ma,da].forEach(el=>el.addEventListener("input",update));update();
-  document.getElementById("submissionForm").addEventListener("submit",e=>{e.preventDefault();const mr=prRemaining(target.id,"member"),dr=prRemaining(target.id,"donation"),memberAmount=Number(ma.value)||0,donationAmount=Number(da.value)||0,total=memberAmount+donationAmount,err=document.getElementById("submissionError"),receipt=getReceipt();if(type.value==="member"&&memberAmount>mr){err.textContent=`Pradeshikam amount cannot exceed ${money(mr)}.`;err.classList.remove("d-none");return;}if(type.value==="donation"&&donationAmount>dr){err.textContent=`Donation amount cannot exceed ${money(dr)}.`;err.classList.remove("d-none");return;}if(type.value==="both"&&(memberAmount>mr||donationAmount>dr)){err.textContent="One or both amounts exceed the remaining amount.";err.classList.remove("d-none");return;}if(total<=0){err.textContent="Enter an amount to submit.";err.classList.remove("d-none");return;}if(!receipt){err.textContent="Receipt / Voucher is required before saving this submission.";err.classList.remove("d-none");return;}const date=document.getElementById("submissionDate").value;if(!date){err.textContent="Select a submission date.";err.classList.remove("d-none");return;}const sub={id:uid("sub"),pradeshikamId:target.id,memberAmount,donationAmount,amount:total,date,remarks:document.getElementById("remarks").value.trim(),receiptDataUrl:receipt,createdAt:new Date().toISOString(),recordedBy:actorLabel(),recordedByUserId:s.id,recordedByRole:s.role,type:type.value};db.submissions.push(sub);addActivity(db,{action:"Submission Added",entityType:"submission",entityId:sub.id,pradeshikamId:target.id,summary:`${prName(target.id)} submitted ${money(total)}`,details:`Member ${money(memberAmount)} · Donation ${money(donationAmount)}.`,newValue:sub});fcmsClearPageDraft(); saveDB(db);render();});
+  document.getElementById("submissionForm").addEventListener("submit",e=>{e.preventDefault();const mr=prRemaining(target.id,"member"),dr=prRemaining(target.id,"donation"),available=mr+dr,amounts=submissionAmounts(),memberAmount=amounts.memberAmount,donationAmount=amounts.donationAmount,total=memberAmount+donationAmount,err=document.getElementById("submissionError"),receipt=getReceipt();if(type.value==="member"&&memberAmount>mr){err.textContent=`Pradeshikam amount cannot exceed ${money(mr)}.`;err.classList.remove("d-none");return;}if(type.value==="donation"&&donationAmount>dr){err.textContent=`Donation amount cannot exceed ${money(dr)}.`;err.classList.remove("d-none");return;}if(type.value==="both"&&total>available){err.textContent=`Total amount cannot exceed available cash of ${money(available)}.`;err.classList.remove("d-none");return;}if(total<=0){err.textContent="Enter an amount to submit.";err.classList.remove("d-none");return;}if(!receipt){err.textContent="Receipt / Voucher is required before saving this submission.";err.classList.remove("d-none");return;}const date=document.getElementById("submissionDate").value;if(!date){err.textContent="Select a submission date.";err.classList.remove("d-none");return;}const sub={id:uid("sub"),pradeshikamId:target.id,memberAmount,donationAmount,amount:total,date,remarks:document.getElementById("remarks").value.trim(),receiptDataUrl:receipt,createdAt:new Date().toISOString(),recordedBy:actorLabel(),recordedByPhone:s.verifiedPhone||"",recordedByUserId:s.id,recordedByRole:s.role,type:type.value};db.submissions.push(sub);addActivity(db,{action:"Submission Added",entityType:"submission",entityId:sub.id,pradeshikamId:target.id,summary:`${prName(target.id)} submitted ${money(total)}`,details:`Member ${money(memberAmount)} · Donation ${money(donationAmount)}.`,newValue:sub});fcmsClearPageDraft(); saveDB(db);render();});
 }
 
 async function deleteSubmission(id){

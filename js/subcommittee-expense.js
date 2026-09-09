@@ -127,10 +127,10 @@
         });
     document.getElementById("expTable").innerHTML = !rows.length
       ? `<div class="empty-state"><i class="bi bi-receipt-cutoff"></i>No expenses recorded yet.</div>`
-      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Bill</th><th>Remarks</th>${canAddOrEdit ? "<th>Actions</th>" : ""}</tr></thead><tbody>${rows
+      : `<div class="table-responsive"><table class="table"><thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Bill</th><th>Remarks</th><th>Audit</th>${canAddOrEdit ? "<th>Actions</th>" : ""}</tr></thead><tbody>${rows
           .map(
             (x) =>
-              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Description">${escapeHTML(x.expensePurpose || x.description || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Bill">${x.billDataUrl ? `<a href="${x.billDataUrl}" download="${escapeHTML(x.billName || "bill")}" class="btn btn-sm btn-light" title="View / Download Receipt / Bill"><i class="bi bi-paperclip"></i></a>` : "-"}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td>${canAddOrEdit ? `<td data-label="Actions"><div class="d-flex gap-1">${isAdmin ? `<button class="btn btn-sm btn-light edit-exp" data-id="${escapeHTML(x.id)}" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>`}</div></td>` : ""}</tr>`,
+              `<tr><td data-label="Date">${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td data-label="Description">${escapeHTML(x.expensePurpose || x.description || "-")}</td><td data-label="Amount" class="fw-semibold">${money(x.amount)}</td><td data-label="Bill">${x.billDataUrl ? `<a href="${x.billDataUrl}" download="${escapeHTML(x.billName || "bill")}" class="btn btn-sm btn-light" title="View / Download Receipt / Bill"><i class="bi bi-paperclip"></i></a>` : "-"}</td><td data-label="Remarks">${escapeHTML(x.remarks || "-")}</td><td data-label="Audit">${fcmsAuditIdentityHTML(x)}</td>${canAddOrEdit ? `<td data-label="Actions"><div class="d-flex gap-1">${isAdmin ? `<button class="btn btn-sm btn-light edit-exp" data-id="${escapeHTML(x.id)}" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-danger delete-exp" data-id="${escapeHTML(x.id)}" title="Delete"><i class="bi bi-trash"></i></button>`}</div></td>` : ""}</tr>`,
           )
           .join("")}</tbody></table></div>`;
     document
@@ -242,6 +242,7 @@
             delete updated.billDataUrl;
             delete updated.billName;
           }
+          fcmsStampRecordEdited(updated, s);
           db.subCommitteeExpenses[idx] = updated;
           addActivity(db, {
             action: "Sub Committee Expense Edited",
@@ -265,6 +266,7 @@
             billName,
             createdAt: new Date().toISOString(),
             recordedBy: actorLabel(),
+          recordedByPhone: s.verifiedPhone || "",
             recordedByUserId: s.id,
             recordedByRole: s.role,
           };

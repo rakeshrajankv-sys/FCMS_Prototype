@@ -1,6 +1,7 @@
 const FCMS_KEY = "fcms_prototype_v1";
 const SESSION_KEY = "fcms_session";
 const FCMS_MEMBER_STATS_CACHE = new WeakMap();
+let FCMS_DB_MEMORY_CACHE = null;
 const FCMS_ADMIN_PASSWORD = "admin123";
 
 const PRADESHIKAM_NAMES = [
@@ -217,11 +218,31 @@ function seedDemoData() {
   return db;
 }
 function getDB() {
-  return seedDemoData();
+  if (FCMS_DB_MEMORY_CACHE) return FCMS_DB_MEMORY_CACHE;
+  FCMS_DB_MEMORY_CACHE = seedDemoData();
+  return FCMS_DB_MEMORY_CACHE;
 }
+window.addEventListener("storage", (event) => {
+  if (event.key === FCMS_KEY) FCMS_DB_MEMORY_CACHE = null;
+});
 function saveDB(db) {
   FCMS_MEMBER_STATS_CACHE.delete(db);
-  localStorage.setItem(FCMS_KEY, JSON.stringify(db));
+  try {
+    localStorage.setItem(FCMS_KEY, JSON.stringify(db));
+    FCMS_DB_MEMORY_CACHE = db;
+  } catch (error) {
+    if (typeof toast === "function") {
+      const ml = typeof fcmsLang === "function" && fcmsLang() === "ml";
+      toast(
+        ml
+          ? "ഡാറ്റ സേവ് ചെയ്യാനായില്ല. ഉപകരണത്തിലെ സംഭരണ സ്ഥലം പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
+          : "Unable to save the data. Check the device storage and try again.",
+        "error",
+        5200,
+      );
+    }
+    throw error;
+  }
   // Provide a shared success notification for CRUD pages that do not have a
   // page-specific toast. The UI layer suppresses this fallback when a clearer
   // notification is displayed by the page itself.
@@ -540,7 +561,43 @@ function clearSession() {
 }
 function actorLabel() {
   const s = currentSession();
-  return s ? (s.name || (s.role === "admin" ? "Main Committee" : "User")) : "System";
+  if (!s) return "System";
+  const account = getDB()?.users?.find(
+    (u) => String(u.id) === String(s.id) || String(u.username) === String(s.username),
+  );
+  return account?.lastVerifiedName || s.operatorName || s.name ||
+    (s.role === "admin" ? "Main Committee" : "User");
+}
+function fcmsStampRecordEdited(record, session = currentSession()) {
+  if (!record) return record;
+  record.lastEditedBy = actorLabel();
+  record.lastEditedByPhone = session?.verifiedPhone || "";
+  record.lastEditedByUserId = session?.id || null;
+  record.lastEditedAt = new Date().toISOString();
+  return record;
+}
+function fcmsAuditIdentityHTML(record) {
+  if (!record) return "-";
+  if (!fcmsAuditIdentityHTML.creationIndex) {
+    const index = new Map();
+    (getDB()?.activities || []).forEach((activity) => {
+      if (/(added|saved|created|recorded)/i.test(String(activity.action || ""))) {
+        index.set(String(activity.entityId || ""), activity);
+      }
+    });
+    fcmsAuditIdentityHTML.creationIndex = index;
+  }
+  const creation = fcmsAuditIdentityHTML.creationIndex.get(String(record.id || ""));
+  const creatorName = record.recordedBy || creation?.actor || "-";
+  const creatorPhone = record.recordedByPhone || creation?.actorPhone || "";
+  const addedBy = escapeHTML(creatorName);
+  const addedPhone = creatorPhone
+    ? `<div class="small text-muted">${escapeHTML(creatorPhone)}</div>`
+    : "";
+  const edited = record.lastEditedBy
+    ? `<div class="mt-2 pt-2 border-top"><span class="small text-muted">Last edited by</span><br><strong>${escapeHTML(record.lastEditedBy)}</strong>${record.lastEditedByPhone ? `<div class="small text-muted">${escapeHTML(record.lastEditedByPhone)}</div>` : ""}${record.lastEditedAt ? `<div class="small text-muted">${new Date(record.lastEditedAt).toLocaleString("en-IN")}</div>` : ""}</div>`
+    : "";
+  return `<div><span class="small text-muted">Added by</span><br><strong>${addedBy}</strong>${addedPhone}</div>${edited}`;
 }
 function actorContext(db) {
   const s = currentSession();
@@ -679,6 +736,7 @@ function donationSnapshot(d) {
   };
 }
 function resetPrototype() {
+  FCMS_DB_MEMORY_CACHE = null;
   localStorage.removeItem(FCMS_KEY);
   localStorage.removeItem("fcms_verified_devices_v1");
   localStorage.removeItem("fcms_verified_devices_v2");

@@ -22,40 +22,43 @@ ${pageTitle("Add Collection")}
   function refreshNewPaymentBook(){
     if(!receiptInput || !receiptBook) return;
     const raw = String(receiptInput.value || "").trim();
-    receiptBook.hidden = true;
-    receiptBook.textContent = "";
-    receiptBook.classList.remove("is-error");
+    let text = "";
+    let isError = false;
+    let validity = "";
 
     if(!raw) {
-      receiptInput.setCustomValidity("");
-      return;
+      // Keep the indicator hidden.
+    } else {
+      const info = typeof fcmsPublishedBookInfo === "function"
+        ? fcmsPublishedBookInfo(raw, db)
+        : (typeof fcmsReceiptBookInfo === "function" ? fcmsReceiptBookInfo(raw) : null);
+      if(info && Number.isFinite(Number(info.book))) {
+        if(info.published === false){
+          const limit = Number(info.publishedLimit || (typeof fcmsReceiptBookLimit === "function" ? fcmsReceiptBookLimit(db) : 0));
+          text = `Book ${info.book} has not been published yet. Current published limit is Book ${limit}.`;
+          validity = text;
+          isError = true;
+        } else {
+          text = `${typeof fcmsLang === "function" && fcmsLang() === "ml" ? "ബുക്ക്" : "Book"} ${info.book}`;
+        }
+      }
     }
 
-    const info = typeof fcmsPublishedBookInfo === "function"
-      ? fcmsPublishedBookInfo(raw, db)
-      : (typeof fcmsReceiptBookInfo === "function" ? fcmsReceiptBookInfo(raw) : null);
-
-    if(!info || !Number.isFinite(Number(info.book))) {
-      receiptInput.setCustomValidity("");
-      return;
-    }
-
-    if(info.published === false){
-      const limit = Number(info.publishedLimit || (typeof fcmsReceiptBookLimit === "function" ? fcmsReceiptBookLimit(db) : 0));
-      const msg = `Book ${info.book} has not been published yet. Current published limit is Book ${limit}.`;
-      receiptBook.textContent = msg;
-      receiptBook.classList.add("is-error");
-      receiptBook.hidden = false;
-      receiptInput.setCustomValidity(msg);
-      return;
-    }
-
-    receiptBook.textContent = `${typeof fcmsLang === "function" && fcmsLang() === "ml" ? "ബുക്ക്" : "Book"} ${info.book}`;
-    receiptBook.hidden = false;
-    receiptInput.setCustomValidity("");
+    const signature = `${text}|${isError}|${validity}`;
+    if(receiptBook.dataset.renderSignature === signature) return;
+    receiptBook.dataset.renderSignature = signature;
+    receiptBook.textContent = text;
+    receiptBook.hidden = !text;
+    receiptBook.classList.toggle("is-error", isError);
+    receiptInput.setCustomValidity(validity);
   }
 
-  ["input","change","blur"].forEach(evt => receiptInput?.addEventListener(evt, refreshNewPaymentBook));
+  let receiptFrame = 0;
+  receiptInput?.addEventListener("input", () => {
+    cancelAnimationFrame(receiptFrame);
+    receiptFrame = requestAnimationFrame(refreshNewPaymentBook);
+  });
+  ["change","blur"].forEach(evt => receiptInput?.addEventListener(evt, refreshNewPaymentBook));
   refreshNewPaymentBook();
 
   document.getElementById("paymentForm").addEventListener("submit", async (e) => {
@@ -129,6 +132,8 @@ ${pageTitle("Add Collection")}
       holdReplacedAt: heldPaymentToReplace ? new Date().toISOString() : undefined,
       holdReplacedByUserId: heldPaymentToReplace ? s.id : undefined,
     });
+    if (heldPaymentToReplace) fcmsStampRecordEdited(payment, s);
+    else Object.assign(payment, { recordedBy: actorLabel(), recordedByPhone: s.verifiedPhone || "", recordedByUserId: s.id, recordedByRole: s.role, createdAt: new Date().toISOString() });
     fcmsMarkNewElectronicPending(payment);
     if (!heldPaymentToReplace) db.payments.push(payment);
     addActivity(db, {

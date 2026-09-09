@@ -74,7 +74,7 @@ else {
       </div>
       <button id="export" class="btn btn-sm btn-light export-icon-btn" title="Download CSV" aria-label="Download CSV"><i class="bi bi-download" aria-hidden="true"></i></button>
     </div>
-    ${filtered.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Committee</th><th>Purpose</th><th>Date</th><th>Details</th><th>Amount</th><th>Phone</th><th>Bill</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${filtered.map((x) => `<tr><td>${escapeHTML(choices.find((c) => c.id === x.committeeId)?.name || x.committeeId || "Other")}</td><td>${escapeHTML(x.expensePurpose || "-")}</td><td>${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td>${escapeHTML(x.title || "")}</td><td class="fw-semibold">${money(x.amount)}</td><td>${escapeHTML(x.phone || "-")}</td><td>${x.billData ? `<a href="${x.billData}" target="_blank" class="btn btn-sm btn-light">View</a>` : "-"}</td><td>${escapeHTML(x.remarks || "-")}</td><td><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit" data-id="${x.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger del" data-id="${x.id}"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">No expenses recorded for this committee.</div>`}
+    ${filtered.length ? `<div class="table-responsive"><table class="table"><thead><tr><th>Committee</th><th>Purpose</th><th>Date</th><th>Details</th><th>Amount</th><th>Phone</th><th>Bill</th><th>Remarks</th><th>Audit</th><th>Actions</th></tr></thead><tbody>${filtered.map((x) => `<tr><td>${escapeHTML(choices.find((c) => c.id === x.committeeId)?.name || x.committeeId || "Other")}</td><td>${escapeHTML(x.expensePurpose || "-")}</td><td>${new Date(x.date || x.createdAt).toLocaleDateString("en-IN")}</td><td>${escapeHTML(x.title || "")}</td><td class="fw-semibold">${money(x.amount)}</td><td>${escapeHTML(x.phone || "-")}</td><td>${x.billData ? `<a href="${x.billData}" target="_blank" class="btn btn-sm btn-light">View</a>` : "-"}</td><td>${escapeHTML(x.remarks || "-")}</td><td>${fcmsAuditIdentityHTML(x)}</td><td><div class="d-flex gap-1"><button class="btn btn-sm btn-light edit" data-id="${x.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger del" data-id="${x.id}"><i class="bi bi-trash"></i></button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">No expenses recorded for this committee.</div>`}
   </div>`;
 
     const committeeSelect = document.getElementById("committee");
@@ -162,12 +162,17 @@ else {
           remarks: document.getElementById("remarks").value.trim(),
           billData: billData || "",
           recordedBy: actorLabel(),
+          recordedByPhone: s.verifiedPhone || "",
           createdAt: new Date().toISOString(),
         };
         if (editId) {
           const i = db.mainExpenses.findIndex((y) => y.id === editId);
           const old = db.mainExpenses[i];
           if (!billData) x.billData = old?.billData || "";
+          x.recordedBy = old?.recordedBy || x.recordedBy;
+          x.recordedByPhone = old?.recordedByPhone || x.recordedByPhone;
+          x.createdAt = old?.createdAt || x.createdAt;
+          fcmsStampRecordEdited(x, s);
           db.mainExpenses[i] = x;
           addActivity(db, {
             action: "Main Expense Edited",

@@ -97,6 +97,7 @@ if (!canEditDonation) {
             ? donor?.countryCode || "+91"
             : document.getElementById("phoneCode").value,
       });
+      fcmsStampRecordEdited(donation, s);
       addActivity(db, {
         action:
           wasHold && newStatus !== "hold"

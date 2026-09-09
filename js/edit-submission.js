@@ -58,6 +58,10 @@ if (s.role !== "admin") {
           type: t,
           date: document.getElementById("date").value,
           remarks: document.getElementById("remarks").value.trim(),
+          lastEditedBy: actorLabel(),
+          lastEditedByPhone: s.verifiedPhone || "",
+          lastEditedByUserId: s.id,
+          lastEditedAt: new Date().toISOString(),
         });
         addActivity(db, {
           action: "Submission Edited",
